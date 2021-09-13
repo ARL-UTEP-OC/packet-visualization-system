@@ -1,0 +1,1 @@
+The models folder is where all entities should be created under
