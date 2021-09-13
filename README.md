@@ -7,7 +7,7 @@ This project is developed under a virtual environment follow the next steps to m
 - Run *source venv/bin/activate*
 - To test the project as a package run *pip install -e packet-visualize*
 - Try testing the package
-
+***
 ## Dependencies
 
 **To install dependencies in our project please follow these steps**
@@ -20,7 +20,12 @@ This project is developed under a virtual environment follow the next steps to m
 **Please list your dependency names below**
 *E.g.*
 *- numpy*
+***
+## Tests - Using PyTest
+When creating a new test file, follow this naming convention test_*your_test* 
 
+**It is important to follow this step otherwise the test discovery will be broken**
+***
 ## Setup.py
 **NOTE: If we require the ones who use this packages to install dependencies please for our project to work add them to the install_requires property in the Setup.py file** 
  
