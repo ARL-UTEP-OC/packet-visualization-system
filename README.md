@@ -22,5 +22,5 @@ This project is developed under a virtual environment follow the next steps to m
 *- numpy*
 
 ## Setup.py
-**NOTE: If we require the ones who use the packages to install dependencies please add them to the install_requires property in the Setup.py file** 
+**NOTE: If we require the ones who use this packages to install dependencies please for our project to work add them to the install_requires property in the Setup.py file** 
  
