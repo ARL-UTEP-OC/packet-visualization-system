@@ -15,11 +15,6 @@ This project is developed under a virtual environment follow the next steps to m
 - To look at which dependencies we have in the project: *pip freeze*
 - To push dependencies to file: *pip freeze > dev_requirements.txt*
 - To install upcoming dependencies: *pip install -r dev_requirements.txt*
-
-## Current Dependencies
-**Please list your dependency names below**
-*E.g.*
-*- numpy*
 ***
 ## Tests - Using PyTest
 When creating a new test file, follow this naming convention test_*your_test* 
