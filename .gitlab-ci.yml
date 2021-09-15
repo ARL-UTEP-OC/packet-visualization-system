@@ -36,7 +36,7 @@ unit-test-job:   # This job runs in the test stage.
     - echo "Dependencies Installed."
   script:
     - echo "Running unit tests... "
-    - python3 -m pytest --junitxmml=report.xml
+    - python3 -m pytest --junitxml=report.xml
     - echo "Test Complete"
   artifacts:
     when: always
