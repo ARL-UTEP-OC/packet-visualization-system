@@ -24,13 +24,16 @@ build-job:       # This job runs in the build stage, which runs first.
   stage: build
   script:
     - echo "Installing Dependencies..."
-    - apt-get -yq update
-    - apt-get -yq install python3-pip
-    - pip3 install -r dev_requirements.txt
     - echo "Dependencies Installed."
 
 unit-test-job:   # This job runs in the test stage.
   stage: test    # It only starts when the job in the build stage completes successfully.
+  before_scrip:
+    - echo "Installing Dependencies..."
+    - apt-get -yq update
+    - apt-get -yq install python3-pip
+    - pip3 install -r dev_requirements.txt
+    - echo "Dependencies Installed."
   script:
     - echo "Running unit tests... "
     - python3 -m pytest --junitxmml=report.xml
