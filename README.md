@@ -17,7 +17,8 @@ This project is developed under a virtual environment follow the next steps to m
 - To install upcoming dependencies: *pip install -r dev_requirements.txt*
 ***
 ## Tests - Using PyTest
-When creating a new test file, follow this naming convention test_*your_test* 
+When creating a new test file, follow this naming convention test_*your_test*.py.
+When creating a new test function, follow the same naming convention def test_*your_test_method*:
 
 **It is important to follow this step otherwise the test discovery will be broken**
 ***
