@@ -1,0 +1,2 @@
+class packet:
+    print("test")
