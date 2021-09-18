@@ -20,6 +20,9 @@ This project is developed under a virtual environment follow the next steps to m
 When creating a new test file, follow this naming convention test_*your_test*.py.
 When creating a new test function, follow the same naming convention def test_*your_test_method*:
 
+To run tests locally execute the following command on the project home folder: 
+`python3 -m pytest`
+
 **It is important to follow this step otherwise the test discovery will be broken**
 ***
 ## Setup.py
