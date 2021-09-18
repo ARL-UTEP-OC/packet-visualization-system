@@ -2,13 +2,15 @@
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QInputDialog, QLineEdit
+from PyQt5.QtWidgets import QInputDialog, QLineEdit, QFileDialog
 
-class Workspace(QtWidgets.QMainWindow):
-    def __init__(self):
+
+class Workspace_UI(QtWidgets.QMainWindow):
+    def __init__(self, workspace_name: str):
         # Workspace Constructor
         super().__init__()
         self.setFixedSize(917,548)
+        self.setWindowTitle(workspace_name)
 
         self.project_tree = QtWidgets.QTreeWidget()
         self.project_tree.setGeometry(QtCore.QRect(0, 62, 221, 451))
@@ -45,8 +47,9 @@ class Workspace(QtWidgets.QMainWindow):
         item = QtWidgets.QTreeWidgetItem(self.project_tree)
         item.setText(0, text)
 
+
     def add_dataset(self):
-        if self.project_tree.selectedItems():
+        if self.project_tree.selectedItems() and self.project_tree.selectedItems()[0].parent() == None:
             project = self.project_tree.selectedItems()[0]
             text = QInputDialog.getText(self, "Dataset Name Entry", "Enter Dataset name:")[0]
 
@@ -55,10 +58,17 @@ class Workspace(QtWidgets.QMainWindow):
             project.addChild(child_item)
 
     def add_pcap(self):
+        if self.project_tree.selectedItems() and self.project_tree.selectedItems()[0].parent().parent() == None:
+            print()
         return
 
     def save(self):
         return
 
     def open_new_workspace(self):
-        return
+        file = QFileDialog.getSaveFileName(caption="Choose Workspace location")
+        file_split = file[0].split("/")
+        workspace_name = file_split[-1]
+        if file != ('', ''):
+            self.workspace = Workspace_UI(workspace_name)
+            self.workspace.show()
