@@ -1,7 +1,7 @@
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QFileDialog
-from workspace import Ui_workspace
+from workspace import Workspace
 
 
 class Ui_startup_window(object):
@@ -12,8 +12,10 @@ class Ui_startup_window(object):
         self.centralwidget.setObjectName("centralwidget")
 
         self.new_workspace_button = QtWidgets.QPushButton(self.centralwidget, clicked = lambda: self.open_new_workspace_placeholder())
+        self.new_workspace_button.clicked.connect(lambda : startup_window.close())
         self.new_workspace_button.setGeometry(QtCore.QRect(40, 20, 171, 31))
         self.new_workspace_button.setObjectName("new_workspace_button")
+
 
         self.existing_workspace_button = QtWidgets.QPushButton(self.centralwidget, clicked = lambda: self.open_existing_workspace())
         self.existing_workspace_button.setGeometry(QtCore.QRect(40, 70, 171, 31))
@@ -30,16 +32,12 @@ class Ui_startup_window(object):
         if file != ('', ''):
             #Save the new workspace
 
-            self.window = QtWidgets.QMainWindow()
-            self.ui = Ui_workspace()
-            self.ui.setupUi(self.window, workspace_name)
-            self.window.show()
+            self.workspace = Workspace()
+            self.workspace.show()
 
     def open_new_workspace_placeholder(self):
-        self.window = QtWidgets.QMainWindow()
-        self.ui = Ui_workspace()
-        self.ui.setupUi(self.window)
-        self.window.show()
+        self.workspace = Workspace()
+        self.workspace.show()
 
     def open_existing_workspace(self):
         file = QFileDialog.getOpenFileName(caption="Open existing Workspace")

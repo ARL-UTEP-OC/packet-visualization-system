@@ -1,126 +1,64 @@
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtWidgets
+from PyQt5 import QtGui
+from PyQt5 import QtCore
+from PyQt5.QtWidgets import QInputDialog, QLineEdit
 
-class Ui_workspace(object):
-    def setupUi(self, workspace):
-        workspace.setObjectName("workspace")
-        workspace.setFixedSize(912, 548)
+class Workspace(QtWidgets.QMainWindow):
+    def __init__(self):
+        # Workspace Constructor
+        super().__init__()
+        self.setFixedSize(917,548)
 
-        self.centralwidget = QtWidgets.QWidget(workspace)
-        self.centralwidget.setObjectName("centralwidget")
+        self.project_tree = QtWidgets.QTreeWidget()
+        self.project_tree.setGeometry(QtCore.QRect(0, 62, 221, 451))
+        self.project_tree.setHeaderLabels(["Project(s) Name", "Size", "DoC"])
 
-        self.project_tree = QtWidgets.QTreeWidget(self.centralwidget)
-        self.project_tree.setGeometry(QtCore.QRect(0, 50, 221, 451))
-        self.project_tree.setObjectName("project_tree")
-        item_0 = QtWidgets.QTreeWidgetItem(self.project_tree)
-        item_0 = QtWidgets.QTreeWidgetItem(self.project_tree)
+        self.add_project_button = QtWidgets.QPushButton("Add a Project",clicked = lambda : self.add_project())
+        self.add_project_button.setGeometry(QtCore.QRect(0, 22, 221, 41))
 
-        self.add_project_button = QtWidgets.QPushButton(self.centralwidget)
-        self.add_project_button.setGeometry(QtCore.QRect(0, 10, 221, 41))
-        self.add_project_button.setObjectName("add_project_button")
+        self.add_pcap_button = QtWidgets.QPushButton("Add Pcap", clicked=lambda: self.add_pcap())
+        self.add_pcap_button.setGeometry(QtCore.QRect(370, 22, 111, 31))
 
-        self.table = QtWidgets.QTableWidget(self.centralwidget)
-        self.table.setGeometry(QtCore.QRect(220, 50, 691, 451))
-        self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustIgnored)
-        self.table.setObjectName("table")
-        self.table.setColumnCount(9)
-        self.table.setRowCount(1)
-        item = QtWidgets.QTableWidgetItem()
-        self.table.setVerticalHeaderItem(0, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.table.setHorizontalHeaderItem(0, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.table.setHorizontalHeaderItem(1, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.table.setHorizontalHeaderItem(2, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.table.setHorizontalHeaderItem(3, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.table.setHorizontalHeaderItem(4, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.table.setHorizontalHeaderItem(5, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.table.setHorizontalHeaderItem(6, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.table.setHorizontalHeaderItem(7, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.table.setHorizontalHeaderItem(8, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.table.setItem(0, 0, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.table.setItem(0, 1, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.table.setItem(0, 2, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.table.setItem(0, 3, item)
+        self.add_dataset_button = QtWidgets.QPushButton("Add Dataset", clicked=lambda: self.add_dataset())
+        self.add_dataset_button.setGeometry(QtCore.QRect(240, 22, 111, 31))
 
-        self.pushButton = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton.setGeometry(QtCore.QRect(500, 10, 111, 31))
-        self.pushButton.setObjectName("pushButton")
+        self.open_in_wireshark_button = QtWidgets.QPushButton("Export to Wireshark")
+        self.open_in_wireshark_button.setGeometry(QtCore.QRect(500, 22, 111, 31))
 
-        workspace.setCentralWidget(self.centralwidget)
-        self.menubar = QtWidgets.QMenuBar(workspace)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 912, 22))
-        self.menubar.setObjectName("menubar")
-        self.menuFile = QtWidgets.QMenu(self.menubar)
-        self.menuFile.setObjectName("menuFile")
-        self.menuEdit = QtWidgets.QMenu(self.menubar)
-        self.menuEdit.setObjectName("menuEdit")
-        self.menuHelp = QtWidgets.QMenu(self.menubar)
-        self.menuHelp.setObjectName("menuHelp")
-        workspace.setMenuBar(self.menubar)
-        self.actionSave = QtWidgets.QAction(workspace)
-        self.actionSave.setObjectName("actionSave")
-        self.menuFile.addAction(self.actionSave)
-        self.menubar.addAction(self.menuFile.menuAction())
-        self.menubar.addAction(self.menuEdit.menuAction())
-        self.menubar.addAction(self.menuHelp.menuAction())
+        menu = self.menuBar()
+        menu_file = menu.addMenu("File")
+        menu_file.addAction("Save", self.save, QtGui.QKeySequence.Save)
+        menu_file.addAction("Open new Workspace", self.open_new_workspace)
 
-        self.retranslateUi(workspace)
-        QtCore.QMetaObject.connectSlotsByName(workspace)
+        self.setLayout(QtWidgets.QVBoxLayout())
+        self.layout().addWidget(self.add_project_button)
+        self.layout().addWidget(self.project_tree)
+        self.layout().addWidget(self.add_dataset_button)
+        self.layout().addWidget(self.add_pcap_button)
+        self.layout().addWidget(self.open_in_wireshark_button)
 
-    def retranslateUi(self, workspace):
-        _translate = QtCore.QCoreApplication.translate
-        workspace.setWindowTitle(_translate("workspace", "name_of_workspace"))
-        self.project_tree.headerItem().setText(0, _translate("workspace", "Project(s) Name"))
-        self.project_tree.headerItem().setText(1, _translate("workspace", "Size?"))
-        __sortingEnabled = self.project_tree.isSortingEnabled()
-        self.project_tree.setSortingEnabled(False)
-        self.project_tree.topLevelItem(0).setText(0, _translate("workspace", "p1"))
-        self.project_tree.topLevelItem(1).setText(0, _translate("workspace", "p2"))
-        self.project_tree.setSortingEnabled(__sortingEnabled)
-        self.add_project_button.setText(_translate("workspace", "Add Project"))
-        item = self.table.verticalHeaderItem(0)
-        item.setText(_translate("workspace", "Packet #"))
-        item = self.table.horizontalHeaderItem(0)
-        item.setText(_translate("workspace", "Packet Attribute"))
-        item = self.table.horizontalHeaderItem(1)
-        item.setText(_translate("workspace", "Packet Attribute"))
-        item = self.table.horizontalHeaderItem(2)
-        item.setText(_translate("workspace", "New Column"))
-        item = self.table.horizontalHeaderItem(3)
-        item.setText(_translate("workspace", "New Column"))
-        item = self.table.horizontalHeaderItem(4)
-        item.setText(_translate("workspace", "New Column"))
-        item = self.table.horizontalHeaderItem(5)
-        item.setText(_translate("workspace", "New Column"))
-        item = self.table.horizontalHeaderItem(6)
-        item.setText(_translate("workspace", "New Column"))
-        item = self.table.horizontalHeaderItem(7)
-        item.setText(_translate("workspace", "New Column"))
-        item = self.table.horizontalHeaderItem(8)
-        item.setText(_translate("workspace", "New Column"))
-        __sortingEnabled = self.table.isSortingEnabled()
-        self.table.setSortingEnabled(False)
-        item = self.table.item(0, 0)
-        item.setText(_translate("workspace", "a"))
-        item = self.table.item(0, 1)
-        item.setText(_translate("workspace", "b"))
-        item = self.table.item(0, 2)
-        item.setText(_translate("workspace", "c"))
-        self.table.setSortingEnabled(__sortingEnabled)
-        self.pushButton.setText(_translate("workspace", "Add Packet"))
-        self.menuFile.setTitle(_translate("workspace", "File"))
-        self.menuEdit.setTitle(_translate("workspace", "Edit"))
-        self.menuHelp.setTitle(_translate("workspace", "Help"))
-        self.actionSave.setText(_translate("workspace", "Save"))
+        self.show()
+
+    def add_project(self):
+        text = QInputDialog.getText(self, "Project Name Entry", "Enter Project name:")[0]
+        item = QtWidgets.QTreeWidgetItem(self.project_tree)
+        item.setText(0, text)
+
+    def add_dataset(self):
+        if self.project_tree.selectedItems():
+            project = self.project_tree.selectedItems()[0]
+            text = QInputDialog.getText(self, "Dataset Name Entry", "Enter Dataset name:")[0]
+
+            child_item = QtWidgets.QTreeWidgetItem()
+            child_item.setText(0, text)
+            project.addChild(child_item)
+
+    def add_pcap(self):
+        return
+
+    def save(self):
+        return
+
+    def open_new_workspace(self):
+        return
