@@ -9,11 +9,8 @@ class Workspace:
         self.cwd = os.getcwd()
         self.work_dir()
 
-    # TODO: Ask Eyan what would be better
-    #def add_project(self, new:Project) -> list:
-        #self.project.append(new)
-    def add_project(self, name:str) -> list:
-        self.project.append(Project(name))
+    def add_project(self, new:Project) -> list:
+        self.project.append(new)
         return self.project
 
     def del_project(self, old:Project) -> list:
