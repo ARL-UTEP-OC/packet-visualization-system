@@ -1,4 +1,4 @@
-from project import Project
+from components.models.project import Project
 import os, shutil
 
 class Workspace:

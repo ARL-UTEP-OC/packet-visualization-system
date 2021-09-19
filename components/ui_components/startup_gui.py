@@ -1,7 +1,10 @@
+import re
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QFileDialog
-from workspace import Workspace_UI
+
+from components.models.workspace import Workspace
+from workspace_gui import Workspace_UI
 
 
 class Ui_startup_window(object):
@@ -25,13 +28,46 @@ class Ui_startup_window(object):
         self.retranslateUi(startup_window)
         QtCore.QMetaObject.connectSlotsByName(startup_window)
 
-    def open_new_workspace(self):
-        file = QFileDialog.getSaveFileName(caption="Choose Workspace location")
-        file_split = file[0].split("/")
-        workspace_name = file_split[-1]
-        if file != ('', ''):
+        file = QFileDialog.getSaveFileName(caption="Choose Workspace location")[0]
+        workspace_name, path = self.collect_path_and_name(file)
+        workspace_object = Workspace(name=workspace_name, location=path, project=[])
+        print(workspace_object.name)
 
-            self.workspace = Workspace_UI(workspace_name)
+
+    def collect_path_and_name(self, full_path:str):
+        file_split = ""
+        on_windows = True
+        path = ""
+        name = ""
+
+        if "/" in full_path:
+            file_split = full_path.split("/")
+            on_windows = True
+        elif "\\" in full_path:
+            file_split = full_path.split("\\")
+            on_windows = False
+
+        if on_windows == True:
+            name = file_split[-1]
+            file_split.pop()
+            empty = "/"
+            path = empty.join(file_split)
+        elif on_windows == False:
+            name = file_split[-1]
+            file_split.pop()
+            empty = "\\"
+            path = empty.join(file_split)
+
+        return path, name
+
+    def open_new_workspace(self):
+        file = QFileDialog.getSaveFileName(caption="Choose Workspace location")[0]
+
+        if file != ('', ''):
+            path, workspace_name = self.collect_path_and_name(file)
+            workspace_object = Workspace(name= workspace_name, location= path, project= [])
+            print(workspace_object.name)
+            self.workspace = Workspace_UI(workspace_name, self.workspace_object)
             self.workspace.show()
 
     def open_existing_workspace(self):

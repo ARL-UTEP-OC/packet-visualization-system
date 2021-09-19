@@ -3,10 +3,11 @@ from PyQt5 import QtWidgets
 from PyQt5 import QtGui
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QInputDialog, QLineEdit, QFileDialog
+from components.models.workspace import Workspace
 
 
 class Workspace_UI(QtWidgets.QMainWindow):
-    def __init__(self, workspace_name: str):
+    def __init__(self, workspace_name: str, workspace_object: Workspace):
         # Workspace Constructor
         super().__init__()
         self.setFixedSize(917,548)
@@ -30,8 +31,8 @@ class Workspace_UI(QtWidgets.QMainWindow):
 
         menu = self.menuBar()
         menu_file = menu.addMenu("File")
-        menu_file.addAction("Save", self.save, QtGui.QKeySequence.Save)
-        menu_file.addAction("Open new Workspace", self.open_new_workspace)
+        menu_file.addAction("Save", self.save(workspace_object), QtGui.QKeySequence.Save)
+        menu_file.addAction("Open new Workspace", self.open_new_workspace())
 
         self.setLayout(QtWidgets.QVBoxLayout())
         self.layout().addWidget(self.add_project_button)
@@ -62,7 +63,8 @@ class Workspace_UI(QtWidgets.QMainWindow):
             print()
         return
 
-    def save(self):
+    def save(self, workspace_object= Workspace):
+        print()
         return
 
     def open_new_workspace(self):
