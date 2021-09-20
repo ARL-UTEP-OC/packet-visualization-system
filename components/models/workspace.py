@@ -19,14 +19,17 @@ class Workspace:
         return self.project
 
     def work_dir(self) -> str:
-        path = os.path.join(self.location, self.name)
-        os.mkdir(path)
+        tail = "." + self.name # we want to work inside a temp, hidden folder
+        path = os.path.join(self.location, tail)
+        if not os.path.isdir(path):
+            os.mkdir(path)
         os.chdir(path)
         return path
 
     def close(self) -> bool:
         try:
-            path = os.path.join(self.location, self.name)
+            tail = "." + self.name
+            path = os.path.join(self.location, tail)
             os.chdir(self.cwd)
             shutil.rmtree(path)
             return True
@@ -35,8 +38,21 @@ class Workspace:
 
     def save(self) -> bool:
         try:
-            path = os.path.join(self.location, self.name)
-            shutil.make_archive(path,'zip', path)
+            tail = "." + self.name
+            src = os.path.join(self.location, tail)
+            dst = os.path.join(self.location, self.name)
+            # Create the JSON file that will contain important information
+            save_file = ".save.json"
+            with open(save_file, 'w') as f:
+                f.write('{"name": "%s", "project": [' % (self.name))
+                for p in self.project:
+                    p.save(f)
+                    if p != self.project[-1]:
+                        f.write(',')
+                f.write(']}')
+            os.rename(save_file, "save.json")
+            # Zip everything in the working directory
+            shutil.make_archive(dst,'zip', src)
             return True
         except:
             return False
