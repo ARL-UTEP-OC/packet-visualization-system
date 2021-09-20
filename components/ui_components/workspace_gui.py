@@ -3,8 +3,9 @@ from PyQt5 import QtWidgets
 from PyQt5 import QtGui
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QInputDialog, QLineEdit, QFileDialog
-from components.models.workspace import Workspace
 
+from components.models.project import Project
+from components.models.workspace import Workspace
 
 class Workspace_UI(QtWidgets.QMainWindow):
     def __init__(self, workspace_name: str, workspace_object: Workspace):
@@ -17,7 +18,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
         self.project_tree.setGeometry(QtCore.QRect(0, 62, 221, 451))
         self.project_tree.setHeaderLabels(["Project(s) Name", "Size", "DoC"])
 
-        self.add_project_button = QtWidgets.QPushButton("Add a Project",clicked = lambda : self.add_project())
+        self.add_project_button = QtWidgets.QPushButton("Add a Project",clicked = lambda : self.add_project(workspace_object))
         self.add_project_button.setGeometry(QtCore.QRect(0, 22, 221, 41))
 
         self.add_pcap_button = QtWidgets.QPushButton("Add Pcap", clicked=lambda: self.add_pcap())
@@ -31,8 +32,8 @@ class Workspace_UI(QtWidgets.QMainWindow):
 
         menu = self.menuBar()
         menu_file = menu.addMenu("File")
-        menu_file.addAction("Save", self.save(workspace_object), QtGui.QKeySequence.Save)
-        menu_file.addAction("Open new Workspace", self.open_new_workspace())
+        menu_file.addAction("Save")
+        menu_file.addAction("Open new Workspace")
 
         self.setLayout(QtWidgets.QVBoxLayout())
         self.layout().addWidget(self.add_project_button)
@@ -43,10 +44,16 @@ class Workspace_UI(QtWidgets.QMainWindow):
 
         self.show()
 
-    def add_project(self):
+    def add_project(self, workspace_object: Workspace):
         text = QInputDialog.getText(self, "Project Name Entry", "Enter Project name:")[0]
-        item = QtWidgets.QTreeWidgetItem(self.project_tree)
-        item.setText(0, text)
+        if not self.project_tree.findItems(text, QtCore.Qt.MatchRecursive, 0):
+            project = Project(name=text)
+            workspace_object.add_project(project)
+
+            item = QtWidgets.QTreeWidgetItem(self.project_tree)
+            item.setText(0, text)
+        else:
+            print("Item already exists")
 
 
     def add_dataset(self):
@@ -63,7 +70,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
             print()
         return
 
-    def save(self, workspace_object= Workspace):
+    def save(self):
         print()
         return
 

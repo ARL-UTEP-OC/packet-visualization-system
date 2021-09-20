@@ -1,4 +1,5 @@
 import re
+import shutil
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QFileDialog
@@ -15,7 +16,6 @@ class Ui_startup_window(object):
         self.centralwidget.setObjectName("centralwidget")
 
         self.new_workspace_button = QtWidgets.QPushButton(self.centralwidget, clicked = lambda: self.open_new_workspace())
-        self.new_workspace_button.clicked.connect(lambda : startup_window.close())
         self.new_workspace_button.setGeometry(QtCore.QRect(40, 20, 171, 31))
         self.new_workspace_button.setObjectName("new_workspace_button")
 
@@ -27,12 +27,6 @@ class Ui_startup_window(object):
         startup_window.setCentralWidget(self.centralwidget)
         self.retranslateUi(startup_window)
         QtCore.QMetaObject.connectSlotsByName(startup_window)
-
-        file = QFileDialog.getSaveFileName(caption="Choose Workspace location")[0]
-        workspace_name, path = self.collect_path_and_name(file)
-        workspace_object = Workspace(name=workspace_name, location=path, project=[])
-        print(workspace_object.name)
-
 
     def collect_path_and_name(self, full_path:str):
         file_split = ""
@@ -63,11 +57,12 @@ class Ui_startup_window(object):
     def open_new_workspace(self):
         file = QFileDialog.getSaveFileName(caption="Choose Workspace location")[0]
 
-        if file != ('', ''):
+        if file != '':
+            startup_window.close()
             path, workspace_name = self.collect_path_and_name(file)
             workspace_object = Workspace(name= workspace_name, location= path, project= [])
-            print(workspace_object.name)
-            self.workspace = Workspace_UI(workspace_name, self.workspace_object)
+            workspace_object.close()
+            self.workspace = Workspace_UI(workspace_name, workspace_object)
             self.workspace.show()
 
     def open_existing_workspace(self):
