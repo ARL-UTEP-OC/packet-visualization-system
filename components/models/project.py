@@ -35,3 +35,7 @@ class Project:
             return True
         except:
             return False
+    
+    def save(self, f) -> None:
+        f.write('{"name": "%s", "c_time": %s, "dataset": [' % (self.name, self.c_time))
+        f.write(']}')

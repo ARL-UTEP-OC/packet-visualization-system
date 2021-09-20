@@ -41,6 +41,17 @@ class Workspace:
             tail = "." + self.name
             src = os.path.join(self.location, tail)
             dst = os.path.join(self.location, self.name)
+            # Create the JSON file that will contain important information
+            save_file = ".save.json"
+            with open(save_file, 'w') as f:
+                f.write('{"name": "%s", "project": [' % (self.name))
+                for p in self.project:
+                    p.save(f)
+                    if p != self.project[-1]:
+                        f.write(',')
+                f.write(']}')
+            os.rename(save_file, "save.json")
+            # Zip everything in the working directory
             shutil.make_archive(dst,'zip', src)
             return True
         except:
