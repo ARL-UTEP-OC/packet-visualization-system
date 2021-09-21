@@ -1,5 +1,6 @@
 import os, shutil
 from pcap import Pcap
+from project import Project
 
 class Dataset:
     def __init__(self, name: str, parentProject: Project, pcaps = []) -> None:  # Not sure if we should pass entire Project object, need to ask team
@@ -20,9 +21,9 @@ class Dataset:
         self.pcaps.remove(old)
         return self.pcaps
 
-    def add_pcap_dir(self, location:str) -> list:  # when we recieve directory w/PCAPs as user input
+    def add_pcap_dir(self, location: str) -> list:  # when we recieve directory w/PCAPs as user input
         for file in os.listdir(location):
-            self.pcaps.append(Pcap(file)) # For each file, create instance of Packet
+            self.pcaps.append(Pcap(file, self))  # For each file, create instance of Packet
         return self.pcaps
 
     def create_folder(self) -> str: # create save location
@@ -32,7 +33,7 @@ class Dataset:
 
     def remove(self) -> bool:
         try:
-            path = os.path.join(os.getcwd(), self.name) # remove folder
+            path = os.path.join(os.getcwd(), self.name)  # remove folder
             shutil.rmtree(path)
             return True
         except:
