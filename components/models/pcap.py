@@ -1,11 +1,11 @@
 import os
 import shutil
-from dataset import Dataset
+
 
 class Pcap:
 
-    def __init__(self, file, parentDataset: Dataset) -> None:
-        self.path = parentDataset.path  # Save location for PCAP File
+    def __init__(self, file) -> None:
+        self.path = os.path.join(os.getcwd())  # Save location for PCAP File
         self.pcap_file = file  # Actual File itself
         shutil.copy(self.pcap_file, self.path)  # Copy user input into our directory
 
