@@ -5,6 +5,8 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import QEvent
 from PyQt5.QtWidgets import QInputDialog, QMenu, QFileDialog, QAction, QMessageBox, QTreeWidget
 
+from components.models.dataset import Dataset
+from components.models.pcap import Pcap
 from components.models.project import Project
 from components.models.workspace import Workspace
 
@@ -104,21 +106,45 @@ class Workspace_UI(QtWidgets.QMainWindow):
             return False
 
     def add_dataset(self):
-        if self.project_tree.selectedItems() and self.project_tree.selectedItems()[0].parent() == None:
-            text = QInputDialog.getText(self, "Dataset Name Entry", "Enter Dataset name:")[0]
-            if not self.project_tree.findItems(text, QtCore.Qt.MatchRecursive, 0):
-                project = self.project_tree.selectedItems()[0]
+        try:
+            if self.project_tree.selectedItems() and self.project_tree.selectedItems()[0].parent() == None:
+                text = QInputDialog.getText(self, "Dataset Name Entry", "Enter Dataset name:")[0]
+                if not self.project_tree.findItems(text, QtCore.Qt.MatchRecursive, 0):
+                   # pcap_path, pcap_name = self.collect_path_and_name(self.get_pcap_path())
+                    #print(pcap_name)
+                    #if pcap_path == "":
+                        #return False
+                    project = self.project_tree.selectedItems()[0]
 
-                child_item = QtWidgets.QTreeWidgetItem()
-                child_item.setText(0, text)
-                project.addChild(child_item)
-            else:
-                print("Item named " + text + " already exists")
+                    for p in self.workspace_object.project:
+                        if p.name == project.text(0):
+                            dataset = Dataset(name=text, path=p.path)
+                            p.add_dataset(dataset)
+                            child_item = QtWidgets.QTreeWidgetItem()
+                            child_item.setText(0, text)
+                            project.addChild(child_item)
+
+                            #new_pcap = Pcap(file= pcap_path)
+                            #pcap_item = QtWidgets.QTreeWidgetItem()
+                            #pcap_item.setText(0, )
+                            #child_item.addChild()
+                            return True
+                else:
+                    print("Item named " + text + " already exists")
+        except:
+            print(traceback.print_exc())
 
     def add_pcap(self):
         if self.project_tree.selectedItems() and self.project_tree.selectedItems()[0].parent().parent() == None:
-            print()
+            print("Adding Pcap")
+            file = QFileDialog.getOpenFileName(caption= "Add a Pcap file to this Dataset")
+
         return
+    def get_pcap_path(self):
+        file_filter = "Wireshark capture file (*.pcap)"
+        initial_filter = "Wireshark capture file (*.pcap)"
+        path = QFileDialog.getOpenFileName(caption="Add a Pcap file to this Dataset", filter= file_filter, initialFilter= initial_filter)[0]
+        return path
 
     def save(self):
         try:

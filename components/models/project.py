@@ -1,6 +1,8 @@
-#from dataset import Dataset
+
 from datetime import datetime
 import os, shutil
+
+from components.models.dataset import Dataset
 
 class Project:
     def __init__(self, name:str, c_time=datetime.now().timestamp(), datasets=[], size=0) -> None:
@@ -10,7 +12,7 @@ class Project:
         self.dataset = datasets
         self.path = os.path.join(os.getcwd(), self.name)
         self.create_folder()
-    '''
+
     def add_dataset(self, new:Dataset) -> list:
         self.dataset.append(new)
         self.size = os.path.getsize(self.path)
@@ -21,7 +23,7 @@ class Project:
         self.dataset.remove(old)
         self.size = os.path.getsize(self.path)
         return self.dataset
-    '''
+
     def create_folder(self) -> str:
         if not os.path.isdir(self.path):
             os.mkdir(self.path)
