@@ -61,7 +61,7 @@ class Ui_startup_window(object):
             startup_window.close()
             path, workspace_name = self.collect_path_and_name(file)
             workspace_object = Workspace(name= workspace_name, location= path, project= [])
-            workspace_object.close()
+
             self.workspace = Workspace_UI(workspace_name, workspace_object)
             self.workspace.show()
 
