@@ -1,7 +1,5 @@
 from components.models.pcap import Pcap
 import os, shutil
-from pcap import Pcap
-from project import Project
 
 class Dataset:
     def __init__(self, name: str, parentPath: str) -> None:  # Not sure if we should pass entire Project object, need to ask team
