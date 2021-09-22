@@ -58,7 +58,7 @@ class Workspace:
             path = os.path.join(self.location, tail)
             os.chdir(self.cwd)
             shutil.rmtree(path)
-            for p in project:
+            for p in self.project:
                 del p
             return True
         except:

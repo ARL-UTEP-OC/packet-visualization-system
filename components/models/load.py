@@ -1,5 +1,5 @@
 from components.models.workspace import Workspace
-from somponents.models.project import Project
+from components.models.project import Project
 from components.models.dataset import Dataset
 import json, datetime, os, shutil
 

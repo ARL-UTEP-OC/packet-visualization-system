@@ -1,3 +1,4 @@
+
 from components.models.dataset import Dataset
 from datetime import datetime
 import os, shutil
@@ -18,7 +19,7 @@ class Project:
         return self.dataset
 
     def del_datset(self, old:Dataset) -> list:
-        del remove()
+        del old
         self.dataset.remove(old)
         self.size = os.path.getsize(self.path)
         return self.dataset
@@ -41,7 +42,7 @@ class Project:
         try:
             path = os.path.join(os.getcwd(), self.name)
             shutil.rmtree(path)
-            for d in dataset:
+            for d in self.dataset:
                 del d
             return True
         except:
