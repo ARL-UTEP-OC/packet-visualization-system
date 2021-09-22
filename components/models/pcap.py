@@ -3,7 +3,6 @@ import shutil
 from dataset import Dataset
 import pyshark
 
-
 class Pcap:
 
     def __init__(self, name: str ,path: str, file: str) -> None:
