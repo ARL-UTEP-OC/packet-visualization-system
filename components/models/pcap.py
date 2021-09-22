@@ -12,7 +12,6 @@ class Pcap:
         self.pcap_data = self.set_packet_data()  # packet capture object (packets within pcap file)
         self.total_packets = self.calculate_total_packets()
         self.protocols = {}
-
         shutil.copy(self.pcap_file, self.path)  # Copy user input into our directory
 
 
