@@ -31,6 +31,10 @@ class Dataset:
             os.mkdir(self.path)
         return self.path
 
+    #TODO:
+    def calculate_total_packets(self):
+        print("traverse list of packets get packet amount from each in list")
+
     def remove(self) -> bool:
         try:
             path = os.path.join(os.getcwd(), self.name)  # remove folder
