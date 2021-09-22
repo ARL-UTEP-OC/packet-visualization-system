@@ -18,8 +18,8 @@ class Workspace:
         return self.project
 
     def del_project(self, old:Project) -> list:
-        del old
         self.project.remove(old)
+        del old
         return self.project
 
     def work_dir(self) -> str:
