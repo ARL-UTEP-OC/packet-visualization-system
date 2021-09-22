@@ -4,8 +4,9 @@ import shutil
 
 class Pcap:
 
-    def __init__(self, file) -> None:
-        self.path = os.path.join(os.getcwd())  # Save location for PCAP File
+    def __init__(self, path: str, file: str, name: str) -> None:
+        self.name = name
+        self.path = os.path.join(path, self.name)  # Save location for PCAP File
         self.pcap_file = file  # Actual File itself
         shutil.copy(self.pcap_file, self.path)  # Copy user input into our directory
 
