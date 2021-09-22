@@ -19,9 +19,9 @@ class Project:
         return self.dataset
 
     def del_datset(self, old:Dataset) -> list:
-        del old
         self.dataset.remove(old)
         self.size = os.path.getsize(self.path)
+        del old
         return self.dataset
 
     def create_folder(self) -> str:
