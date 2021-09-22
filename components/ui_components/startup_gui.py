@@ -1,6 +1,8 @@
 import re
 import shutil
 import sys
+import traceback
+
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QFileDialog
 
@@ -55,16 +57,18 @@ class Ui_startup_window(object):
         return path, name
 
     def open_new_workspace(self):
-        file = QFileDialog.getSaveFileName(caption="Choose Workspace location")[0]
+        try:
+            file = QFileDialog.getSaveFileName(caption="Choose Workspace location")[0]
 
-        if file != '':
-            startup_window.close()
-            path, workspace_name = self.collect_path_and_name(file)
-            workspace_object = Workspace(name= workspace_name, location= path, project= [])
+            if file != '':
+                startup_window.close()
+                path, workspace_name = self.collect_path_and_name(file)
+                workspace_object = Workspace(name=workspace_name, location=path)
 
-            self.workspace = Workspace_UI(workspace_name, workspace_object)
-            self.workspace.show()
-
+                self.workspace = Workspace_UI(workspace_name, workspace_object)
+                self.workspace.show()
+        except:
+            traceback.print_exc()
     def open_existing_workspace(self):
         file = QFileDialog.getOpenFileName(caption="Open existing Workspace")
         #Open existing workspace from path "file"

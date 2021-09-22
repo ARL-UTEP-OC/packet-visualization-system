@@ -9,7 +9,7 @@ class Pcap:
         self.path = os.path.join(path, self.name)  # Save location for PCAP File
         self.pcap_file = file  # pcap recieved from user
         self.pcap_data = self.set_packet_data()  # packet capture object (packets within pcap file)
-        self.total_packets = self.calculate_total_packets()
+        self.total_packets = 0
         self.protocols = {}
         shutil.copy(self.pcap_file, self.path)  # Copy user input into our directory
 

@@ -14,49 +14,52 @@ class Workspace_UI(QtWidgets.QMainWindow):
     def __init__(self, workspace_name: str, workspace_object: Workspace):
         # Workspace Constructor
         super(Workspace_UI, self).__init__()
-        self.workspace_object = workspace_object
+        try:
+            self.workspace_object = workspace_object
 
-        self.setFixedSize(917, 548)
-        self.setWindowTitle(workspace_name)
+            self.setFixedSize(917, 548)
+            self.setWindowTitle(workspace_name)
 
-        self.project_tree = QtWidgets.QTreeWidget()
-        self.project_tree.setGeometry(QtCore.QRect(0, 62, 221, 451))
-        self.project_tree.setHeaderLabels(["Project(s) Name", "Size", "DoC"])
-        self.project_tree.installEventFilter(self)
+            self.project_tree = QtWidgets.QTreeWidget()
+            self.project_tree.setGeometry(QtCore.QRect(0, 62, 221, 451))
+            self.project_tree.setHeaderLabels(["Project(s) Name", "Size", "DoC"])
+            self.project_tree.installEventFilter(self)
 
-        self.add_project_button = QtWidgets.QPushButton("Add a Project", clicked=lambda: self.add_project())
-        self.add_project_button.setGeometry(QtCore.QRect(0, 22, 221, 41))
+            self.add_project_button = QtWidgets.QPushButton("Add a Project", clicked=lambda: self.add_project())
+            self.add_project_button.setGeometry(QtCore.QRect(0, 22, 221, 41))
 
-        self.add_pcap_button = QtWidgets.QPushButton("Add Pcap", clicked=lambda: self.add_pcap())
-        self.add_pcap_button.setGeometry(QtCore.QRect(370, 22, 111, 31))
+            self.add_pcap_button = QtWidgets.QPushButton("Add Pcap", clicked=lambda: self.add_pcap())
+            self.add_pcap_button.setGeometry(QtCore.QRect(370, 22, 111, 31))
 
-        self.add_dataset_button = QtWidgets.QPushButton("Add Dataset", clicked=lambda: self.add_dataset())
-        self.add_dataset_button.setGeometry(QtCore.QRect(240, 22, 111, 31))
+            self.add_dataset_button = QtWidgets.QPushButton("Add Dataset", clicked=lambda: self.add_dataset())
+            self.add_dataset_button.setGeometry(QtCore.QRect(240, 22, 111, 31))
 
-        self.open_in_wireshark_button = QtWidgets.QPushButton("Export to Wireshark")
-        self.open_in_wireshark_button.setGeometry(QtCore.QRect(500, 22, 111, 31))
+            self.open_in_wireshark_button = QtWidgets.QPushButton("Export to Wireshark")
+            self.open_in_wireshark_button.setGeometry(QtCore.QRect(500, 22, 111, 31))
 
-        save_action = QAction("Save", self)
-        save_action.triggered.connect(lambda: self.save())
+            save_action = QAction("Save", self)
+            save_action.triggered.connect(lambda: self.save())
 
-        open_new_workspace_action = QAction("Open new Workspace", self)
-        open_new_workspace_action.triggered.connect(lambda: self.open_new_workspace())
+            open_new_workspace_action = QAction("Open new Workspace", self)
+            open_new_workspace_action.triggered.connect(lambda: self.open_new_workspace())
 
-        open_existing_workspace_action = QAction("Open Existing Workspace", self)
-        open_existing_workspace_action.triggered.connect(lambda: print("Open Existing Workspace"))
+            open_existing_workspace_action = QAction("Open Existing Workspace", self)
+            open_existing_workspace_action.triggered.connect(lambda: print("Open Existing Workspace"))
 
-        menu = self.menuBar()
-        menu_file = menu.addMenu("File")
-        menu_file.addAction(save_action)
-        menu_file.addAction(open_new_workspace_action)
-        menu_file.addAction(open_existing_workspace_action)
+            menu = self.menuBar()
+            menu_file = menu.addMenu("File")
+            menu_file.addAction(save_action)
+            menu_file.addAction(open_new_workspace_action)
+            menu_file.addAction(open_existing_workspace_action)
 
-        self.setLayout(QtWidgets.QVBoxLayout())
-        self.layout().addWidget(self.add_project_button)
-        self.layout().addWidget(self.project_tree)
-        self.layout().addWidget(self.add_dataset_button)
-        self.layout().addWidget(self.add_pcap_button)
-        self.layout().addWidget(self.open_in_wireshark_button)
+            self.setLayout(QtWidgets.QVBoxLayout())
+            self.layout().addWidget(self.add_project_button)
+            self.layout().addWidget(self.project_tree)
+            self.layout().addWidget(self.add_dataset_button)
+            self.layout().addWidget(self.add_pcap_button)
+            self.layout().addWidget(self.open_in_wireshark_button)
+        except:
+            traceback.print_exc()
 
         self.show()
 
@@ -79,7 +82,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
             self.workspace_object.close()
             event.accept()
         else:
-            self.workspace_object.close()
+            self.workspace_object.__del__()
             event.accept()
 
     def add_project(self):
@@ -118,7 +121,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
 
                     for p in self.workspace_object.project:
                         if p.name == project.text(0):
-                            dataset = Dataset(name=text, path=p.path)
+                            dataset = Dataset(name=text, parentPath=p.path)
                             p.add_dataset(dataset)
                             child_item = QtWidgets.QTreeWidgetItem()
                             child_item.setText(0, text)
