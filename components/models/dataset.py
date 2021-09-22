@@ -11,8 +11,8 @@ class Dataset:
         # self.timeSpan = None #  Need further understanding of which time span is being referred to her
         self.create_folder()
 
-    def add_pcap(self, new: Pcap, file) -> list:
-        self.pcaps.append(Pcap(file, self))
+    def add_pcap(self, new: Pcap) -> list:
+        self.pcaps.append(new)
         return self.pcaps
 
     def delete_pcap(self, old: Pcap) -> list:
