@@ -76,6 +76,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
 
         if reply == QMessageBox.Yes:
             self.workspace_object.save()
+            self.workspace_object.close()
             event.accept()
         else:
             self.workspace_object.close()
@@ -109,11 +110,10 @@ class Workspace_UI(QtWidgets.QMainWindow):
         try:
             if self.project_tree.selectedItems() and self.project_tree.selectedItems()[0].parent() == None:
                 text = QInputDialog.getText(self, "Dataset Name Entry", "Enter Dataset name:")[0]
-                if not self.project_tree.findItems(text, QtCore.Qt.MatchRecursive, 0):
-                   # pcap_path, pcap_name = self.collect_path_and_name(self.get_pcap_path())
-                    #print(pcap_name)
-                    #if pcap_path == "":
-                        #return False
+                if not self.project_tree.findItems(text, QtCore.Qt.MatchRecursive, 0) and text != "":
+                    pcap_path, pcap_name, file = self.get_pcap_path()
+                    if pcap_path == None:
+                        return False
                     project = self.project_tree.selectedItems()[0]
 
                     for p in self.workspace_object.project:
@@ -124,15 +124,16 @@ class Workspace_UI(QtWidgets.QMainWindow):
                             child_item.setText(0, text)
                             project.addChild(child_item)
 
-                            #new_pcap = Pcap(file= pcap_path)
-                            #pcap_item = QtWidgets.QTreeWidgetItem()
-                            #pcap_item.setText(0, )
-                            #child_item.addChild()
+                            new_pcap = Pcap(file= file, path= dataset.path, name= pcap_name)
+                            pcap_item = QtWidgets.QTreeWidgetItem()
+                            pcap_item.setText(0, pcap_name)
+                            child_item.addChild(pcap_item)
                             return True
                 else:
-                    print("Item named " + text + " already exists")
+                    return False
         except:
             print(traceback.print_exc())
+            return False
 
     def add_pcap(self):
         if self.project_tree.selectedItems() and self.project_tree.selectedItems()[0].parent().parent() == None:
@@ -143,8 +144,12 @@ class Workspace_UI(QtWidgets.QMainWindow):
     def get_pcap_path(self):
         file_filter = "Wireshark capture file (*.pcap)"
         initial_filter = "Wireshark capture file (*.pcap)"
-        path = QFileDialog.getOpenFileName(caption="Add a Pcap file to this Dataset", filter= file_filter, initialFilter= initial_filter)[0]
-        return path
+        full_path = QFileDialog.getOpenFileName(caption="Add a Pcap file to this Dataset", filter= file_filter, initialFilter= initial_filter)[0]
+        if full_path != "":
+            path, name = self.collect_path_and_name(full_path)
+            return path, name, full_path
+        else:
+            return None, None, full_path
 
     def save(self):
         try:

@@ -6,9 +6,10 @@ import pyshark
 
 class Pcap:
 
-    def __init__(self, file) -> None:
-        self.path = os.path.join(os.getcwd())  # Save location for PCAP File
-        self.pcap_file = file  # pcap file path location
+    def __init__(self, name: str ,path: str, file: str) -> None:
+        self.name = name
+        self.path = os.path.join(path, self.name)  # Save location for PCAP File
+        self.pcap_file = file  # pcap recieved from user
         self.pcap_data = self.set_packet_data()  # packet capture object (packets within pcap file)
         self.total_packets = self.calculate_total_packets()
         self.protocols = {}
