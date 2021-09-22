@@ -1,15 +1,14 @@
-
+from components.models.dataset import Dataset
 from datetime import datetime
 import os, shutil
 
-from components.models.dataset import Dataset
 
 class Project:
-    def __init__(self, name:str, c_time=datetime.now().timestamp(), datasets=[], size=0) -> None:
+    def __init__(self, name:str, c_time=datetime.now().timestamp()) -> None:
         self.name = name
         self.c_time = c_time     # creation time
-        self.size = size         # size in bytes
-        self.dataset = datasets
+        self.size = 0            # size in bytes
+        self.dataset = []
         self.path = os.path.join(os.getcwd(), self.name)
         self.create_folder()
 
@@ -19,7 +18,7 @@ class Project:
         return self.dataset
 
     def del_datset(self, old:Dataset) -> list:
-        old.remove()
+        del remove()
         self.dataset.remove(old)
         self.size = os.path.getsize(self.path)
         return self.dataset
@@ -29,15 +28,21 @@ class Project:
             os.mkdir(self.path)
         self.size = os.path.getsize(self.path)
         return self.path
-    
-    def remove(self) -> bool:
+
+    def save(self, f) -> None:
+        f.write('{"name": "%s", "c_time": %s, "dataset": [' % (self.name, self.c_time))
+        for d in self.dataset:
+            d.save(f)
+            if d != self.dataset[-1]:
+                f.write(',')
+        f.write(']}')
+
+    def __del__(self) -> bool:
         try:
             path = os.path.join(os.getcwd(), self.name)
             shutil.rmtree(path)
+            for d in dataset:
+                del d
             return True
         except:
             return False
-    
-    def save(self, f) -> None:
-        f.write('{"name": "%s", "c_time": %s, "dataset": [' % (self.name, self.c_time))
-        f.write(']}')
