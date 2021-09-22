@@ -1,5 +1,6 @@
-from workspace import Workspace
-from project import Project
+from components.models.workspace import Workspace
+from components.models.project import Project
+from components.models.dataset import Dataset
 import json, datetime, os, shutil
 
 class Load:
@@ -29,6 +30,8 @@ class Load:
             head, tail = os.path.split(path)
             tail = "." + tail
             working_dir = os.path.join(head, tail)
+            if os.path.isdir(working_dir):
+                shutil.rmtree(working_dir)
             shutil.copytree(path, working_dir)
             return self.load_workspace(working_dir)
         except Exception:
@@ -51,11 +54,24 @@ class Load:
             print("Specified ZIP or directory does not contain a save file.")
             shutil.rmtree(path)
             return None
-        except Exception:
-            print("Unable to read save file. File may be corrupted.")
-            shutil.rmtree(path)
-            return None
+        #except Exception:
+            #print("Unable to read save file. File may be corrupted.")
+            #shutil.rmtree(path)
+            #return None
 
     def load_project(self, workspace:Workspace, projects:list) -> list:
-        for p in projects:
-            workspace.add_project(Project(p['name'],p['c_time'],p['dataset']))
+        try:
+            for p in projects:
+                proj = Project(p['name'], p['c_time'])
+                self.load_dataset(proj, p['dataset'])
+                print(p['dataset'])
+                workspace.add_project(proj)
+        except:
+            print("Error loading projects")
+    
+    def load_dataset(self, project:Project, datasets:list) -> list:
+        for d in datasets:
+            print(project.name, project.dataset)
+            data = Dataset(d['name'], project.path)
+            #self.load_pcap()
+            project.add_dataset(data)
