@@ -20,16 +20,22 @@ stages:          # List of stages for jobs, and their order of execution
   - test
   - deploy
 
-before_script:
-  - python -V  # Print out python version for debugging
-  - pip install virtualenv
-  - virtualenv venv
-  - source venv/bin/activate
-  - echo "Installing Dependencies..."
-  - pip3 install -r dev_requirements.txt
-  - echo "Dependencies Installed."
-  - apt-get -yq update
-  - apt-get -yq install python3-pip
+build-job:       # This job runs in the build stage, which runs first.
+  stage: build
+  before_script:
+    - python -V  # Print out python version for debugging
+    - pip install virtualenv
+    - virtualenv venv
+    - source venv/bin/activate
+    - echo "Installing Dependencies..."
+    - pip3 install -r dev_requirements.txt
+    - echo "Dependencies Installed."
+    - apt-get -yq update
+    - apt-get -yq install python3-pip
+  script: 
+    - echo "Installing Dependencies..."
+    - python3 setup.py sdist bdist_wheel
+    - echo "Dependencies Installed."
 
 unit-test-job:   # This job runs in the test stage.
   stage: test    # It only starts when the job in the build stage completes successfully.
@@ -41,13 +47,6 @@ unit-test-job:   # This job runs in the test stage.
     when: always
     reports:
       junit: report.xml
-
-build-job:       # This job runs in the build stage, which runs first.
-  stage: build
-  script: 
-    - echo "Installing Dependencies..."
-    - python3 setup.py sdist bdist_wheel
-    - echo "Dependencies Installed."
 
 deploy_production:
   stage: deploy
