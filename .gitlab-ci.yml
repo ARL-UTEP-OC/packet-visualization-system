@@ -24,14 +24,14 @@ build-job:       # This job runs in the build stage, which runs first.
   stage: build
   before_script:
     - python -V  # Print out python version for debugging
+    - apt-get -yq update
+    - apt-get -yq install python3-pip
     - pip install virtualenv
     - virtualenv venv
     - source venv/bin/activate
     - echo "Installing Dependencies..."
     - pip3 install -r dev_requirements.txt
     - echo "Dependencies Installed."
-    - apt-get -yq update
-    - apt-get -yq install python3-pip
   script: 
     - echo "Installing Dependencies..."
     - python3 setup.py sdist bdist_wheel
