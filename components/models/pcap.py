@@ -5,17 +5,20 @@ import pyshark
 class Pcap:
 
     def __init__(self, name: str ,path: str, file: str) -> None:
-        self.name = name
-        self.path = os.path.join(path, self.name)  # Save location for PCAP File
-        self.pcap_file = file  # pcap recieved from user
-        self.pcap_data = None  # packet capture object (packets within pcap file)
-        self.total_packets = 0
-        self.protocols = {}
+        try:
+            self.name = name
+            self.path = os.path.join(path, self.name)  # Save location for PCAP File
+            self.pcap_file = file  # pcap recieved from user
+            self.pcap_data = None  # packet capture object (packets within pcap file)
+            self.total_packets = 0
+            self.protocols = {}
 
-        self.set_packet_data()
-        self.calculate_total_packets()
-        shutil.copy(self.pcap_file, self.path)  # Copy user input into our directory
-
+            self.set_packet_data()
+            self.calculate_total_packets()
+            shutil.copy(self.pcap_file, self.path)  # Copy user input into our directory
+        except:
+            print("Error adding this pcap")
+            self.name = None
 
     def set_packet_data(self):
         self.pcap_data = pyshark.FileCapture(self.pcap_file)

@@ -9,6 +9,7 @@ from components.models.dataset import Dataset
 from components.models.pcap import Pcap
 from components.models.project import Project
 from components.models.workspace import Workspace
+from components.backend_components import Wireshark
 
 class Workspace_UI(QtWidgets.QMainWindow):
     def __init__(self, workspace_name: str, workspace_object: Workspace):
@@ -34,7 +35,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
             self.add_dataset_button = QtWidgets.QPushButton("Add Dataset", clicked=lambda: self.add_dataset())
             self.add_dataset_button.setGeometry(QtCore.QRect(240, 22, 111, 31))
 
-            self.open_in_wireshark_button = QtWidgets.QPushButton("Export to Wireshark")
+            self.open_in_wireshark_button = QtWidgets.QPushButton("Export to Wireshark", clicked=lambda : self.open_in_wireshark())
             self.open_in_wireshark_button.setGeometry(QtCore.QRect(500, 22, 111, 31))
 
             save_action = QAction("Save", self)
@@ -134,10 +135,14 @@ class Workspace_UI(QtWidgets.QMainWindow):
                             project.addChild(child_item)
 
                             new_pcap = Pcap(file= file, path= dataset.path, name= pcap_name)
-                            dataset.add_pcap(new=new_pcap)
-                            pcap_item = QtWidgets.QTreeWidgetItem()
-                            pcap_item.setText(0, pcap_name)
-                            child_item.addChild(pcap_item)
+                            if new_pcap.name != None:
+                                dataset.add_pcap(new=new_pcap)
+                                pcap_item = QtWidgets.QTreeWidgetItem()
+                                pcap_item.setText(0, pcap_name)
+                                child_item.addChild(pcap_item)
+                            else:
+                                child_item.parent().removeChild(child_item)
+                                p.del_dataset(dataset)
                             return True
                 else:
                     return False
@@ -173,16 +178,19 @@ class Workspace_UI(QtWidgets.QMainWindow):
                     for d in p.dataset:
                         if d.name == dataset_item.text(0):
                             new_pcap = Pcap(file=file, path=d.path, name=pcap_name)
-                            d.add_pcap(new_pcap)
-                            pcap_item = QtWidgets.QTreeWidgetItem()
-                            pcap_item.setText(0, pcap_name)
-                            dataset_item.addChild(pcap_item)
+                            if new_pcap.name != None:
+                                d.add_pcap(new_pcap)
+                                pcap_item = QtWidgets.QTreeWidgetItem()
+                                pcap_item.setText(0, pcap_name)
+                                dataset_item.addChild(pcap_item)
 
                 return True
             else:
                 return False
         except:
             traceback.print_exc()
+            print("Error loading this pcap")
+            return False
 
     def remove_pcap(self):
         try:
@@ -197,10 +205,30 @@ class Workspace_UI(QtWidgets.QMainWindow):
                     for d in p.dataset:
                         print(d.name)
                         for cap in d.pcaps:
-                            d.de
+                            d.del_
                 return
         except:
             traceback.print_exc()
+
+    def open_in_wireshark(self):
+        try:
+            if self.project_tree.selectedItems() and self.project_tree.selectedItems()[0].child(0) == None \
+                    and self.check_if_item_is(self.project_tree.selectedItems()[0], "Dataset") == False \
+                    and self.check_if_item_is(self.project_tree.selectedItems()[0], "Project") == False:
+
+                pcap_item = self.project_tree.selectedItems()[0]
+                for p in self.workspace_object.project:
+                    print(p.name)
+                    for d in p.dataset:
+                        print(d.name)
+                        for cap in d.pcaps:
+                            print(cap.name)
+                            if pcap_item.text(0) == cap.name:
+                                Wireshark.openwireshark(cap.pcap_file)
+
+        except:
+            traceback.print_exc()
+            return False
 
     def get_pcap_path(self):
         file_filter = "Wireshark capture file (*.pcap)"
