@@ -46,7 +46,7 @@ unit-test-job: # This job runs in the test stage.
     - virtualenv venv
     - source venv/bin/activate
     - echo "Installing Dependencies..."
-    - pip3 install -r dev_requirements.txt
+    - pip3 install pytest
     - echo "Dependencies Installed."
   script:
     - echo "Running unit tests... "
