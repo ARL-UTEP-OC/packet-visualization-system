@@ -27,7 +27,7 @@ build-job:       # This job runs in the build stage, which runs first.
     - apt-get -yq update
     - apt-get -yq install python-pip
     - python -V  # Print out python version for debugging
-    - pip install virtualenv
+    - pip3 install virtualenv
     - virtualenv venv
     - source venv/bin/activate
     - echo "Installing Dependencies..."
