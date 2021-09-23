@@ -25,7 +25,7 @@ build-job:       # This job runs in the build stage, which runs first.
   image: python:3.6
   before_script:
     - apt-get -yq update
-    - apt-get -yq install python-pip3
+    - apt-get -y install python3-pip
     - python -V  # Print out python version for debugging
     - pip3 install virtualenv
     - virtualenv venv
