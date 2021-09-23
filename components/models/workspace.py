@@ -1,7 +1,6 @@
 from components.models.project import Project
 import os, shutil
 
-
 class Workspace:
     def __init__(self, name:str, location:str) -> None:
         self.name = name
