@@ -4,3 +4,5 @@ packet_visualization.egg-info
 .idea
 .vscode
 .pytest_cache
+build
+dist
