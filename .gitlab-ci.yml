@@ -23,7 +23,8 @@ stages:          # List of stages for jobs, and their order of execution
 build-job:       # This job runs in the build stage, which runs first.
   stage: build
   image: python:3.6
-  before_script:
+  script: 
+    - echo "Installing Dependencies..."
     - apt-get -yq update
     - apt-get -y install python3-pip
     - python -V  # Print out python version for debugging
@@ -33,13 +34,20 @@ build-job:       # This job runs in the build stage, which runs first.
     - echo "Installing Dependencies..."
     - pip3 install -r dev_requirements.txt
     - echo "Dependencies Installed."
-  script: 
-    - echo "Installing Dependencies..."
-    - python3 setup.py sdist bdist_wheel
-    - echo "Dependencies Installed."
 
 unit-test-job:   # This job runs in the test stage.
   stage: test    # It only starts when the job in the build stage completes successfully.
+  before_script:
+    - echo "Installing Dependencies..."
+    - apt-get -yq update
+    - apt-get -y install python3-pip
+    - python -V  # Print out python version for debugging
+    - pip3 install virtualenv
+    - virtualenv venv
+    - source venv/bin/activate
+    - echo "Installing Dependencies..."
+    - pip3 install -r dev_requirements.txt
+    - echo "Dependencies Installed."
   script:
     - echo "Running unit tests... "
     - python3 -m pytest --junitxml=report.xml
@@ -55,6 +63,7 @@ deploy_production:
     TWINE_USERNAME: $PRODUCTION_USERNAME
     TWINE_PASSWORD: $PRODUCTION_PASSWORD
   script:
+    - python3 setup.py sdist bdist_wheel
     - twine upload dist/*
   only:
     - tags
