@@ -63,7 +63,9 @@ deploy_production:
     TWINE_USERNAME: $PRODUCTION_USERNAME
     TWINE_PASSWORD: $PRODUCTION_PASSWORD
   script:
+    - echo "Deploying app ... "
     - python3 setup.py sdist bdist_wheel
     - twine upload dist/*
+    - echo "App deployed... "
   only:
     - tags

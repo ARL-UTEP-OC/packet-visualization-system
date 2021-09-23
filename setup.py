@@ -6,7 +6,7 @@ setuptools.setup(
     author="team-1",
     author_email="hbarrazalo@miners.utep.edu",
     description="packet visualization",
-    url="https://github.com/pypa/sampleproject",
+    url="https://gitlab.com/utep/packet-visualize",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
