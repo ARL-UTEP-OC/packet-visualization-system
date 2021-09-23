@@ -43,8 +43,7 @@ class Dataset:
 
     def __del__(self) -> bool:
         try:
-            path = os.path.join(os.getcwd(), self.name)  # remove folder
-            shutil.rmtree(path)
+            shutil.rmtree(self.path)
             for p in self.pcaps:
                 del p
             return True

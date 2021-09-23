@@ -153,7 +153,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
                     for d in p.dataset:
                         if d.name == dataset_item.text(0):
                             print("Found", d.name)
-                            p.del_datset(old=d)
+                            p.del_dataset(old=d)
                             dataset_item.parent().removeChild(dataset_item)
                 return True
         except:
