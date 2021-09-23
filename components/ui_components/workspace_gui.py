@@ -152,6 +152,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
                 for p in self.workspace_object.project:
                     for d in p.dataset:
                         if d.name == dataset_item.text(0):
+                            print("Found", d.name)
                             p.del_datset(old=d)
                             dataset_item.parent().removeChild(dataset_item)
                 return True
@@ -172,6 +173,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
                     for d in p.dataset:
                         if d.name == dataset_item.text(0):
                             new_pcap = Pcap(file=file, path=d.path, name=pcap_name)
+                            d.add_pcap(new_pcap)
                             pcap_item = QtWidgets.QTreeWidgetItem()
                             pcap_item.setText(0, pcap_name)
                             dataset_item.addChild(pcap_item)
@@ -195,8 +197,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
                     for d in p.dataset:
                         print(d.name)
                         for cap in d.pcaps:
-                            print(cap.name)
-                            print("Found", cap.name)
+                            d.de
                 return
         except:
             traceback.print_exc()
