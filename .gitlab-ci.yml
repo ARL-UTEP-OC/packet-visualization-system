@@ -64,6 +64,7 @@ deploy_production:
     TWINE_PASSWORD: $PRODUCTION_PASSWORD
   script:
     - echo "Deploying app ... "
+    - apt-get install python3-setuptools
     - python3 setup.py sdist bdist_wheel
     - twine upload dist/*
     - echo "App deployed... "
