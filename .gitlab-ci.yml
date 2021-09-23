@@ -15,19 +15,19 @@
 variables:
   TEST_VAR: "All jobs can use this variable's value"
 
-stages:          # List of stages for jobs, and their order of execution
+stages: # List of stages for jobs, and their order of execution
   - build
   - test
   - deploy
 
-build-job:       # This job runs in the build stage, which runs first.
+build-job: # This job runs in the build stage, which runs first.
   stage: build
   image: python:3.6
-  script: 
+  script:
     - echo "Installing Dependencies..."
     - apt-get -yq update
     - apt-get -y install python3-pip
-    - python -V  # Print out python version for debugging
+    - python -V # Print out python version for debugging
     - pip3 install virtualenv
     - virtualenv venv
     - source venv/bin/activate
@@ -35,13 +35,13 @@ build-job:       # This job runs in the build stage, which runs first.
     - pip3 install -r dev_requirements.txt
     - echo "Dependencies Installed."
 
-unit-test-job:   # This job runs in the test stage.
-  stage: test    # It only starts when the job in the build stage completes successfully.
+unit-test-job: # This job runs in the test stage.
+  stage: test # It only starts when the job in the build stage completes successfully.
   before_script:
     - echo "Installing Dependencies..."
     - apt-get -yq update
     - apt-get -y install python3-pip
-    - python -V  # Print out python version for debugging
+    - python -V # Print out python version for debugging
     - pip3 install virtualenv
     - virtualenv venv
     - source venv/bin/activate
