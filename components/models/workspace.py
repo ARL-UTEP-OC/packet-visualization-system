@@ -45,6 +45,8 @@ class Workspace:
                     if p != self.project[-1]:
                         f.write(',')
                 f.write(']}')
+            if os.path.isfile("save.json"):
+                os.remove("save.json")
             os.rename(save_file, "save.json")
             # Zip everything in the working directory
             shutil.make_archive(dst,'zip', src)
