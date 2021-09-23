@@ -22,10 +22,11 @@ stages:          # List of stages for jobs, and their order of execution
 
 build-job:       # This job runs in the build stage, which runs first.
   stage: build
+  image: python:3.6
   before_script:
-    - python -V  # Print out python version for debugging
     - apt-get -yq update
-    - apt-get -yq install python3-pip
+    - apt-get -yq install python-pip
+    - python -V  # Print out python version for debugging
     - pip install virtualenv
     - virtualenv venv
     - source venv/bin/activate
