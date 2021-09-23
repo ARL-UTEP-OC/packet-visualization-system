@@ -1,40 +1,35 @@
 from components.models.project import Project
 import os, shutil
 
+
 class Workspace:
-    def __init__(self, name:str, location:str, project=[]) -> None:
+    def __init__(self, name:str, location:str) -> None:
         self.name = name
-        self.location = location
-        self.project = project
+        if location == '':
+            self.location = os.getcwd()
+        else:
+            self.location = location
+        self.project = []
         self.cwd = os.getcwd()
-        self.work_dir()
+        self.path = self.work_dir()
 
     def add_project(self, new:Project) -> list:
         self.project.append(new)
         return self.project
 
     def del_project(self, old:Project) -> list:
-        old.remove()
         self.project.remove(old)
+        old.remove()
         return self.project
 
     def work_dir(self) -> str:
         tail = "." + self.name # we want to work inside a temp, hidden folder
         path = os.path.join(self.location, tail)
-        if not os.path.isdir(path):
-            os.mkdir(path)
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        os.mkdir(path)
         os.chdir(path)
         return path
-
-    def close(self) -> bool:
-        try:
-            tail = "." + self.name
-            path = os.path.join(self.location, tail)
-            os.chdir(self.cwd)
-            shutil.rmtree(path)
-            return True
-        except:
-            return False
 
     def save(self) -> bool:
         try:
@@ -50,6 +45,8 @@ class Workspace:
                     if p != self.project[-1]:
                         f.write(',')
                 f.write(']}')
+            if os.path.isfile("save.json"):
+                os.remove("save.json")
             os.rename(save_file, "save.json")
             # Zip everything in the working directory
             shutil.make_archive(dst,'zip', src)
@@ -57,3 +54,14 @@ class Workspace:
         except:
             return False
 
+    def __del__(self) -> bool:
+        try:
+            tail = "." + self.name
+            path = os.path.join(self.location, tail)
+            os.chdir(self.cwd)
+            shutil.rmtree(path)
+            for p in self.project:
+                p.remove()
+            return True
+        except:
+            return False
