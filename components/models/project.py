@@ -38,10 +38,12 @@ class Project:
                 f.write(',')
         f.write(']}')
 
+    def remove(self) -> bool:
+        return self.__del__()
+
     def __del__(self) -> bool:
         try:
-            path = os.path.join(os.getcwd(), self.name)
-            shutil.rmtree(path)
+            shutil.rmtree(self.path)
             for d in self.dataset:
                 del d
             return True

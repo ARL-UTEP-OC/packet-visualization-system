@@ -19,7 +19,7 @@ class Workspace:
 
     def del_project(self, old:Project) -> list:
         self.project.remove(old)
-        del old
+        old.remove()
         return self.project
 
     def work_dir(self) -> str:
@@ -59,7 +59,7 @@ class Workspace:
             os.chdir(self.cwd)
             shutil.rmtree(path)
             for p in self.project:
-                del p
+                p.remove()
             return True
         except:
             return False
