@@ -18,10 +18,10 @@ class Project:
         self.size = os.path.getsize(self.path)
         return self.dataset
 
-    def del_datset(self, old:Dataset) -> list:
+    def del_dataset(self, old:Dataset) -> list:
         self.dataset.remove(old)
         self.size = os.path.getsize(self.path)
-        del old
+        old.remove()
         return self.dataset
 
     def create_folder(self) -> str:
@@ -45,7 +45,7 @@ class Project:
         try:
             shutil.rmtree(self.path)
             for d in self.dataset:
-                del d
+                d.remove()
             return True
         except:
             return False
