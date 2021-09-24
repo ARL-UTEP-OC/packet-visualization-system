@@ -50,13 +50,14 @@ class Workspace:
                     if p != self.project[-1]:
                         f.write(',')
                 f.write(']}')
+            f.close()
             if os.path.isfile("save.json"):
                 os.remove("save.json")
             os.rename(save_file, "save.json")
             # Zip everything in the working directory
             shutil.make_archive(dst,'zip', src)
             return True
-        except:
+        except Exception:
             return False
 
     def __del__(self) -> bool:
@@ -68,5 +69,5 @@ class Workspace:
             for p in self.project:
                 p.remove()
             return True
-        except:
+        except Exception:
             return False

@@ -51,5 +51,5 @@ class Project:
             for d in self.dataset:
                 d.remove()
             return True
-        except:
+        except Exception:
             return False
