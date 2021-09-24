@@ -1,8 +1,6 @@
-
 from components.models.dataset import Dataset
 from datetime import datetime
 import os, shutil
-
 
 class Project:
     def __init__(self, name:str, c_time=datetime.now().timestamp()) -> None:
@@ -23,6 +21,12 @@ class Project:
         self.size = os.path.getsize(self.path)
         old.remove()
         return self.dataset
+
+    def find_dataset(self, name:str) -> Dataset:
+        for d in dataset:
+            if d.name == name:
+                return d
+        return None
 
     def create_folder(self) -> str:
         if not os.path.isdir(self.path):

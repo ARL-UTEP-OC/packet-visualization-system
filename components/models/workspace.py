@@ -1,7 +1,6 @@
 from components.models.project import Project
 import os, shutil
 
-
 class Workspace:
     def __init__(self, name:str, location:str) -> None:
         self.name = name
@@ -21,6 +20,12 @@ class Workspace:
         self.project.remove(old)
         old.remove()
         return self.project
+
+    def find_project(self, name:str) -> Project:
+        for p in self.project:
+            if p.name == name:
+                return p
+        return None
 
     def work_dir(self) -> str:
         tail = "." + self.name # we want to work inside a temp, hidden folder
