@@ -23,7 +23,7 @@ class Project:
         return self.dataset
 
     def find_dataset(self, name:str) -> Dataset:
-        for d in dataset:
+        for d in self.dataset:
             if d.name == name:
                 return d
         return None

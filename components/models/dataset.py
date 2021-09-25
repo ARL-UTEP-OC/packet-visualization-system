@@ -45,7 +45,7 @@ class Dataset:
         try:
             shutil.rmtree(self.path)
             for p in self.pcaps:
-                del p
+                p.remove()
             return True
         except:
             return False
