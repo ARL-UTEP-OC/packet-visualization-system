@@ -50,6 +50,7 @@ class Project:
             shutil.rmtree(self.path)
             for d in self.dataset:
                 d.remove()
+            self.dataset = [] # unlink all datasets
             return True
         except Exception:
             return False

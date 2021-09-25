@@ -68,6 +68,7 @@ class Workspace:
             shutil.rmtree(path)
             for p in self.project:
                 p.remove()
+            self.project = [] # unlink all projects
             return True
         except Exception:
             return False

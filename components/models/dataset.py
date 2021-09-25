@@ -46,6 +46,7 @@ class Dataset:
             shutil.rmtree(self.path)
             for p in self.pcaps:
                 p.remove()
+            self.pcaps = [] # unlink all pcaps
             return True
         except:
             return False

@@ -43,7 +43,7 @@ def test_add_dataset():
     assert p1.dataset == [d1, d2]
     assert p2.dataset == [] # make sure projects are not pointing to the same dataset array
 
-def test_find_project():
+def test_find_dataset():
     global w, p1, p2, d1, d2
     # funciton should return the dataset opject if the names match
     assert p1.find_dataset("testDataset1") == d1
@@ -51,8 +51,8 @@ def test_find_project():
     assert p1.find_dataset("testDataset3") == None
     assert p2.find_dataset("testDataset1") == None
 
-def test_del_project():
-    global w, p1, d1, d2
+def test_del_dataset():
+    global w, p1, p2, d1, d2
     assert [d1] == p1.del_dataset(d2)
     assert p1.dataset == [d1]
     assert not os.path.isdir(os.path.join(cwd, ".testWorkspace3", "testProject3", "testDataset2"))
