@@ -180,8 +180,8 @@ def test_add_pcap(workspace_object):
     app = QtWidgets.QApplication(sys.argv)
     test_workspace = Workspace_UI(workspace_name="Test Worskpace", workspace_object=workspace_object, test_mode=True, existing_flag=True)
 
-    pcap1 = Pcap("sample2.pcap", "C:\\Users\\eyanm\\PracticumGUI\\TestSpace\\.Test Workspace\\P1\\D1",
-                 "C:\\Users\\eyanm\\PracticumGUI\\sample2.pcap")
+    pcap1 = Pcap("sample3.pcap", "C:\\Users\\eyanm\\PracticumGUI\\TestSpace\\.Test Workspace\\P1\\D1",
+                 "C:\\Users\\eyanm\\PracticumGUI\\sample3.pcap")
 
     item = QtWidgets.QTreeWidgetItem()
     item.setText(0, "D1")
