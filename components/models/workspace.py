@@ -18,8 +18,14 @@ class Workspace:
 
     def del_project(self, old:Project) -> list:
         self.project.remove(old)
-        del old
+        old.remove()
         return self.project
+
+    def find_project(self, name:str) -> Project:
+        for p in self.project:
+            if p.name == name:
+                return p
+        return None
 
     def work_dir(self) -> str:
         tail = "." + self.name # we want to work inside a temp, hidden folder
@@ -44,11 +50,14 @@ class Workspace:
                     if p != self.project[-1]:
                         f.write(',')
                 f.write(']}')
+            f.close()
+            if os.path.isfile("save.json"):
+                os.remove("save.json")
             os.rename(save_file, "save.json")
             # Zip everything in the working directory
             shutil.make_archive(dst,'zip', src)
             return True
-        except:
+        except Exception:
             return False
 
     def __del__(self) -> bool:
@@ -58,7 +67,7 @@ class Workspace:
             os.chdir(self.cwd)
             shutil.rmtree(path)
             for p in self.project:
-                del p
+                p.remove()
             return True
-        except:
+        except Exception:
             return False

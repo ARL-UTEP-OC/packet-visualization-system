@@ -32,7 +32,8 @@ build-job: # This job runs in the build stage, which runs first.
     - virtualenv venv
     - source venv/bin/activate
     - echo "Installing Dependencies..."
-    - pip3 install -r dev_requirements.txt
+    - pip3 install build
+    - python -m build
     - echo "Dependencies Installed."
 
 unit-test-job: # This job runs in the test stage.
