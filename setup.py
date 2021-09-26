@@ -12,7 +12,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    packages=["components"],
+    packages=setuptools.find_packages(),
     install_requires=[],
     include_package_data=True,
     python_requires=">=3.6",
