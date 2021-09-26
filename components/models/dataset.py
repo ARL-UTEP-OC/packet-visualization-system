@@ -12,12 +12,9 @@ class Dataset:
         self.create_folder()
 
     def add_pcap(self, new: Pcap) -> list:
+        print("Adding new PCAP")
         self.pcaps.append(new)
-        return self.pcaps
-
-    def delete_pcap(self, old: Pcap) -> list:
-        # old.remove()
-        self.pcaps.remove(old)
+        self.calculate_total_packets()
         return self.pcaps
 
     def add_pcap_dir(self, location: str) -> list:  # when we receive directory w/PCAPs as user input
@@ -34,14 +31,21 @@ class Dataset:
         f.write('{"name": "%s", "totalPackets": %s, "pcaps": [' % (self.name, self.totalPackets))
         f.write(']}')
 
-    #TODO:
     def calculate_total_packets(self):
-        print("traverse list of packets get packet amount from each in list")
+        for pcap in self.pcaps:
+            self.totalPackets += pcap.total_packets
+
+        print(self.totalPackets)
+        return self.totalPackets
+
+    def remove(self) -> bool:
+        return self.__del__()
 
     def __del__(self) -> bool:
         try:
-            path = os.path.join(os.getcwd(), self.name)  # remove folder
-            shutil.rmtree(path)
+            shutil.rmtree(self.path)
+            for p in self.pcaps:
+                del p
             return True
         except:
             return False
