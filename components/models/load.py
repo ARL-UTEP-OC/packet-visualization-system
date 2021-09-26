@@ -64,14 +64,12 @@ class Load:
             for p in projects:
                 proj = Project(p['name'], p['c_time'])
                 self.load_dataset(proj, p['dataset'])
-                print(p['dataset'])
                 workspace.add_project(proj)
         except:
             print("Error loading projects")
     
     def load_dataset(self, project:Project, datasets:list) -> list:
         for d in datasets:
-            print(project.name, project.dataset)
             data = Dataset(d['name'], project.path)
             #self.load_pcap()
             project.add_dataset(data)
