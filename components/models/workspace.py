@@ -2,7 +2,7 @@ from components.models.project import Project
 import os, shutil
 
 class Workspace:
-    def __init__(self, name:str, location:str) -> None:
+    def __init__(self, name:str, location:str, open_existing:bool = False) -> None:
         self.name = name
         if location == '':
             self.location = os.getcwd()
@@ -10,6 +10,7 @@ class Workspace:
             self.location = location
         self.project = []
         self.cwd = os.getcwd()
+        self.open_existing = open_existing
         self.path = self.work_dir()
 
     def add_project(self, new:Project) -> list:
@@ -30,9 +31,10 @@ class Workspace:
     def work_dir(self) -> str:
         tail = "." + self.name # we want to work inside a temp, hidden folder
         path = os.path.join(self.location, tail)
-        if os.path.isdir(path):
-            shutil.rmtree(path)
-        os.mkdir(path)
+        if not self.open_existing:
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+            os.mkdir(path)
         os.chdir(path)
         return path
 
