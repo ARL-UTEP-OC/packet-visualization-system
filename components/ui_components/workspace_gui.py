@@ -222,8 +222,18 @@ class Workspace_UI(QtWidgets.QMainWindow):
             traceback.print_exc()
             return False
 
-    def open_in_wireshark(self, pcap_item = False):
+    def open_in_wireshark(self, pcap_item = None, dataset_item = None, merge_flag = False):
         try:
+            if self.project_tree.selectedItems() and self.check_if_item_is(self.project_tree.selectedItems()[0], "Dataset") or (self.test_mode == True and merge_flag == True):
+                if self.test_mode == False:
+                    dataset_item = self.project_tree.selectedItems()[0]
+                for p in self.workspace_object.project:
+                    for d in p.dataset:
+                        if d.name == dataset_item.text(0):
+                            Wireshark.openwireshark(d.mergeFilePath)
+                            return True
+                False
+
             if self.project_tree.selectedItems() and self.project_tree.selectedItems()[0].child(0) == None \
                     and self.check_if_item_is(self.project_tree.selectedItems()[0], "Dataset") == False \
                     and self.check_if_item_is(self.project_tree.selectedItems()[0], "Project") == False or self.test_mode == True:
