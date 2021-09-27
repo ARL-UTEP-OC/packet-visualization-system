@@ -1,3 +1,4 @@
+import sys
 import traceback
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
@@ -12,11 +13,12 @@ from components.models.workspace import Workspace
 from components.backend_components import Wireshark
 
 class Workspace_UI(QtWidgets.QMainWindow):
-    def __init__(self, workspace_name: str, workspace_object: Workspace):
+    def __init__(self, workspace_name: str, workspace_object: Workspace, test_mode:bool = False, existing_flag:bool = False):
         # Workspace Constructor
         super(Workspace_UI, self).__init__()
         try:
             self.workspace_object = workspace_object
+            self.test_mode = test_mode
 
             self.setFixedSize(917, 548)
             self.setWindowTitle(workspace_name)
@@ -24,7 +26,6 @@ class Workspace_UI(QtWidgets.QMainWindow):
             self.project_tree = QtWidgets.QTreeWidget()
             self.project_tree.setGeometry(QtCore.QRect(0, 62, 221, 451))
             self.project_tree.setHeaderLabels(["Project(s) Name", "Size", "DoC"])
-            self.project_tree.installEventFilter(self)
 
             self.add_project_button = QtWidgets.QPushButton("Add a Project", clicked=lambda: self.add_project())
             self.add_project_button.setGeometry(QtCore.QRect(0, 22, 221, 41))
@@ -39,7 +40,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
             self.open_in_wireshark_button.setGeometry(QtCore.QRect(500, 22, 111, 31))
 
             save_action = QAction("Save", self)
-            save_action.triggered.connect(lambda: self.save())
+            save_action.triggered.connect(lambda: workspace_object.save())
 
             open_new_workspace_action = QAction("Open new Workspace", self)
             open_new_workspace_action.triggered.connect(lambda: self.open_new_workspace())
@@ -59,6 +60,9 @@ class Workspace_UI(QtWidgets.QMainWindow):
             self.layout().addWidget(self.add_dataset_button)
             self.layout().addWidget(self.add_pcap_button)
             self.layout().addWidget(self.open_in_wireshark_button)
+
+            if existing_flag == True:
+                self.generate_existing_workspace()
         except:
             traceback.print_exc()
 
@@ -92,39 +96,45 @@ class Workspace_UI(QtWidgets.QMainWindow):
             self.workspace_object.__del__()
             event.accept()
 
-    def add_project(self):
-        text = QInputDialog.getText(self, "Project Name Entry", "Enter Project name:")[0]
+    def add_project(self, text = None):
+        if self.test_mode == False:
+            text = QInputDialog.getText(self, "Project Name Entry", "Enter Project name:")[0]
         if not self.project_tree.findItems(text, QtCore.Qt.MatchRecursive, 0):
             project = Project(name=text)
             self.workspace_object.add_project(project)
 
             item = QtWidgets.QTreeWidgetItem(self.project_tree)
             item.setText(0, text)
+            return True
         else:
             print("Item named " + text + " already exists")
-
-    def remove_project(self):
-        try:
-            if self.project_tree.selectedItems() and self.check_if_item_is(self.project_tree.selectedItems()[0], "Project"):
-                project = self.project_tree.selectedItems()[0]
-                for p in self.workspace_object.project:
-                    if p.name == project.text(0):
-                        self.workspace_object.del_project(p)
-                        QTreeWidget.invisibleRootItem(self.project_tree).removeChild(project)
-                        return True
-        except:
-            print(traceback.print_exc())
             return False
 
-    def add_dataset(self):
+    def remove_project(self, project = None):
+        if self.project_tree.selectedItems() and self.check_if_item_is(self.project_tree.selectedItems()[0], "Project") or self.test_mode == True:
+            if self.test_mode == False:
+                project = self.project_tree.selectedItems()[0]
+            for p in self.workspace_object.project:
+                if p.name == project.text(0):
+                    self.workspace_object.del_project(p)
+                    QTreeWidget.invisibleRootItem(self.project_tree).removeChild(project)
+                    return True
+            return False
+
+    def add_dataset(self, text = None, new_pcap = None, project = None):
         try:
-            if self.project_tree.selectedItems() and self.check_if_item_is(self.project_tree.selectedItems()[0], "Project"):
-                text = QInputDialog.getText(self, "Dataset Name Entry", "Enter Dataset name:")[0]
+            pcap_path = ""
+            pcap_name = ""
+            if self.project_tree.selectedItems() and self.check_if_item_is(self.project_tree.selectedItems()[0], "Project") or self.test_mode == True:
+                if self.test_mode == False:
+                    text = QInputDialog.getText(self, "Dataset Name Entry", "Enter Dataset name:")[0]
                 if not self.project_tree.findItems(text, QtCore.Qt.MatchRecursive, 0) and text != "":
-                    pcap_path, pcap_name, file = self.get_pcap_path()
+                    if self.test_mode == False:
+                        pcap_path, pcap_name, file = self.get_pcap_path()
                     if pcap_path == None:
                         return False
-                    project = self.project_tree.selectedItems()[0]
+                    if self.test_mode == False:
+                        project = self.project_tree.selectedItems()[0]
 
                     for p in self.workspace_object.project:
                         if p.name == project.text(0):
@@ -134,7 +144,8 @@ class Workspace_UI(QtWidgets.QMainWindow):
                             child_item.setText(0, text)
                             project.addChild(child_item)
 
-                            new_pcap = Pcap(file= file, path= dataset.path, name= pcap_name)
+                            if self.test_mode == False:
+                                new_pcap = Pcap(file= file, path= dataset.path, name= pcap_name)
                             if new_pcap.name != None:
                                 dataset.add_pcap(new=new_pcap)
                                 pcap_item = QtWidgets.QTreeWidgetItem()
@@ -150,90 +161,92 @@ class Workspace_UI(QtWidgets.QMainWindow):
             print(traceback.print_exc())
             return False
 
-    def remove_dataset(self):
-        try:
-            if self.project_tree.selectedItems() and self.check_if_item_is(self.project_tree.selectedItems()[0], "Dataset"):
+    def remove_dataset(self, dataset_item = None):
+         if self.project_tree.selectedItems() and self.check_if_item_is(self.project_tree.selectedItems()[0], "Dataset") or self.test_mode == True:
+            if self.test_mode == False:
                 dataset_item = self.project_tree.selectedItems()[0]
-                for p in self.workspace_object.project:
-                    for d in p.dataset:
-                        if d.name == dataset_item.text(0):
-                            print("Found", d.name)
-                            p.del_dataset(old=d)
-                            dataset_item.parent().removeChild(dataset_item)
-                return True
-        except:
-            traceback.print_exc()
+            for p in self.workspace_object.project:
+                for d in p.dataset:
+                    if d.name == dataset_item.text(0):
+                        p.del_dataset(old=d)
+                        dataset_item.parent().removeChild(dataset_item)
+                        return True
             return False
 
-    def add_pcap(self):
+    def add_pcap(self, dataset_item = None, new_pcap = None):
         try:
-            if self.project_tree.selectedItems()and self.check_if_item_is(self.project_tree.selectedItems()[0], "Dataset"):
-
-                pcap_path, pcap_name, file = self.get_pcap_path()
+            if self.project_tree.selectedItems()and self.check_if_item_is(self.project_tree.selectedItems()[0], "Dataset") or self.test_mode:
+                pcap_path = ""
+                pcap_name = ""
+                if self.test_mode == False:
+                    pcap_path, pcap_name, file = self.get_pcap_path()
                 if pcap_path == None:
                     return False
-
-                dataset_item = self.project_tree.selectedItems()[0]
+                if self.test_mode == False:
+                    dataset_item = self.project_tree.selectedItems()[0]
                 for p in self.workspace_object.project:
                     for d in p.dataset:
                         if d.name == dataset_item.text(0):
-                            new_pcap = Pcap(file=file, path=d.path, name=pcap_name)
-                            if new_pcap.name != None:
+                            if self.test_mode == False:
+                                new_pcap = Pcap(file=file, path=d.path, name=pcap_name)
+                            for cap in d.pcaps:
+                                if new_pcap.name == cap.name:
+                                    return
+                            if new_pcap.name != None and new_pcap not in d.pcaps:
                                 d.add_pcap(new_pcap)
                                 pcap_item = QtWidgets.QTreeWidgetItem()
                                 pcap_item.setText(0, pcap_name)
                                 dataset_item.addChild(pcap_item)
-
-                return True
-            else:
+                                return True
                 return False
         except:
-            traceback.print_exc()
             print("Error loading this pcap")
-            return False
 
-    def remove_pcap(self):
+    def remove_pcap(self, pcap_item = None):
         try:
             if self.project_tree.selectedItems() and self.project_tree.selectedItems()[0].child(0) == None \
                     and self.check_if_item_is(self.project_tree.selectedItems()[0], "Dataset") == False\
-                    and self.check_if_item_is(self.project_tree.selectedItems()[0], "Project") == False:
+                    and self.check_if_item_is(self.project_tree.selectedItems()[0], "Project") == False or self.test_mode == True:
 
-                pcap_item = self.project_tree.selectedItems()[0]
-                print("Here")
+                if self.test_mode == False:
+                    pcap_item = self.project_tree.selectedItems()[0]
                 for p in self.workspace_object.project:
-                    print(p.name)
                     for d in p.dataset:
-                        print(d.name)
                         for cap in d.pcaps:
-                            d.del_
-                return
-        except:
-            traceback.print_exc()
-
-    def open_in_wireshark(self):
-        try:
-            if self.project_tree.selectedItems() and self.project_tree.selectedItems()[0].child(0) == None \
-                    and self.check_if_item_is(self.project_tree.selectedItems()[0], "Dataset") == False \
-                    and self.check_if_item_is(self.project_tree.selectedItems()[0], "Project") == False:
-
-                pcap_item = self.project_tree.selectedItems()[0]
-                for p in self.workspace_object.project:
-                    print(p.name)
-                    for d in p.dataset:
-                        print(d.name)
-                        for cap in d.pcaps:
-                            print(cap.name)
-                            if pcap_item.text(0) == cap.name:
-                                Wireshark.openwireshark(cap.pcap_file)
-
+                            if cap.name == pcap_item.text(0):
+                                d.del_pcap(cap)
+                                pcap_item.parent().removeChild(pcap_item)
+                                return True
+                return False
         except:
             traceback.print_exc()
             return False
 
-    def get_pcap_path(self):
+    def open_in_wireshark(self, pcap_item = False):
+        try:
+            if self.project_tree.selectedItems() and self.project_tree.selectedItems()[0].child(0) == None \
+                    and self.check_if_item_is(self.project_tree.selectedItems()[0], "Dataset") == False \
+                    and self.check_if_item_is(self.project_tree.selectedItems()[0], "Project") == False or self.test_mode == True:
+
+                if self.test_mode == False:
+                    pcap_item = self.project_tree.selectedItems()[0]
+                for p in self.workspace_object.project:
+                    for d in p.dataset:
+                        for cap in d.pcaps:
+                            if pcap_item.text(0) == cap.name:
+                                if self.test_mode == True:
+                                    return True
+                                Wireshark.openwireshark(cap.pcap_file)
+        except:
+            traceback.print_exc()
+            return False
+
+    def get_pcap_path(self, full_path:str = None):
         file_filter = "Wireshark capture file (*.pcap)"
         initial_filter = "Wireshark capture file (*.pcap)"
-        full_path = QFileDialog.getOpenFileName(caption="Add a Pcap file to this Dataset", filter= file_filter, initialFilter= initial_filter)[0]
+        if self.test_mode == False:
+            full_path = QFileDialog.getOpenFileName(caption="Add a Pcap file to this Dataset", filter= file_filter, initialFilter= initial_filter)[0]
+
         if full_path != "":
             path, name = self.collect_path_and_name(full_path)
             return path, name, full_path
@@ -246,36 +259,31 @@ class Workspace_UI(QtWidgets.QMainWindow):
                 for p in self.workspace_object.project:
                     if item.text(0) == p.name:
                         return True
-                else:
-                    return False
 
             if key == "Dataset":
                 for p in self.workspace_object.project:
                     for d in p.dataset:
                         if d.name == item.text(0):
                             return True
-                    else:
-                        return False
+            return False
         except:
             traceback.print_exc()
             return False
 
-    def save(self):
+    def open_new_workspace(self, file = None):
         try:
-            self.workspace_object.save()
+            if self.test_mode == False:
+                file = QFileDialog.getSaveFileName(caption="Choose Workspace location")[0]
+
+            if file != '':
+                path, workspace_name = self.collect_path_and_name(file)
+                new_workspace_object = Workspace(name=workspace_name, location=path)
+                self.workspace = Workspace_UI(workspace_name, new_workspace_object)
+                self.workspace.show()
+                return True
         except:
             traceback.print_exc()
-        return
-
-    def open_new_workspace(self):
-        file = QFileDialog.getSaveFileName(caption="Choose Workspace location")[0]
-
-        if file != '':
-            path, workspace_name = self.collect_path_and_name(file)
-            new_workspace_object = Workspace(name=workspace_name, location=path, project=[])
-            new_workspace_object.close()
-            self.workspace = Workspace_UI(workspace_name, new_workspace_object)
-            self.workspace.show()
+            return False
 
     def collect_path_and_name(self, full_path: str):
         file_split = ""
@@ -302,3 +310,17 @@ class Workspace_UI(QtWidgets.QMainWindow):
             path = empty.join(file_split)
 
         return path, name
+
+    def generate_existing_workspace(self):
+        for p in self.workspace_object.project:
+            project_item = QtWidgets.QTreeWidgetItem(self.project_tree)
+            project_item.setText(0, p.name)
+            for d in p.dataset:
+                dataset_item = QtWidgets.QTreeWidgetItem()
+                dataset_item.setText(0, d.name)
+                project_item.addChild(dataset_item)
+                for cap in d.pcaps:
+                    pcap_item = QtWidgets.QTreeWidgetItem()
+                    pcap_item.setText(0, cap.name)
+                    dataset_item.addChild(pcap_item)
+        return True
