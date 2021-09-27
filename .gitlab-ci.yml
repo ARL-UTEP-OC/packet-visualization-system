@@ -15,23 +15,38 @@
 variables:
   TEST_VAR: "All jobs can use this variable's value"
 
-stages:          # List of stages for jobs, and their order of execution
+stages: # List of stages for jobs, and their order of execution
   - build
   - test
   - deploy
 
-build-job:       # This job runs in the build stage, which runs first.
+build-job: # This job runs in the build stage, which runs first.
   stage: build
+  image: python:3.6
   script:
     - echo "Installing Dependencies..."
+    - apt-get -yq update
+    - apt-get -y install python3-pip
+    - python -V # Print out python version for debugging
+    - pip3 install virtualenv
+    - virtualenv venv
+    - source venv/bin/activate
+    - echo "Installing Dependencies..."
+    - pip3 install build
+    - python -m build
     - echo "Dependencies Installed."
 
-unit-test-job:   # This job runs in the test stage.
-  stage: test    # It only starts when the job in the build stage completes successfully.
+unit-test-job: # This job runs in the test stage.
+  stage: test # It only starts when the job in the build stage completes successfully.
   before_script:
     - echo "Installing Dependencies..."
     - apt-get -yq update
-    - apt-get -yq install python3-pip
+    - apt-get -y install python3-pip
+    - python -V # Print out python version for debugging
+    - pip3 install virtualenv
+    - virtualenv venv
+    - source venv/bin/activate
+    - echo "Installing Dependencies..."
     - pip3 install -r dev_requirements.txt
     - echo "Dependencies Installed."
   script:
@@ -43,9 +58,19 @@ unit-test-job:   # This job runs in the test stage.
     reports:
       junit: report.xml
 
-
-deploy-job:      # This job runs in the deploy stage.
-  stage: deploy  # It only runs when *both* jobs in the test stage complete successfully.
+deploy_production:
+  stage: deploy
+  variables:
+    TWINE_USERNAME: $PRODUCTION_USERNAME
+    TWINE_PASSWORD: $PRODUCTION_PASSWORD
   script:
-    - echo "Deploying application..."
-    - echo "Application successfully deployed."
+    - echo "Deploying app ... "
+    - apt-get -yq update
+    - apt-get -y install python3-pip
+    - pip3 install --upgrade pip setuptools wheel virtualenv
+    - pip3 install twine
+    - python3 setup.py sdist bdist_wheel
+    - twine upload dist/*
+    - echo "App deployed... "
+  only:
+    - main

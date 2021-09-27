@@ -1,0 +1,38 @@
+{
+    "name": "myWorkspace", 
+    "project": [
+        {
+            "name": "myProject1", 
+            "c_time": 1631937324.460275,
+            "dataset": [
+	        {
+		    "name": "myDataset1",
+		    "pcaps": [
+			{"name": "sample1.pcap", "m_data": "1 sample pcap"},
+			{"name": "sample2.pcap", "m_data": "2 sample pcap"},
+			{"name": "sample3.pcap", "m_data": "3 sample pcap"}
+		    ]
+		},
+		{
+	            "name": "myDataset2",
+		    "pcaps": [
+			{"name": "sample4.pcap", "m_data": "4 sample pcap"},
+			{"name": "sample5.pcap", "m_data": "5 sample pcap"}
+		    ]
+		}
+	    ]
+        },
+        {
+            "name": "myProject2", 
+            "c_time": 1631937435.460275,
+            "dataset": [
+		{
+	            "name": "myDataset3",
+		    "pcaps": [
+			{"name": "sample6.pcap", "m_data": "6 sample pcap"}
+		    ]
+		}
+	    ]
+        }
+    ]
+}
