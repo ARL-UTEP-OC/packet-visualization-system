@@ -1,3 +1,4 @@
+import os
 import sys
 
 import PyQt5
@@ -20,15 +21,14 @@ def test_setupUI():
     assert ui.existing_workspace_button.geometry() == PyQt5.QtCore.QRect(40, 70, 171, 31)
 
 def test_collect_path_and_name():
-    full_path = "C:\\Users\\eyanm\\PracticumGUI\\TestSpace"
-    assert Ui_startup_window.collect_path_and_name(ui, full_path) == ("C:\\Users\\eyanm\\PracticumGUI", "TestSpace")
-
-    full_path = "C:/Users/eyanm/PracticumGUI/TestSpace"
-    assert Ui_startup_window.collect_path_and_name(ui, full_path) == ("C:/Users/eyanm/PracticumGUI", "TestSpace")
+    full_path = os.getcwd()
+    partial_path = os.path.dirname(full_path)
+    base = os.path.basename(full_path)
+    assert Ui_startup_window.collect_path_and_name(ui, full_path) == (partial_path, base)
 
 def test_open_new_workspace():
     assert Ui_startup_window.open_new_workspace(ui, True, "") == None
-    assert Ui_startup_window.open_new_workspace(ui, True,"C:\\Users\\eyanm\\PracticumGUI") == True
+    assert Ui_startup_window.open_new_workspace(ui, True,os.getcwd()) == True
 
 def test_retranslateUI():
     ui.retranslateUi()
