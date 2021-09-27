@@ -5,7 +5,7 @@ import pyshark
 
 class Pcap:
 
-    def __init__(self, name: str ,path: str, file: str) -> None:
+    def __init__(self, name: str ,path: str, file: str, m_data = "") -> None:
         try:
             self.name = name
             self.path = os.path.join(path, self.name)  # Save location for PCAP File
@@ -13,10 +13,12 @@ class Pcap:
             self.pcap_data = None  # packet capture object (packets within pcap file)
             self.total_packets = 0
             self.protocols = {}
+            self.m_data = m_data   # metadata 
 
             self.set_packet_data()
-            self.calculate_total_packets()
-            shutil.copy(self.pcap_file, self.path)  # Copy user input into our directory
+            #self.calculate_total_packets() 
+            if not self.pcap_file == self.path:
+                shutil.copy(self.pcap_file, self.path)  # Copy user input into our directory
         except:
             print("Error adding this pcap")
             self.name = None
@@ -49,6 +51,10 @@ class Pcap:
         print("# knows where PCAP originated from")
 
         # knows PCAP editable free text meta-data
+    
+    def save(self, f) -> None:
+        f.write('{"name": "%s", "m_data": "%s"' % (self.name, self.m_data))
+        f.write('}')
 
     def remove(self) -> bool:
         return self.__del__()

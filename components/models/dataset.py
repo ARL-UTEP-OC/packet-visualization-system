@@ -24,7 +24,7 @@ class Dataset:
         if not self.pcaps: # must have at least one pcap to merge
             self.merge_pcaps()
         os.remove(old.path) # delete file in dir
-        del old
+        old.remove()
         return self.pcaps
 
     def add_pcap_dir(self, location: str) -> list:  # when we receive directory w/PCAPs as user input
@@ -46,6 +46,10 @@ class Dataset:
 
     def save(self, f) -> None: # Save file
         f.write('{"name": "%s", "totalPackets": %s, "pcaps": [' % (self.name, self.totalPackets))
+        for a in self.pcaps:
+            a.save(f)
+            if a != self.pcaps[-1]:
+                f.write(',')
         f.write(']}')
 
     def calculate_total_packets(self):
@@ -78,7 +82,8 @@ class Dataset:
         try:
             shutil.rmtree(self.path)
             for p in self.pcaps:
-                del p
+                p.remove()
+            self.pcaps = [] # unlink all pcaps
             return True
         except:
             return False
