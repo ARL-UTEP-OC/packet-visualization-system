@@ -202,19 +202,22 @@ class Workspace_UI(QtWidgets.QMainWindow):
         except:
             print("Error loading this pcap")
 
-    def remove_pcap(self):
+    def remove_pcap(self, pcap_item = None):
         try:
             if self.project_tree.selectedItems() and self.project_tree.selectedItems()[0].child(0) == None \
                     and self.check_if_item_is(self.project_tree.selectedItems()[0], "Dataset") == False\
-                    and self.check_if_item_is(self.project_tree.selectedItems()[0], "Project") == False:
+                    and self.check_if_item_is(self.project_tree.selectedItems()[0], "Project") == False or self.test_mode == True:
 
-                pcap_item = self.project_tree.selectedItems()[0]
+                if self.test_mode == False:
+                    pcap_item = self.project_tree.selectedItems()[0]
                 for p in self.workspace_object.project:
                     for d in p.dataset:
                         for cap in d.pcaps:
                             if cap.name == pcap_item.text(0):
-                                print()
+                                d.del_pcap(cap)
+                                pcap_item.parent().removeChild(pcap_item)
                                 return True
+                return False
         except:
             traceback.print_exc()
             return False
