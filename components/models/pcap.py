@@ -31,6 +31,7 @@ class Pcap:
         self.total_packets = len(count)
         return len(count)
 
+    #return lists
     #TODO:
     def calculate_protocols(self) -> dict:
         print("create dictionary from base file, traverse packets and create dictionary based on protocol/occurances")
