@@ -122,7 +122,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
                     return True
             return False
 
-    def add_dataset(self, text = None, new_pcap = None, project = None):
+    def add_dataset(self, text = None, file = None, project = None):
         try:
             pcap_path = ""
             pcap_name = ""
@@ -132,6 +132,8 @@ class Workspace_UI(QtWidgets.QMainWindow):
                 if not self.project_tree.findItems(text, QtCore.Qt.MatchRecursive, 0) and text != "":
                     if self.test_mode == False:
                         pcap_path, pcap_name, file = self.get_pcap_path()
+                    else:
+                        pcap_path, pcap_name = os.path.split(file)
                     if pcap_path == None:
                         return False
                     if self.test_mode == False:
@@ -145,8 +147,8 @@ class Workspace_UI(QtWidgets.QMainWindow):
                             child_item.setText(0, text)
                             project.addChild(child_item)
 
-                            if self.test_mode == False:
-                                new_pcap = Pcap(file= file, path= dataset.path, name= pcap_name)
+                            #if self.test_mode == False:
+                            new_pcap = Pcap(file= file, path= dataset.path, name= pcap_name)
                             if new_pcap.name != None:
                                 dataset.add_pcap(new=new_pcap)
                                 pcap_item = QtWidgets.QTreeWidgetItem()
