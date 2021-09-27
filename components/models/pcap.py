@@ -2,7 +2,6 @@ import os
 import shutil
 import pyshark
 
-
 class Pcap:
 
     def __init__(self, name: str ,path: str, file: str, m_data = "") -> None:
