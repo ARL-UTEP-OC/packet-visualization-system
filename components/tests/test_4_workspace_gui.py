@@ -180,8 +180,8 @@ def test_add_pcap(workspace_object):
     app = QtWidgets.QApplication(sys.argv)
     test_workspace = Workspace_UI(workspace_name="Test Worskpace", workspace_object=workspace_object, test_mode=True, existing_flag=True)
 
-    pcap1 = Pcap("sample2.pcap", "C:\\Users\\eyanm\\PracticumGUI\\TestSpace\\.Test Workspace\\P1\\D1",
-                 "C:\\Users\\eyanm\\PracticumGUI\\sample2.pcap")
+    pcap1 = Pcap("sample3.pcap", "C:\\Users\\eyanm\\PracticumGUI\\TestSpace\\.Test Workspace\\P1\\D1",
+                 "C:\\Users\\eyanm\\PracticumGUI\\sample3.pcap")
 
     item = QtWidgets.QTreeWidgetItem()
     item.setText(0, "D1")
@@ -191,6 +191,22 @@ def test_add_pcap(workspace_object):
     item.setText(0, "")
     assert test_workspace.add_pcap(item, pcap1) == False
 
+def test_remove_pcap(workspace_object):
+    global test_workspace
+    QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+    app = QtWidgets.QApplication(sys.argv)
+    test_workspace = Workspace_UI(workspace_name="Test Worskpace", workspace_object=workspace_object, test_mode=True, existing_flag=True)
+
+    item = QtWidgets.QTreeWidgetItem()
+    item.setText(0, "sample2.pcap")
+
+    parent = QtWidgets.QTreeWidgetItem()
+    parent.addChild(item)
+
+    assert test_workspace.remove_pcap(item) == True
+
+    item.setText(0, "")
+    assert test_workspace.remove_pcap(item) == False
 
 
 

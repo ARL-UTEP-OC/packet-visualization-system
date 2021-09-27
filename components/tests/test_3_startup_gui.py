@@ -12,10 +12,10 @@ def setup_module(module):
     app = QtWidgets.QApplication(sys.argv)
     startup_window = QtWidgets.QMainWindow()
     ui = Ui_startup_window()
-    ui.setupUi(startup_window, test_mode= True)
+    ui.setupUi(test_mode= True)
 
 def test_setupUI():
-    assert startup_window.size() == PyQt5.QtCore.QSize(248, 121)
+    assert ui.startup_window.size() == PyQt5.QtCore.QSize(248, 121)
     assert ui.new_workspace_button.geometry() == PyQt5.QtCore.QRect(40, 20, 171, 31)
     assert ui.existing_workspace_button.geometry() == PyQt5.QtCore.QRect(40, 70, 171, 31)
 
@@ -31,7 +31,7 @@ def test_open_new_workspace():
     assert Ui_startup_window.open_new_workspace(ui, True,"C:\\Users\\eyanm\\PracticumGUI") == True
 
 def test_retranslateUI():
-    ui.retranslateUi(startup_window)
-    assert startup_window.windowTitle() == "Startup"
+    ui.retranslateUi()
+    assert ui.startup_window.windowTitle() == "Startup"
     assert ui.new_workspace_button.text() == "Start a new Workspace"
     assert ui.existing_workspace_button.text() == "Open an existing Workspace"
