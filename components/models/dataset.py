@@ -20,6 +20,8 @@ class Dataset:
 
     def del_pcap(self, old: Pcap):
         self.pcaps.remove(old)
+        if not self.pcaps: # must have at least one pcap to merge
+            self.merge_pcaps()
         os.remove(old.path) # delete file in dir
         del old
         return self.pcaps
@@ -38,7 +40,7 @@ class Dataset:
         filename = self.name + ".pcap"
         path = os.path.join(self.path, filename)
         self.mergeFilePath = path
-        fp = open(path, 'x')
+        fp = open(path, 'a')
         fp.close()
 
     def save(self, f) -> None: # Save file
@@ -53,8 +55,13 @@ class Dataset:
         return self.totalPackets
 
     def merge_pcaps(self):
+        pcapPaths = ""
+
         for pcap in self.pcaps:
-            os.system('cd "C:\\Program Files\\Wireshark" & mergecap -I none -w %s %s' % (self.mergeFilePath, pcap.path))
+            pcapPaths += pcap.path + " "
+
+        print(pcapPaths)
+        os.system('cd "C:\\Program Files\\Wireshark\\" & mergecap -w %s %s' % (self.mergeFilePath, pcapPaths))
 
     def remove(self) -> bool:
         return self.__del__()
