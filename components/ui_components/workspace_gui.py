@@ -1,3 +1,4 @@
+import os
 import sys
 import traceback
 from PyQt5 import QtWidgets
@@ -286,9 +287,9 @@ class Workspace_UI(QtWidgets.QMainWindow):
                 file = QFileDialog.getSaveFileName(caption="Choose Workspace location")[0]
 
             if file != '':
-                path, workspace_name = self.collect_path_and_name(file)
-                new_workspace_object = Workspace(name=workspace_name, location=path)
-                self.workspace = Workspace_UI(workspace_name, new_workspace_object)
+                #path, workspace_name = self.collect_path_and_name(file)
+                new_workspace_object = Workspace(name=os.path.basename(file), location=os.path.dirname(file))
+                self.workspace = Workspace_UI(os.path.basename(file), new_workspace_object)
                 self.workspace.show()
                 return True
         except:
