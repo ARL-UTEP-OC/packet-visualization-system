@@ -51,16 +51,13 @@ class Dataset:
         for pcap in self.pcaps:
             self.totalPackets += pcap.total_packets
 
-        print(self.totalPackets)
         return self.totalPackets
 
     def merge_pcaps(self):
         pcapPaths = ""
-
         for pcap in self.pcaps:
             pcapPaths += pcap.path + " "
 
-        print(pcapPaths)
         os.system('cd "C:\\Program Files\\Wireshark\\" & mergecap -w %s %s' % (self.mergeFilePath, pcapPaths))
 
     def remove(self) -> bool:
