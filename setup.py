@@ -12,7 +12,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    packages=setuptools.find_packages(include=['packet-visualize', 'packet-visualize.*']),
+    packages=setuptools.find_packages(include=['packet-visualize', 'packet-visualize.*'],exclude=["tests"]),
     install_requires=[],
     include_package_data=True,
     python_requires=">=3.6",
