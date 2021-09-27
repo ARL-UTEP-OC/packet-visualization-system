@@ -7,14 +7,19 @@ class Dataset:
         self.pcaps = []
         self.path = os.path.join(parentPath, self.name)
         self.totalPackets = 0
-        self.protocols = None  # will write function to get list of protocols associated with packets (dictionary)
-        # self.timeSpan = None #  Need further understanding of which time span is being referred to her
+        self.protocols = None
         self.create_folder()
 
     def add_pcap(self, new: Pcap) -> list:
-        print("Adding new PCAP")
+        # print("Adding new PCAP")
         self.pcaps.append(new)
-        self.calculate_total_packets()
+        # self.calculate_total_packets()
+        return self.pcaps
+
+    def del_pcap(self, old: Pcap):
+        self.pcaps.remove(old)
+        os.remove(old.path) # delete file in dir
+        del old
         return self.pcaps
 
     def add_pcap_dir(self, location: str) -> list:  # when we receive directory w/PCAPs as user input
@@ -49,3 +54,4 @@ class Dataset:
             return True
         except:
             return False
+
