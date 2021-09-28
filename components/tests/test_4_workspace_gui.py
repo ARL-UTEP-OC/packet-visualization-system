@@ -180,18 +180,18 @@ def test_add_dataset(workspace_object):
     file = os.path.join(cwd, "..", "components", "tests", "examples", "myWorkspace", "myProject1", "myDataset1",
                         "sample2.pcap")
     file = os.path.normpath(file)
-    print(file)
     #cwd = os.path.join(cwd, "P1", "D1")
     #pcap1 = Pcap("sample2.pcap", cwd,
     #             file)
     text = "D2"
 
     item = QtWidgets.QTreeWidgetItem()
-    item.setText(0, "P1")
-    print(test_workspace.check_if_item_is(item, "Project"))
+    item.setText(0, "P3")
+
     assert test_workspace.add_dataset(text, file, item) == True
+    assert test_workspace.add_dataset("D1", file, item) == True
     assert test_workspace.add_dataset("D1", file, item) == False
-'''
+
 def test_remove_dataset(workspace_object):
     global test_workspace
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
@@ -209,28 +209,29 @@ def test_remove_dataset(workspace_object):
 
     item.setText(0, "")
     assert test_workspace.remove_dataset(item) == False
-    
+
 def test_add_pcap(workspace_object):
     global test_workspace
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     app = QtWidgets.QApplication(sys.argv)
     test_workspace = Workspace_UI(workspace_name="Test Worskpace", workspace_object=workspace_object, test_mode=True, existing_flag=True)
 
-    os.chdir("..")
+    #os.chdir("..")
     cwd = os.getcwd()
-    file = os.path.join(cwd, "examples", "myWorkspace", "myProject1", "myDataset1",
+    file = os.path.join(cwd, "..", "components", "tests", "examples", "myWorkspace", "myProject1", "myDataset1",
                         "sample3.pcap")
+    file = os.path.normpath(file)
 
-    cwd = os.path.join(cwd, ".Test Workspace", "P1", "D1")
-    pcap1 = Pcap("sample3.pcap", cwd, file)
-
+    #cwd = os.path.join(cwd, ".Test Workspace", "P1", "D1")
+    #pcap1 = Pcap("sample3.pcap", cwd, file)
+    print(workspace_object.project[0].dataset[0].name)
     item = QtWidgets.QTreeWidgetItem()
-    item.setText(0, "D1")
+    item.setText(0, "D2")
 
-    assert test_workspace.add_pcap(item, pcap1) == True
+    assert test_workspace.add_pcap(item, file) == True
 
     item.setText(0, "")
-    assert test_workspace.add_pcap(item, pcap1) == False
+    assert test_workspace.add_pcap(item, file) == False
 
 def test_remove_pcap(workspace_object):
     global test_workspace
@@ -248,7 +249,7 @@ def test_remove_pcap(workspace_object):
 
     item.setText(0, "")
     assert test_workspace.remove_pcap(item) == False
-'''
+
 
 
 
