@@ -1,4 +1,4 @@
-
+import os
 import sys
 import traceback
 
@@ -70,10 +70,8 @@ class Ui_startup_window(object):
 
             if file != '':
                 self.startup_window.close()
-                path, workspace_name = self.collect_path_and_name(file)
-                workspace_object = Workspace(name=workspace_name, location=path)
-
-                self.workspace = Workspace_UI(workspace_name, workspace_object)
+                workspace_object = Workspace(name=os.path.basename(file), location=os.path.dirname(file))
+                self.workspace = Workspace_UI(os.path.basename(file), workspace_object)
                 self.workspace.show()
                 return True
         except:

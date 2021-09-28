@@ -1,3 +1,5 @@
+import os
+import shutil
 import sys
 import traceback
 
@@ -15,24 +17,41 @@ from components.models.project import Project
 from components.models.workspace import Workspace
 from components.backend_components import Wireshark
 from components.ui_components.workspace_gui import Workspace_UI
+from components.backend_components.load import Load
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def workspace_object():
-    workspace_object = Workspace(name="Test Workspace", location="C:\\Users\\eyanm\\PracticumGUI\\TestSpace")
+    cwd = os.getcwd()
+    original_cwd = os.getcwd()
+    file = os.path.join(cwd, "components", "tests", "examples", "myWorkspace", "myProject1", "myDataset1",
+                        "sample2.pcap")
+    workspace_object = Workspace(name="Test Workspace", location=cwd)
     project1 = Project("P1")
     workspace_object.add_project(project1)
-    dataset1 = Dataset("D1", "C:\\Users\\eyanm\\PracticumGUI\\TestSpace\\.Test Workspace\\P1")
+    cwd = os.path.join(cwd, ".Test Workspace", "P1")
+    dataset1 = Dataset("D1", project1.path)
     project1.add_dataset(dataset1)
-    pcap1 = Pcap("sample2.pcap", "C:\\Users\\eyanm\\PracticumGUI\\TestSpace\\.Test Workspace\\P1\\D1",
-                 "C:\\Users\\eyanm\\PracticumGUI\\sample2.pcap")
+    cwd = os.path.join(cwd, "D1")
+    pcap_path = os.getcwd()
+    pcap1 = Pcap("sample2.pcap", dataset1.path,
+                 file)
     dataset1.add_pcap(pcap1)
-    return workspace_object
+    yield workspace_object
+    print("++++Teardown++++")
+    cwd = os.getcwd()
+    os.chdir("..")
+    base = os.path.basename(cwd)
+    try:
+        if os.path.isdir(cwd) and base == ".Test Workspace":
+            shutil.rmtree(cwd)
+    except:
+        print(".Test Workspace was not removed properly")
 
 def test_workspace_setup():
     global workspace_object, test_workspace
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     app = QtWidgets.QApplication(sys.argv)
-    workspace_object = Workspace(name="Test Workspace", location="C:\\Users\\eyanm\\PracticumGUI\\TestSpace")
+    workspace_object = Workspace(name="Test Workspace", location=os.getcwd())
     test_workspace = Workspace_UI(workspace_name="Test Worskpace", workspace_object=workspace_object)
 
     assert test_workspace.size() == PyQt5.QtCore.QSize(917, 548)
@@ -45,37 +64,39 @@ def test_workspace_setup():
     assert test_workspace.add_dataset_button.text() == "Add Dataset"
     assert test_workspace.open_in_wireshark_button.geometry() == QtCore.QRect(500, 22, 111, 31)
     assert test_workspace.open_in_wireshark_button.text() == "Export to Wireshark"
+    workspace_object.__del__()
 
 def test_collect_path_and_name():
     global workspace_object, test_workspace
+    full_path = os.getcwd()
+    partial_path = os.path.dirname(full_path)
+    base = os.path.basename(full_path)
+
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     app = QtWidgets.QApplication(sys.argv)
-    workspace_object = Workspace(name="Test Workspace", location="C:\\Users\\eyanm\\PracticumGUI\\TestSpace")
+    workspace_object = Workspace(name="Test Workspace", location=full_path)
     test_workspace = Workspace_UI(workspace_name="Test Worskpace", workspace_object=workspace_object)
 
-    full_path = "C:\\Users\\eyanm\\PracticumGUI\\TestSpace"
-    assert test_workspace.collect_path_and_name(full_path) == ("C:\\Users\\eyanm\\PracticumGUI", "TestSpace")
-
-    full_path = "C:/Users/eyanm/PracticumGUI/TestSpace"
-    assert test_workspace.collect_path_and_name(full_path) == ("C:/Users/eyanm/PracticumGUI", "TestSpace")
-
-    full_path = "C:\\Users\\eyanm\\PycharmProjects\\packet-visualize\\components\\tests\\examples\\myWorkspace\\myProject1\\myDataset1\\sample1.pcap"
-    assert test_workspace.collect_path_and_name(full_path) == ("C:\\Users\\eyanm\\PycharmProjects\\packet-visualize\\components\\tests\\examples\\myWorkspace\\myProject1\\myDataset1", "sample1.pcap")
+    assert test_workspace.collect_path_and_name(full_path) == (partial_path, base)
+    workspace_object.__del__()
 
 def test_get_pcap_path():
     global workspace_object, test_workspace
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     app = QtWidgets.QApplication(sys.argv)
-    workspace_object = Workspace(name="Test Workspace", location="C:\\Users\\eyanm\\PracticumGUI\\TestSpace")
+    workspace_object = Workspace(name="Test Workspace", location=os.getcwd())
     test_workspace = Workspace_UI(workspace_name="Test Worskpace", workspace_object=workspace_object, test_mode= True)
+    test_workspace.test_mode = True
 
     assert test_workspace.get_pcap_path("") == (None, None, "")
+    workspace_object.__del__()
 
 def test_check_if_item_is(workspace_object):
     global test_workspace
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     app = QtWidgets.QApplication(sys.argv)
     test_workspace = Workspace_UI(workspace_name="Test Worskpace", workspace_object=workspace_object, test_mode=True, existing_flag=True)
+
 
     item = QtWidgets.QTreeWidgetItem()
     item.setText(0, "P1")
@@ -87,15 +108,19 @@ def test_check_if_item_is(workspace_object):
     item.setText(0, "sample2.pcap")
     assert test_workspace.check_if_item_is(item, "Dataset") == False
 
+'''
 def test_open_new_workspace():
     global workspace_object, test_workspace
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     app = QtWidgets.QApplication(sys.argv)
-    workspace_object = Workspace(name="Test Workspace", location="C:\\Users\\eyanm\\PracticumGUI\\TestSpace")
+    cwd = os.getcwd()
+    workspace_object = Workspace(name="Test Workspace", location=os.getcwd())
     test_workspace = Workspace_UI(workspace_name="Test Worskpace", workspace_object=workspace_object, test_mode=True)
 
-    assert test_workspace.open_new_workspace(file= "C:\\Users\\eyanm\\PracticumGUI\\TestSpace") == True
+    assert test_workspace.open_new_workspace(file=os.path.join(cwd, "TestSpace")) == True
     assert test_workspace.open_new_workspace(file="") == None
+
+'''
 
 def test_generate_existing_workspace(workspace_object):
     global test_workspace
@@ -113,10 +138,15 @@ def test_open_in_wireshark(workspace_object):
 
     pcap_item = QtWidgets.QTreeWidgetItem()
     pcap_item.setText(0, "sample2.pcap")
+
     assert test_workspace.open_in_wireshark(pcap_item=pcap_item) == True
 
     pcap_item.setText(0, "")
     assert test_workspace.open_in_wireshark(pcap_item=pcap_item) == None
+
+    dataset_item = QtWidgets.QTreeWidgetItem()
+    dataset_item.setText(0, "D1")
+    assert test_workspace.open_in_wireshark(None, dataset_item, True) == True
 
 def test_add_project(workspace_object):
     global test_workspace
@@ -139,22 +169,28 @@ def test_remove_project(workspace_object):
 
     item.setText(0, "P2")
     assert test_workspace.remove_project(item) == False
-
+    
 def test_add_dataset(workspace_object):
     global test_workspace
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     app = QtWidgets.QApplication(sys.argv)
     test_workspace = Workspace_UI(workspace_name="Test Worskpace", workspace_object=workspace_object, test_mode=True, existing_flag=True)
 
-    pcap1 = Pcap("sample2.pcap", "C:\\Users\\eyanm\\PracticumGUI\\TestSpace\\.Test Workspace\\P1\\D1",
-                 "C:\\Users\\eyanm\\PracticumGUI\\sample2.pcap")
+    cwd = os.getcwd()
+    file = os.path.join(cwd, "..", "components", "tests", "examples", "myWorkspace", "myProject1", "myDataset1",
+                        "sample2.pcap")
+    file = os.path.normpath(file)
+    #cwd = os.path.join(cwd, "P1", "D1")
+    #pcap1 = Pcap("sample2.pcap", cwd,
+    #             file)
     text = "D2"
 
     item = QtWidgets.QTreeWidgetItem()
-    item.setText(0, "P1")
+    item.setText(0, "P3")
 
-    assert test_workspace.add_dataset(text, pcap1, item) == True
-    assert test_workspace.add_dataset("D1", pcap1, item) == False
+    assert test_workspace.add_dataset(text, file, item) == True
+    assert test_workspace.add_dataset("D1", file, item) == True
+    assert test_workspace.add_dataset("D1", file, item) == False
 
 def test_remove_dataset(workspace_object):
     global test_workspace
@@ -180,16 +216,22 @@ def test_add_pcap(workspace_object):
     app = QtWidgets.QApplication(sys.argv)
     test_workspace = Workspace_UI(workspace_name="Test Worskpace", workspace_object=workspace_object, test_mode=True, existing_flag=True)
 
-    pcap1 = Pcap("sample3.pcap", "C:\\Users\\eyanm\\PracticumGUI\\TestSpace\\.Test Workspace\\P1\\D1",
-                 "C:\\Users\\eyanm\\PracticumGUI\\sample3.pcap")
+    #os.chdir("..")
+    cwd = os.getcwd()
+    file = os.path.join(cwd, "..", "components", "tests", "examples", "myWorkspace", "myProject1", "myDataset1",
+                        "sample3.pcap")
+    file = os.path.normpath(file)
 
+    #cwd = os.path.join(cwd, ".Test Workspace", "P1", "D1")
+    #pcap1 = Pcap("sample3.pcap", cwd, file)
+    print(workspace_object.project[0].dataset[0].name)
     item = QtWidgets.QTreeWidgetItem()
-    item.setText(0, "D1")
+    item.setText(0, "D2")
 
-    assert test_workspace.add_pcap(item, pcap1) == True
+    assert test_workspace.add_pcap(item, file) == True
 
     item.setText(0, "")
-    assert test_workspace.add_pcap(item, pcap1) == False
+    assert test_workspace.add_pcap(item, file) == False
 
 def test_remove_pcap(workspace_object):
     global test_workspace
