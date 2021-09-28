@@ -51,12 +51,14 @@ unit-test-job: # This job runs in the test stage.
     - echo "Dependencies Installed."
   script:
     - echo "Running unit tests... "
-    - python3 -m pytest --junitxml=report.xml
+    - python3 -m pytest --ignore components/tests/test_4_workspace_gui.py --junitxml=report.xml
+    - python3 -m pytest components/tests/test_4_workspace_gui.py --junitxml=report2.xml
     - echo "Test Complete"
   artifacts:
     when: always
     reports:
       junit: report.xml
+      junit: report2.xml
 
 deploy_production:
   stage: deploy
