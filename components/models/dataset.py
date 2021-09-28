@@ -1,5 +1,6 @@
 from components.models.pcap import Pcap
 import os, shutil
+import platform
 
 class Dataset:
     def __init__(self, name: str, parentPath: str) -> None:  # Not sure if we should pass entire Project object, need to ask team
@@ -59,10 +60,20 @@ class Dataset:
 
     def merge_pcaps(self):
         pcapPaths = ""
-        for pcap in self.pcaps:
-            pcapPaths += pcap.path + " "
 
-        os.system('cd "C:\\Program Files\\Wireshark\\" & mergecap -w %s %s' % (self.mergeFilePath, pcapPaths))
+        if platform.system() == 'Windows':
+            for pcap in self.pcaps:
+                pcapPaths += pcap.path + " "
+
+            os.system('cd "C:\\Program Files\\Wireshark\\" & mergecap -w %s %s' % (self.mergeFilePath, pcapPaths))
+            print("")
+        elif platform.system() == 'Linux':
+            for pcap in self.pcaps:
+                pcapPaths += pcap.path + " "
+
+            os.system('mergecap -w %s %s' % (self.mergeFilePath, pcapPaths))
+            print("Linux")
+
 
     def remove(self) -> bool:
         return self.__del__()
@@ -76,4 +87,3 @@ class Dataset:
             return True
         except:
             return False
-
