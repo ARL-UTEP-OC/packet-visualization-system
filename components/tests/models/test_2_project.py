@@ -10,8 +10,8 @@ def test_create_project():
     global w,cwd,p1,p2
     cwd = os.getcwd()
     w = Workspace("testWorkspace2", cwd)
-    p1 = Project("testProject1", 1632527017.653542)
-    p2 = Project("testProject2", 1632527130.789377)
+    p1 = Project("testProject1", w.path,1632527017.653542)
+    p2 = Project("testProject2", w.path,1632527130.789377)
     assert p1.name == "testProject1"
     assert p2.name == "testProject2"
     assert p1.c_time == 1632527017.653542

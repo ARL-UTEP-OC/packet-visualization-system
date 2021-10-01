@@ -101,7 +101,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
         if self.test_mode == False:
             text = QInputDialog.getText(self, "Project Name Entry", "Enter Project name:")[0]
         if not self.project_tree.findItems(text, QtCore.Qt.MatchRecursive, 0):
-            project = Project(name=text)
+            project = Project(name=text, parent_path=self.workspace_object.path)
             self.workspace_object.add_project(project)
 
             item = QtWidgets.QTreeWidgetItem(self.project_tree)
