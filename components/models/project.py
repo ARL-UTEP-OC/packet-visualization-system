@@ -3,12 +3,12 @@ from datetime import datetime
 import os, shutil
 
 class Project:
-    def __init__(self, name:str, c_time=datetime.now().timestamp()) -> None:
+    def __init__(self, name:str, parent_path:str, c_time=datetime.now().timestamp()) -> None:
         self.name = name
         self.c_time = c_time     # creation time
         self.size = 0            # size in bytes
         self.dataset = []
-        self.path = os.path.join(os.getcwd(), self.name)
+        self.path = os.path.join(parent_path, self.name)
         self.create_folder()
 
     def add_dataset(self, new:Dataset) -> list:

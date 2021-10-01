@@ -13,8 +13,8 @@ def test_crete_dataset():
     global cwd, w, p1, p2, d1, d2
     cwd = os.getcwd()
     w = Workspace("testWorkspace3", cwd)
-    p1 = Project("testProject3", 1632527017.653542) # specify c_time for a static checksum of save.json
-    p2 = Project("testProject4", 1632527130.789377)
+    p1 = Project("testProject3", w.path, 1632527017.653542) # specify c_time for a static checksum of save.json
+    p2 = Project("testProject4", w.path, 1632527130.789377)
     w.add_project(p1)
     w.add_project(p2)
     d1 = Dataset("testDataset1", p1.path)
