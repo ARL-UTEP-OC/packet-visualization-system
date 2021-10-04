@@ -20,7 +20,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     packages=setuptools.find_packages(include=['components', 'components.*'],exclude=["tests"]),
-    install_requires=['pyshark','PyQt5'],
+    install_requires=['pyshark','PyQt5','sqlalchemy'],
     include_package_data=True,
     python_requires=">=3.6",
 )

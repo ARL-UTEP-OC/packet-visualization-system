@@ -8,12 +8,14 @@ colorama==0.4.4
 distlib==0.3.3
 docutils==0.17.1
 filelock==3.0.12
+greenlet==1.1.2
 idna==3.2
 importlib-metadata==4.8.1
 iniconfig==1.1.1
 keyring==23.2.1
 lxml==4.6.3
 packaging==21.0
+packetvisualization==0.0.5
 pep517==0.11.0
 pkginfo==1.7.1
 platformdirs==2.3.0
@@ -32,6 +34,7 @@ requests==2.26.0
 requests-toolbelt==0.9.1
 rfc3986==1.5.0
 six==1.16.0
+SQLAlchemy==1.4.25
 toml==0.10.2
 tomli==1.2.1
 tqdm==4.62.3
