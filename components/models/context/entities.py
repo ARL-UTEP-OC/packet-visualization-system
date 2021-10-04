@@ -50,7 +50,7 @@ class pcap(Base):
 class EntityOperations():
     def bulk_insert_datasets(self, datasets_to_insert):
         """
-        pcaps_to_insert = [
+        dataset_to_insert = [
             dataset(...),
             dataset(...),
             dataset(...)
