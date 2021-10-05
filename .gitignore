@@ -7,3 +7,4 @@ packet_visualization.egg-info
 build
 dist
 packetvisualization.egg-info
+packets.sqlite
