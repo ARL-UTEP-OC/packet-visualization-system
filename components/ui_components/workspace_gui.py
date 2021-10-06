@@ -1,6 +1,8 @@
 import os
-import sys
+import shutil
 import traceback
+import zipfile
+
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
 from PyQt5 import QtCore
@@ -8,7 +10,7 @@ from PyQt5.QtCore import QEvent
 from PyQt5.QtWidgets import QInputDialog, QMenu, QFileDialog, QAction, QMessageBox, QTreeWidget, QProgressBar
 
 from components.backend_components.load import Load
-from components.models import dataset
+from components.models.context.entities import EntityOperations
 from components.models.dataset import Dataset
 from components.models.pcap import Pcap
 from components.models.project import Project
@@ -97,6 +99,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
         convert_to_json_action = context_menu.addAction("Convert Dataset to JSON")
         context_menu.addSeparator()
         add_pcap_folder_action = context_menu.addAction("Add Folder of PCAP's")
+        add_pcap_zip_action = context_menu.addAction("Add zip Folder of PCAP's")
 
         action = context_menu.exec_(self.mapToGlobal(event.pos()))
 
@@ -112,6 +115,8 @@ class Workspace_UI(QtWidgets.QMainWindow):
             self.convert_dataset_to_json()
         elif action == add_pcap_folder_action:
             self.add_pcap_folder()
+        elif action == add_pcap_zip_action:
+            self.add_pcap_zip()
 
     def closeEvent(self, event):
         reply = QMessageBox.question(self, "Workspace Close", "Would you like to save this Workspace?",
@@ -160,24 +165,25 @@ class Workspace_UI(QtWidgets.QMainWindow):
                 if not self.test_mode:
                     text = QInputDialog.getText(self, "Dataset Name Entry", "Enter Dataset name:")[0]
                 if not self.project_tree.findItems(text, QtCore.Qt.MatchRecursive, 0) and text != "":
-                    if self.test_mode == False:
-                        pcap_path, pcap_name, file = self.get_pcap_path()
+                    if not self.test_mode:
+                        pcap_path, pcap_name, file, extension = self.get_pcap_path()
                     else:
                         pcap_path, pcap_name = os.path.split(file)
                     if pcap_path is None:
                         return False
-                    if self.test_mode == False:
+                    if not self.test_mode:
                         project = self.project_tree.selectedItems()[0]
 
                     p = project.data(0, QtCore.Qt.UserRole)
                     dataset = Dataset(name=text, parentPath=p.path)
+
                     p.add_dataset(dataset)
                     child_item = QtWidgets.QTreeWidgetItem()
                     child_item.setText(0, text)
                     child_item.setData(0, QtCore.Qt.UserRole, dataset)
+
                     project.addChild(child_item)
 
-                    # if self.test_mode == False:
                     new_pcap = Pcap(file=file, path=dataset.path, name=pcap_name)
                     if new_pcap.name is not None:
                         dataset.add_pcap(new=new_pcap)
@@ -214,8 +220,8 @@ class Workspace_UI(QtWidgets.QMainWindow):
             if self.project_tree.selectedItems() and type(
                     self.project_tree.selectedItems()[0].data(0, QtCore.Qt.UserRole)) is Dataset or self.test_mode:
 
-                if self.test_mode == False:
-                    pcap_path, pcap_name, file = self.get_pcap_path()
+                if not self.test_mode:
+                    pcap_path, pcap_name, file, extension = self.get_pcap_path()
                 else:
                     pcap_path, pcap_name = os.path.split(file)
                 if pcap_path is None:
@@ -232,11 +238,37 @@ class Workspace_UI(QtWidgets.QMainWindow):
                     pcap_item.setText(0, pcap_name)
                     pcap_item.setData(0, QtCore.Qt.UserRole, new_pcap)
                     dataset_item.addChild(pcap_item)
+
                     return True
                 return False
         except:
             traceback.print_exc()
             print("Error loading this pcap")
+
+    def add_pcap_zip(self):
+        try:
+            if self.project_tree.selectedItems() and type(
+                    self.project_tree.selectedItems()[0].data(0, QtCore.Qt.UserRole)) is Dataset or self.test_mode:
+
+                location = QFileDialog.getOpenFileName(caption="Select zip Folder of PCAP's", filter="zip (*.zip)")[0]
+                dataset_item = self.project_tree.selectedItems()[0]
+                dataset_obj = self.project_tree.selectedItems()[0].data(0, QtCore.Qt.UserRole)
+                extracted_folder = os.path.join(os.path.dirname(location), "ExtractedPV")
+                with zipfile.ZipFile(location, 'r') as my_zip:
+                    my_zip.extractall(extracted_folder)
+
+                for file in os.listdir(extracted_folder):
+                    new_pcap = Pcap(file, dataset_obj.path, os.path.join(extracted_folder, file))
+                    dataset_obj.add_pcap(new_pcap)
+                    pcap_item = QtWidgets.QTreeWidgetItem()
+                    pcap_item.setText(0, os.path.basename(file))
+                    pcap_item.setData(0, QtCore.Qt.UserRole, new_pcap)
+                    dataset_item.addChild(pcap_item)
+
+                shutil.rmtree(extracted_folder)
+                return True
+        except:
+            traceback.print_exc()
 
     def add_pcap_folder(self):
         try:
@@ -353,8 +385,8 @@ class Workspace_UI(QtWidgets.QMainWindow):
             traceback.print_exc()
 
     def get_pcap_path(self, full_path: str = None):
-        file_filter = "Wireshark capture file (*.pcap);; zip (*.zip)"
-        initial_filter = "Wireshark capture file (*.pcap);; zip (*.zip)"
+        file_filter = "Wireshark capture file (*.pcap)"
+        initial_filter = "Wireshark capture file (*.pcap)"
         if not self.test_mode:
             full_path = QFileDialog.getOpenFileName(caption="Add a Pcap file to this Dataset", filter=file_filter,
                                                     initialFilter=initial_filter)[0]
@@ -362,7 +394,8 @@ class Workspace_UI(QtWidgets.QMainWindow):
         if full_path != "":
             name = os.path.basename(full_path)
             path = os.path.dirname(full_path)
-            return path, name, full_path
+            extension = os.path.splitext(full_path)[1]
+            return path, name, full_path, extension
         else:
             return None, None, full_path
 
@@ -372,7 +405,6 @@ class Workspace_UI(QtWidgets.QMainWindow):
                 file = QFileDialog.getSaveFileName(caption="Choose Workspace location")[0]
 
             if file != '':
-                # path, workspace_name = self.collect_path_and_name(file)
                 new_workspace_object = Workspace(name=os.path.basename(file), location=os.path.dirname(file))
                 self.workspace = Workspace_UI(os.path.basename(file), new_workspace_object)
                 self.workspace.show()
