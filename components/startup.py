@@ -1,6 +1,6 @@
 from components.ui_components.startup_gui import Ui_startup_window
 import components.models.context.database_context as _context
-from components.models.context.entities import dataset, pcap
+from components.models.context.entities import Dataset, Pcap
 
 class Main():
     def __init__(self):
