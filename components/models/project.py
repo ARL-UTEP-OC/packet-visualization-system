@@ -23,7 +23,7 @@ class Project:
         return self.dataset
 
     def find_dataset(self, name:str) -> Dataset:
-        for d in dataset:
+        for d in self.dataset:
             if d.name == name:
                 return d
         return None
@@ -50,6 +50,7 @@ class Project:
             shutil.rmtree(self.path)
             for d in self.dataset:
                 d.remove()
+            self.dataset = [] # unlink all datasets
             return True
         except Exception:
             return False

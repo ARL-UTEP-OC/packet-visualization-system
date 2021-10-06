@@ -1,5 +1,6 @@
 from components.models.pcap import Pcap
 import os, shutil
+import platform
 
 class Dataset:
     def __init__(self, name: str, parentPath: str) -> None:  # Not sure if we should pass entire Project object, need to ask team
@@ -23,7 +24,7 @@ class Dataset:
         if not self.pcaps: # must have at least one pcap to merge
             self.merge_pcaps()
         os.remove(old.path) # delete file in dir
-        del old
+        old.remove()
         return self.pcaps
 
     def add_pcap_dir(self, location: str) -> list:  # when we receive directory w/PCAPs as user input
@@ -45,6 +46,10 @@ class Dataset:
 
     def save(self, f) -> None: # Save file
         f.write('{"name": "%s", "totalPackets": %s, "pcaps": [' % (self.name, self.totalPackets))
+        for a in self.pcaps:
+            a.save(f)
+            if a != self.pcaps[-1]:
+                f.write(',')
         f.write(']}')
 
     def calculate_total_packets(self):
@@ -55,10 +60,20 @@ class Dataset:
 
     def merge_pcaps(self):
         pcapPaths = ""
-        for pcap in self.pcaps:
-            pcapPaths += pcap.path + " "
 
-        os.system('cd "C:\\Program Files\\Wireshark\\" & mergecap -w %s %s' % (self.mergeFilePath, pcapPaths))
+        if platform.system() == 'Windows':
+            for pcap in self.pcaps:
+                pcapPaths += pcap.path + " "
+
+            os.system('cd "C:\\Program Files\\Wireshark\\" & mergecap -w %s %s' % (self.mergeFilePath, pcapPaths))
+            print("")
+        elif platform.system() == 'Linux':
+            for pcap in self.pcaps:
+                pcapPaths += pcap.path + " "
+
+            os.system('mergecap -w %s %s' % (self.mergeFilePath, pcapPaths))
+            print("Linux")
+
 
     def remove(self) -> bool:
         return self.__del__()
@@ -67,8 +82,8 @@ class Dataset:
         try:
             shutil.rmtree(self.path)
             for p in self.pcaps:
-                del p
+                p.remove()
+            self.pcaps = [] # unlink all pcaps
             return True
         except:
             return False
-

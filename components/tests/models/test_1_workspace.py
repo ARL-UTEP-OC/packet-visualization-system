@@ -36,4 +36,11 @@ def test_del():
 def test_workspace_with_space():
     w = Workspace("This is my Workspace", "")
     w.save()
+    exported_files = [os.path.join(cwd, "This is my Workspace.zip"), os.path.join(cwd, ".This is my Workspace", "save.json")]
+    exported_hash = "b8caec90a379a1e6e2deb08a2fd1d0b449025c3c"
+    for f in exported_files:
+        assert os.path.isfile(f)
+    with open(exported_files[1], 'rb') as f:
+        data = f.read()
+        assert exported_hash == hashlib.sha1(data).hexdigest()
     del w

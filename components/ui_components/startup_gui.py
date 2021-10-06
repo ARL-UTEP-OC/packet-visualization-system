@@ -5,6 +5,7 @@ import traceback
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QFileDialog
 
+from components.backend_components.load import Load
 from components.models.dataset import Dataset
 from components.models.pcap import Pcap
 from components.models.project import Project
@@ -80,36 +81,18 @@ class Ui_startup_window(object):
 
     def open_existing_workspace(self, test_mode: bool, file = None):
         try:
-            #if test_mode == False:
-                #file = QFileDialog.getOpenFileName(caption="Open existing Workspace")[0]
+            if test_mode == False:
+                file_filter = "zip(*.zip)"
+                file = QFileDialog.getOpenFileName(caption="Open existing Workspace", filter= file_filter)[0]
 
-                #if file != "":
-                    #if test_mode == False:
-                        #startup_window.close()
-            worspace1 = Workspace("W1", "C:\\Users\\eyanm\\PracticumGUI\\TestSpace")
-            project1 = Project("P1")
-            project2 = Project("P2")
-            worspace1.add_project(project1)
-            worspace1.add_project(project2)
-            dataset1 = Dataset("D1","C:\\Users\\eyanm\\PracticumGUI\\TestSpace\\.W1\\P1")
-            dataset2 = Dataset("D2", "C:\\Users\\eyanm\\PracticumGUI\\TestSpace\\.W1\\P1")
-            dataset3 = Dataset("D3", "C:\\Users\\eyanm\\PracticumGUI\\TestSpace\\.W1\\P2")
-            project1.add_dataset(dataset1)
-            project1.add_dataset(dataset2)
-            project2.add_dataset(dataset3)
-            pcap1 = Pcap("sample2.pcap", "C:\\Users\\eyanm\\PracticumGUI\\TestSpace\\.W1\\P1\\D1", "C:\\Users\\eyanm\\PracticumGUI\\sample2.pcap")
-            pcap2 = Pcap("sample3.pcap", "C:\\Users\\eyanm\\PracticumGUI\\TestSpace\\.W1\\P1\\D1", "C:\\Users\\eyanm\\PracticumGUI\\sample3.pcap")
-            pcap3 = Pcap("sample4.pcap", "C:\\Users\\eyanm\\PracticumGUI\\TestSpace\\.W1\\P1\\D1", "C:\\Users\\eyanm\\PracticumGUI\\sample4.pcap")
-            pcap4 = Pcap("sample2.pcap", "C:\\Users\\eyanm\\PracticumGUI\\TestSpace\\.W1\\P1\\D2", "C:\\Users\\eyanm\\PracticumGUI\\sample2.pcap")
-            dataset1.add_pcap(pcap1)
-            dataset1.add_pcap(pcap2)
-            dataset1.add_pcap(pcap3)
-            dataset2.add_pcap(pcap2)
+                if file != "":
+                    if test_mode == False:
+                        self.startup_window.close()
+                        workspace_object = Load().open_zip(file)
 
-            workspaceUI = Workspace_UI("W1", worspace1,existing_flag=True)
-            workspaceUI.show()
-            return True
-
+                        workspaceUI = Workspace_UI(workspace_object.name, workspace_object,existing_flag=True)
+                        workspaceUI.show()
+                        return True
         except:
             traceback.print_exc()
             return False

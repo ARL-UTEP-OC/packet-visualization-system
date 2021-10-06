@@ -6,14 +6,21 @@ from PyQt5 import QtCore, QtWidgets
 
 from components.ui_components.startup_gui import Ui_startup_window
 
-def setup_module(module):
-    global app, startup_window, ui
+cwd = None
 
+def setup_module():
+    global app, startup_window, ui, cwd
+
+    cwd = os.getcwd()
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     app = QtWidgets.QApplication(sys.argv)
     startup_window = QtWidgets.QMainWindow()
     ui = Ui_startup_window()
     ui.setupUi(test_mode= True)
+
+def teardown_module():
+    global cwd
+    os.chdir(cwd)
 
 def test_setupUI():
     assert ui.startup_window.size() == PyQt5.QtCore.QSize(248, 121)
@@ -28,7 +35,7 @@ def test_collect_path_and_name():
 
 def test_open_new_workspace():
     assert Ui_startup_window.open_new_workspace(ui, True, "") == None
-    assert Ui_startup_window.open_new_workspace(ui, True,os.getcwd()) == True
+    assert Ui_startup_window.open_new_workspace(ui, True, os.getcwd()) == True
 
 def test_retranslateUI():
     ui.retranslateUi()
