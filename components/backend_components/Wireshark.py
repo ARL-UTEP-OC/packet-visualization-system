@@ -1,10 +1,14 @@
 import os
 import platform
+import subprocess
 
 def openwireshark(path):
 
     if(platform.system()=="Linux"):
-        os.system('wireshark -r '+path)
+
+        subprocess.Popen('wireshark -r '+path)
 
     elif(platform.system()=="Windows"):
-        os.system('cd "C:\Program Files\Wireshark" & wireshark -r '+path)
+
+        subprocess.Popen("C:\Program Files\Wireshark\wireshark -r " + path)
+
