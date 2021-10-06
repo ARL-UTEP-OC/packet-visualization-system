@@ -54,6 +54,9 @@ class Workspace_UI(QtWidgets.QMainWindow):
             self.analyze_button = QtWidgets.QPushButton("Analyze", clicked=lambda: self.analyze())
             self.analyze_button.setGeometry(QtCore.QRect(630, 22, 111, 31))
 
+            self.stacked_widget = QtWidgets.QStackedWidget()
+            self.stacked_widget.setGeometry(QtCore.QRect(230, 50, 681, 471))
+
             save_action = QAction("Save", self)
             save_action.triggered.connect(lambda: workspace_object.save())
 
