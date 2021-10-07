@@ -31,11 +31,8 @@ class Pcap(Base):
             self.m_data = "m data"
             self.dataset_id = parentKey
 
-
             if not self.pcap_file == self.path:
                 shutil.copy(self.pcap_file, self.path)  # Copy user input into our directory
-
-
         except:
             print("Corrupt PCAP")
             self.name = " "

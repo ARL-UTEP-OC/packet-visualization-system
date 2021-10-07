@@ -13,8 +13,17 @@ class EntityOperations():
         session.add(dataset)
         session.commit()
 
+    def remove_dataset(self, dataset_entity):
+        # print("Test")
+        session.delete(dataset_entity)
+        session.commit()
+
     def insert_pcap(self, pcap):
         session.add(pcap)
+        session.commit()
+
+    def remove_pcap(self):
+        print("test")
         session.commit()
 
     def add_and_commit(self, entity_type, entity_list):
