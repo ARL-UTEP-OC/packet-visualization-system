@@ -16,6 +16,7 @@ from components.models.pcap import Pcap
 from components.models.project import Project
 from components.models.workspace import Workspace
 from components.backend_components import Wireshark
+from components.backend_components.plot import Plot
 
 
 class Workspace_UI(QtWidgets.QMainWindow):
@@ -54,8 +55,8 @@ class Workspace_UI(QtWidgets.QMainWindow):
             self.analyze_button = QtWidgets.QPushButton("Analyze", clicked=lambda: self.analyze())
             self.analyze_button.setGeometry(QtCore.QRect(630, 22, 111, 31))
 
-            self.stacked_widget = QtWidgets.QStackedWidget()
-            self.stacked_widget.setGeometry(QtCore.QRect(230, 50, 681, 471))
+            #self.stacked_widget = QtWidgets.QStackedWidget()
+            #self.stacked_widget.setGeometry(QtCore.QRect(230, 50, 681, 471))
 
             save_action = QAction("Save", self)
             save_action.triggered.connect(lambda: workspace_object.save())
@@ -65,6 +66,9 @@ class Workspace_UI(QtWidgets.QMainWindow):
 
             open_existing_workspace_action = QAction("Open Existing Workspace", self)
             open_existing_workspace_action.triggered.connect(lambda: self.open_existing_workspace(self.test_mode))
+            
+            self.plot = Plot().fig_view
+            self.plot.setGeometry(QtCore.QRect(230, 50, 681, 471))
 
             menu = self.menuBar()
             menu_file = menu.addMenu("File")
@@ -80,6 +84,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
             self.layout().addWidget(self.add_pcap_button)
             self.layout().addWidget(self.analyze_button)
             self.layout().addWidget(self.open_in_wireshark_button)
+            self.layout().addWidget(self.plot)
 
             self.progress_bar = QProgressBar(self)
             self.progress_bar.setGeometry(15, 518, 221, 23)
