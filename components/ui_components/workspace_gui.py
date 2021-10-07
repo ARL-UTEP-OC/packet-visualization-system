@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 import traceback
 import zipfile
 
@@ -7,16 +8,20 @@ from PyQt5 import QtWidgets
 from PyQt5 import QtGui
 from PyQt5 import QtCore
 from PyQt5.QtCore import QEvent
-from PyQt5.QtWidgets import QInputDialog, QMenu, QFileDialog, QAction, QMessageBox, QTreeWidget, QProgressBar
+from PyQt5.QtWidgets import QInputDialog, QMenu, QFileDialog, QAction, QMessageBox, QTreeWidget, QProgressBar, QTableWidget
 
+from components.backend_components.entity_operator import EntityOperations
 from components.backend_components.load import Load
-from components.models.context.entities import EntityOperations
+from components.models import dataset
+#from components.models.context.entities import EntityOperations
 from components.models.dataset import Dataset
 from components.models.pcap import Pcap
 from components.models.project import Project
 from components.models.workspace import Workspace
 from components.backend_components import Wireshark
-
+from components.ui_components.table_gui import table_gui
+from components.models.dataset_ent import Dataset as datasetEnt
+from components.models.pcap_ent import Pcap as pcapEnt
 
 class Workspace_UI(QtWidgets.QMainWindow):
     def __init__(self, workspace_name: str, workspace_object: Workspace, test_mode: bool = False,
@@ -54,8 +59,8 @@ class Workspace_UI(QtWidgets.QMainWindow):
             self.analyze_button = QtWidgets.QPushButton("Analyze", clicked=lambda: self.analyze())
             self.analyze_button.setGeometry(QtCore.QRect(630, 22, 111, 31))
 
-            self.stacked_widget = QtWidgets.QStackedWidget()
-            self.stacked_widget.setGeometry(QtCore.QRect(230, 50, 681, 471))
+            self.tableWidget = table_gui()
+            self.tableWidget.setGeometry(QtCore.QRect(230, 55, 681, 490))
 
             save_action = QAction("Save", self)
             save_action.triggered.connect(lambda: workspace_object.save())
@@ -80,9 +85,12 @@ class Workspace_UI(QtWidgets.QMainWindow):
             self.layout().addWidget(self.add_pcap_button)
             self.layout().addWidget(self.analyze_button)
             self.layout().addWidget(self.open_in_wireshark_button)
+            self.layout().addWidget(self.tableWidget)
 
             self.progress_bar = QProgressBar(self)
             self.progress_bar.setGeometry(15, 518, 221, 23)
+
+            self.ent_operator = EntityOperations()
 
             if existing_flag:
                 self.generate_existing_workspace()
@@ -178,25 +186,35 @@ class Workspace_UI(QtWidgets.QMainWindow):
                         project = self.project_tree.selectedItems()[0]
 
                     p = project.data(0, QtCore.Qt.UserRole)
-                    dataset = Dataset(name=text, parentPath=p.path)
+                    #dataset = Dataset(name=text, parentPath=p.path)
 
-                    p.add_dataset(dataset)
+                    #ent_operator = EntityOperations()
+
+                    db_dataset = datasetEnt(name=text, path=p.path)
+                    self.ent_operator.insert_dataset(db_dataset)
+                    #db_dataset.create_folder()
+                    #db_dataset.create_merge_file()
+
+                    p.add_dataset(db_dataset)
                     child_item = QtWidgets.QTreeWidgetItem()
                     child_item.setText(0, text)
-                    child_item.setData(0, QtCore.Qt.UserRole, dataset)
+                    child_item.setData(0, QtCore.Qt.UserRole, db_dataset)
 
                     project.addChild(child_item)
 
-                    new_pcap = Pcap(file=file, path=dataset.path, name=pcap_name)
-                    if new_pcap.name is not None:
-                        dataset.add_pcap(new=new_pcap)
+                    #new_pcap = Pcap(file=file, path=dataset.path, name=pcap_name)
+                    db_pcap = pcapEnt(name=pcap_name, path=db_dataset.path, pcap_file=file, parentKey=db_dataset.id)
+                    #ent_operator.insert_pcap(db_pcap)
+                    if db_pcap.name is not None:
+                        self.ent_operator.insert_pcap(db_pcap)
+                        #dataset.add_pcap(new=db_pcap)
                         pcap_item = QtWidgets.QTreeWidgetItem()
                         pcap_item.setText(0, pcap_name)
-                        pcap_item.setData(0, QtCore.Qt.UserRole, new_pcap)
+                        pcap_item.setData(0, QtCore.Qt.UserRole, db_pcap)
                         child_item.addChild(pcap_item)
                     else:
                         child_item.parent().removeChild(child_item)
-                        p.del_dataset(dataset)
+                        p.del_dataset(db_dataset)
                     return True
                 else:
                     return False
@@ -221,7 +239,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
     def add_pcap(self, dataset_item=None, file=None):
         try:
             if self.project_tree.selectedItems() and type(
-                    self.project_tree.selectedItems()[0].data(0, QtCore.Qt.UserRole)) is Dataset or self.test_mode:
+                    self.project_tree.selectedItems()[0].data(0, QtCore.Qt.UserRole)) is datasetEnt or self.test_mode:
 
                 if not self.test_mode:
                     pcap_path, pcap_name, file, extension = self.get_pcap_path()
@@ -233,10 +251,12 @@ class Workspace_UI(QtWidgets.QMainWindow):
                     dataset_item = self.project_tree.selectedItems()[0]
 
                 d = dataset_item.data(0, QtCore.Qt.UserRole)
-                new_pcap = Pcap(file=file, path=d.path, name=pcap_name)
+                #new_pcap = Pcap(file=file, path=d.path, name=pcap_name)
+                new_pcap = pcapEnt(name=pcap_name, path=d.path, pcap_file=file, parentKey=d.id)
 
                 if new_pcap.name is not None and new_pcap not in d.pcaps:
-                    d.add_pcap(new_pcap)
+                    #d.add_pcap(new_pcap)
+                    self.ent_operator.insert_pcap(new_pcap)
                     pcap_item = QtWidgets.QTreeWidgetItem()
                     pcap_item.setText(0, pcap_name)
                     pcap_item.setData(0, QtCore.Qt.UserRole, new_pcap)
@@ -382,7 +402,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
 
                 output_file = QFileDialog.getSaveFileName(caption="Choose Output location", filter=".json (*.json)")[0]
 
-                os.system('cd "C:\Program Files\Wireshark" & tshark -r ' + dataset_file + ' > ' + output_file)
+                os.system('cd "C:\Program Files\Wireshark" & tshark -r ' + dataset_file + ' -T json > ' + output_file)
                 return True
         except:
             traceback.print_exc()

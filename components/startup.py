@@ -7,7 +7,7 @@ from components.backend_components.entity_operator import EntityOperations
 
 class Main():
     def __init__(self):
-        _context.Base.metadata.create_all(bind=_context.engine, checkfirst=True)  
+        _context.Base.metadata.create_all(bind=_context.engine, checkfirst=True)
 
     def __del__(self):
         _context.session.close()
