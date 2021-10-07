@@ -54,6 +54,9 @@ class Workspace_UI(QtWidgets.QMainWindow):
 
             self.analyze_button = QtWidgets.QPushButton("Analyze", clicked=lambda: self.analyze())
             self.analyze_button.setGeometry(QtCore.QRect(630, 22, 111, 31))
+            
+            self.plot_button = QtWidgets.QPushButton("ORANG", clicked=lambda: self.plot_reload())
+            self.plot_button.setGeometry(QtCore.QRect(775, 475, 111, 31))
 
             #self.stacked_widget = QtWidgets.QStackedWidget()
             #self.stacked_widget.setGeometry(QtCore.QRect(230, 50, 681, 471))
@@ -67,7 +70,8 @@ class Workspace_UI(QtWidgets.QMainWindow):
             open_existing_workspace_action = QAction("Open Existing Workspace", self)
             open_existing_workspace_action.triggered.connect(lambda: self.open_existing_workspace(self.test_mode))
             
-            self.plot = Plot().fig_view
+            self.plot_object = Plot()
+            self.plot = self.plot_object.fig_view
             self.plot.setGeometry(QtCore.QRect(230, 50, 681, 471))
 
             menu = self.menuBar()
@@ -85,6 +89,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
             self.layout().addWidget(self.analyze_button)
             self.layout().addWidget(self.open_in_wireshark_button)
             self.layout().addWidget(self.plot)
+            self.layout().addWidget(self.plot_button)
 
             self.progress_bar = QProgressBar(self)
             self.progress_bar.setGeometry(15, 518, 221, 23)
@@ -95,6 +100,17 @@ class Workspace_UI(QtWidgets.QMainWindow):
             traceback.print_exc()
 
         self.show()
+    
+    def plot_reload(self):
+        try:
+            if self.project_tree.selectedItems() and type(
+                    self.project_tree.selectedItems()[0].data(0, QtCore.Qt.UserRole)) is Dataset or self.test_mode:
+                dataset_item = self.project_tree.selectedItems()[0]
+                d = dataset_item.data(0, QtCore.Qt.UserRole)
+                self.plot_object.update_pcap(d.mergeFilePath)
+        except:
+            print(traceback.print_exc())
+            return False
 
     def contextMenuEvent(self, event):
         context_menu = QMenu(self)

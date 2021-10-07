@@ -22,14 +22,14 @@ class Plot ():
         self.raw_html += '<body>'
         self.raw_html += po.plot(fig, include_plotlyjs=False, output_type='div')
         self.raw_html += '</body></html>'
-
-        self.fig_view = QWebEngineView()
+        
+        if self.pcap == '':
+            self.fig_view = QWebEngineView()
         # setHtml has a 2MB size limit, need to switch to setUrl on tmp file
         # for large figures.
         self.fig_view.setHtml(self.raw_html)
-        self.fig_view.show()
-        self.fig_view.raise_()
-
+        #self.fig_view.show()
+        #self.fig_view.raise_()
 
     def create_plot(self):
         # Load data
@@ -74,3 +74,7 @@ class Plot ():
             )
         )
         fig_view = self.show_qt(self.fig)
+        
+    def update_pcap(self, path):
+        self.pcap = path
+        self.create_plot()
