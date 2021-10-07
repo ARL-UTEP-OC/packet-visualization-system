@@ -231,6 +231,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
             for p in self.workspace_object.project:
                 for d in p.dataset:
                     if d.name == dataset_item.text(0):
+                        self.ent_operator.remove_dataset(d)
                         p.del_dataset(old=d)
                         dataset_item.parent().removeChild(dataset_item)
                         return True
@@ -325,6 +326,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
                     for d in p.dataset:
                         for cap in d.pcaps:
                             if cap.name == pcap_item.text(0):
+                                self.ent_operator.remove_pcap(cap)
                                 d.del_pcap(cap)
                                 pcap_item.parent().removeChild(pcap_item)
                                 return True
