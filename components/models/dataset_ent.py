@@ -18,8 +18,8 @@ class Dataset(Base):
         self.name = name
         self.path = os.path.join(path,self.name)
         self.merge_file_path = " " # Path where we will store the merged CAP in Dataset
+        self.create_folder()
         self.create_merge_file()
-        # self.create_folder()      implement with eyan
 
 
         # self.pcap_data = None  # will probably remove, need to assess use at later stage

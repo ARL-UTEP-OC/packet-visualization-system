@@ -59,8 +59,11 @@ class Workspace_UI(QtWidgets.QMainWindow):
             self.analyze_button = QtWidgets.QPushButton("Analyze", clicked=lambda: self.analyze())
             self.analyze_button.setGeometry(QtCore.QRect(630, 22, 111, 31))
 
+            self.stack = QtWidgets.QStackedWidget()
+            self.stack.setGeometry(QtCore.QRect(230, 55, 681, 490))
+
             self.tableWidget = table_gui()
-            self.tableWidget.setGeometry(QtCore.QRect(230, 55, 681, 490))
+            self.stack.addWidget(self.tableWidget)
 
             save_action = QAction("Save", self)
             save_action.triggered.connect(lambda: workspace_object.save())
@@ -85,7 +88,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
             self.layout().addWidget(self.add_pcap_button)
             self.layout().addWidget(self.analyze_button)
             self.layout().addWidget(self.open_in_wireshark_button)
-            self.layout().addWidget(self.tableWidget)
+            self.layout().addWidget(self.stack)
 
             self.progress_bar = QProgressBar(self)
             self.progress_bar.setGeometry(15, 518, 221, 23)
@@ -158,7 +161,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
     def remove_project(self, project=None):
         if self.project_tree.selectedItems() and type(
                 self.project_tree.selectedItems()[0].data(0, QtCore.Qt.UserRole)) is Project or self.test_mode == True:
-            if self.test_mode == False:
+            if not self.test_mode:
                 project = self.project_tree.selectedItems()[0]
             p = project.data(0, QtCore.Qt.UserRole)
             self.workspace_object.del_project(p)

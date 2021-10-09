@@ -31,17 +31,18 @@ class Pcap(Base):
             self.m_data = "m data"
             self.dataset_id = parentKey
 
+            self.toJSON()
 
             if not self.pcap_file == self.path:
                 shutil.copy(self.pcap_file, self.path)  # Copy user input into our directory
-
+                print("Entered shutil")
 
         except:
             print("Corrupt PCAP")
             self.name = " "
 
 
-        self.toJSON()
+        #self.toJSON()
 
     def toJSON(self):
         name = self.name
