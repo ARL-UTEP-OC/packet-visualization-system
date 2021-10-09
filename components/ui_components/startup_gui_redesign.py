@@ -95,6 +95,7 @@ class StartupWindow(QWidget):
 
 
 if __name__ == '__main__':
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon(os.path.join("images", "logo.png")))
     window = StartupWindow()

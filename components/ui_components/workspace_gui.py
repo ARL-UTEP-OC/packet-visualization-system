@@ -8,12 +8,13 @@ from PyQt5 import QtWidgets
 from PyQt5 import QtGui
 from PyQt5 import QtCore
 from PyQt5.QtCore import QEvent
-from PyQt5.QtWidgets import QInputDialog, QMenu, QFileDialog, QAction, QMessageBox, QTreeWidget, QProgressBar, QTableWidget
+from PyQt5.QtWidgets import QInputDialog, QMenu, QFileDialog, QAction, QMessageBox, QTreeWidget, QProgressBar, \
+    QTableWidget
 
 from components.backend_components.entity_operator import EntityOperations
 from components.backend_components.load import Load
 from components.models import dataset
-#from components.models.context.entities import EntityOperations
+# from components.models.context.entities import EntityOperations
 from components.models.dataset import Dataset
 from components.models.pcap import Pcap
 from components.models.project import Project
@@ -22,6 +23,7 @@ from components.backend_components import Wireshark
 from components.ui_components.table_gui import table_gui
 from components.models.dataset_ent import Dataset as datasetEnt
 from components.models.pcap_ent import Pcap as pcapEnt
+
 
 class Workspace_UI(QtWidgets.QMainWindow):
     def __init__(self, workspace_name: str, workspace_object: Workspace, test_mode: bool = False,
@@ -189,14 +191,14 @@ class Workspace_UI(QtWidgets.QMainWindow):
                         project = self.project_tree.selectedItems()[0]
 
                     p = project.data(0, QtCore.Qt.UserRole)
-                    #dataset = Dataset(name=text, parentPath=p.path)
+                    # dataset = Dataset(name=text, parentPath=p.path)
 
-                    #ent_operator = EntityOperations()
+                    # ent_operator = EntityOperations()
 
                     db_dataset = datasetEnt(name=text, path=p.path)
                     self.ent_operator.insert_dataset(db_dataset)
-                    #db_dataset.create_folder()
-                    #db_dataset.create_merge_file()
+                    # db_dataset.create_folder()
+                    # db_dataset.create_merge_file()
 
                     p.add_dataset(db_dataset)
                     child_item = QtWidgets.QTreeWidgetItem()
@@ -205,12 +207,12 @@ class Workspace_UI(QtWidgets.QMainWindow):
 
                     project.addChild(child_item)
 
-                    #new_pcap = Pcap(file=file, path=dataset.path, name=pcap_name)
+                    # new_pcap = Pcap(file=file, path=dataset.path, name=pcap_name)
                     db_pcap = pcapEnt(name=pcap_name, path=db_dataset.path, pcap_file=file, parentKey=db_dataset.id)
-                    #ent_operator.insert_pcap(db_pcap)
+                    # ent_operator.insert_pcap(db_pcap)
                     if db_pcap.name is not None:
                         self.ent_operator.insert_pcap(db_pcap)
-                        #dataset.add_pcap(new=db_pcap)
+                        # dataset.add_pcap(new=db_pcap)
                         pcap_item = QtWidgets.QTreeWidgetItem()
                         pcap_item.setText(0, pcap_name)
                         pcap_item.setData(0, QtCore.Qt.UserRole, db_pcap)
@@ -227,8 +229,9 @@ class Workspace_UI(QtWidgets.QMainWindow):
 
     def remove_dataset(self, dataset_item=None):
         if self.project_tree.selectedItems() and type(
-                self.project_tree.selectedItems()[0].data(0, QtCore.Qt.UserRole)) is datasetEnt or self.test_mode == True:
-            if self.test_mode == False:
+                self.project_tree.selectedItems()[0].data(0,
+                                                          QtCore.Qt.UserRole)) is datasetEnt or self.test_mode == True:
+            if not self.test_mode:
                 dataset_item = self.project_tree.selectedItems()[0]
             d = dataset_item.data(0, QtCore.Qt.UserRole)
             for p in self.workspace_object.project:
@@ -255,11 +258,11 @@ class Workspace_UI(QtWidgets.QMainWindow):
                     dataset_item = self.project_tree.selectedItems()[0]
 
                 d = dataset_item.data(0, QtCore.Qt.UserRole)
-                #new_pcap = Pcap(file=file, path=d.path, name=pcap_name)
+                # new_pcap = Pcap(file=file, path=d.path, name=pcap_name)
                 new_pcap = pcapEnt(name=pcap_name, path=d.path, pcap_file=file, parentKey=d.id)
 
                 if new_pcap.name is not None and new_pcap not in d.pcaps:
-                    #d.add_pcap(new_pcap)
+                    # d.add_pcap(new_pcap)
                     self.ent_operator.insert_pcap(new_pcap)
                     pcap_item = QtWidgets.QTreeWidgetItem()
                     pcap_item.setText(0, pcap_name)
@@ -285,9 +288,10 @@ class Workspace_UI(QtWidgets.QMainWindow):
                     my_zip.extractall(extracted_folder)
 
                 for file in os.listdir(extracted_folder):
-                    #new_pcap = Pcap(file, dataset_obj.path, os.path.join(extracted_folder, file))
-                    new_pcap = pcapEnt(name=file, path=dataset_obj.path, pcap_file=os.path.join(extracted_folder, file), parentKey=dataset_obj.id)
-                    #dataset_obj.add_pcap(new_pcap)
+                    # new_pcap = Pcap(file, dataset_obj.path, os.path.join(extracted_folder, file))
+                    new_pcap = pcapEnt(name=file, path=dataset_obj.path, pcap_file=os.path.join(extracted_folder, file),
+                                       parentKey=dataset_obj.id)
+                    # dataset_obj.add_pcap(new_pcap)
                     pcap_item = QtWidgets.QTreeWidgetItem()
                     pcap_item.setText(0, os.path.basename(file))
                     pcap_item.setData(0, QtCore.Qt.UserRole, new_pcap)
@@ -307,9 +311,10 @@ class Workspace_UI(QtWidgets.QMainWindow):
                 dataset_item = self.project_tree.selectedItems()[0]
                 dataset = self.project_tree.selectedItems()[0].data(0, QtCore.Qt.UserRole)
                 for file in os.listdir(location):
-                    #new_pcap = Pcap(file, dataset.path, os.path.join(location, file))
-                    new_pcap = pcapEnt(name=file, path=dataset.path, pcap_file=os.path.join(location, file), parentKey=dataset.id)
-                    #dataset.add_pcap(new_pcap)
+                    # new_pcap = Pcap(file, dataset.path, os.path.join(location, file))
+                    new_pcap = pcapEnt(name=file, path=dataset.path, pcap_file=os.path.join(location, file),
+                                       parentKey=dataset.id)
+                    # dataset.add_pcap(new_pcap)
                     pcap_item = QtWidgets.QTreeWidgetItem()
                     pcap_item.setText(0, os.path.basename(file))
                     pcap_item.setData(0, QtCore.Qt.UserRole, new_pcap)
@@ -321,7 +326,8 @@ class Workspace_UI(QtWidgets.QMainWindow):
     def remove_pcap(self, pcap_item=None):
         try:
             if self.project_tree.selectedItems() and type(
-                    self.project_tree.selectedItems()[0].data(0, QtCore.Qt.UserRole)) is pcapEnt or self.test_mode == True:
+                    self.project_tree.selectedItems()[0].data(0,
+                                                              QtCore.Qt.UserRole)) is pcapEnt or self.test_mode == True:
                 if not self.test_mode:
                     pcap_item = self.project_tree.selectedItems()[0]
 
@@ -340,7 +346,8 @@ class Workspace_UI(QtWidgets.QMainWindow):
 
     def analyze(self):
         if self.project_tree.selectedItems() and type(
-                self.project_tree.selectedItems()[0].data(0, QtCore.Qt.UserRole)) is datasetEnt or self.test_mode == True:
+                self.project_tree.selectedItems()[0].data(0,
+                                                          QtCore.Qt.UserRole)) is datasetEnt or self.test_mode == True:
             if not self.test_mode:
                 text = QInputDialog.getText(self, "Analysis Name Entry", "Enter Analysis name:")[0]
             analysis_item = QtWidgets.QTreeWidgetItem(self.analysis_tree)
@@ -362,7 +369,8 @@ class Workspace_UI(QtWidgets.QMainWindow):
                 return True
 
             if self.project_tree.selectedItems() and type(
-                    self.project_tree.selectedItems()[0].data(0, QtCore.Qt.UserRole)) is pcapEnt or self.test_mode == True:
+                    self.project_tree.selectedItems()[0].data(0,
+                                                              QtCore.Qt.UserRole)) is pcapEnt or self.test_mode == True:
                 if not self.test_mode:
                     pcap_item = self.project_tree.selectedItems()[0]
                 cap = pcap_item.data(0, QtCore.Qt.UserRole)
@@ -450,7 +458,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
                 file = QFileDialog.getOpenFileName(caption="Open existing Workspace", filter=file_filter)[0]
 
                 if file != "":
-                    if test_mode == False:
+                    if not test_mode:
                         workspace_object = Load().open_zip(file)
 
                         workspaceUI = Workspace_UI(workspace_object.name, workspace_object, existing_flag=True)
@@ -471,7 +479,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
                 dataset_item.setData(0, QtCore.Qt.UserRole, d)
                 project_item.addChild(dataset_item)
                 for cap in d.pcaps:
-                    pcap_item = QtWidgets.QTreeWidgetItem()  #Need to link to list of pcaps
+                    pcap_item = QtWidgets.QTreeWidgetItem()  # Need to link to list of pcaps
                     pcap_item.setText(0, cap.name)
                     dataset_item.addChild(pcap_item)
         return True
