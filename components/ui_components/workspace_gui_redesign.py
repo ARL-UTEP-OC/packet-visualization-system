@@ -1,6 +1,7 @@
 import os
 import shutil
 import traceback
+import webbrowser
 import zipfile
 
 from PyQt5.QtCore import Qt, QRect
@@ -28,19 +29,16 @@ class WorkspaceWindow(QMainWindow):
 
         self.setWindowTitle("PacketVisualizer - " + self.workspace_object.name)
         self.resize(800, 600)
-
+        # Docked widget for Project Tree
         self.project_tree = QTreeWidget()
         self.project_tree.setHeaderLabels(["Item Name", "Size", "DoC"])
         self.project_tree.setColumnWidth(0, 200)
+        self.dock_project_tree = QDockWidget("Project Tree", self)
+        self.dock_project_tree.setWidget(self.project_tree)
+        self.dock_project_tree.setFloating(False)
 
-        dockWidget = QDockWidget("Notes", self)
-        self.text_edit = QTextEdit()
-        self.text_edit.setFontPointSize(16)
-        dockWidget.setWidget(self.text_edit)
-        dockWidget.setFloating(False)
-
-        self.setCentralWidget(self.project_tree)
-        # self.addDockWidget(Qt.RightDockWidgetArea, dockWidget)
+        self.setCentralWidget(self.dock_project_tree)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.dock_project_tree)
 
         self._create_actions()
         self._create_menu_bar()
@@ -49,7 +47,8 @@ class WorkspaceWindow(QMainWindow):
         self._create_status_bar()
 
         if existing_flag:
-            self.workspace_object = Load().open_zip(os.path.join(workspace_object.location, workspace_object.name + ".zip"))
+            self.workspace_object = Load().open_zip(
+                os.path.join(workspace_object.location, workspace_object.name + ".zip"))
             self.generate_existing_workspace()
 
         self.show()
@@ -83,13 +82,18 @@ class WorkspaceWindow(QMainWindow):
         self.saveAction.setStatusTip("Save workspace")
         self.saveAction.setToolTip("Save workspace")
 
+        self.deleteAction = QAction(QIcon(os.path.join("images", "svg", "trash.svg")), "&Delete", self)
+        self.deleteAction.setShortcut("Del")
+        self.deleteAction.setStatusTip("Remove selected item")
+        self.deleteAction.setToolTip("Remove item")
+
         self.exitAction = QAction("&Exit", self)
         self.exitAction.setShortcut("Alt+F4")
         self.exitAction.setStatusTip("Exit workspace")
         self.exitAction.setToolTip("Exit workspace")
 
         # Edit Menu Actions
-        self.cutAction = QAction(QIcon(os.path.join("images", "svg", "cut.svg")), "Cu&t", self)
+        self.cutAction = QAction(QIcon(os.path.join("images", "svg", "cut-outline.svg")), "Cu&t", self)
         self.cutAction.setShortcut(QKeySequence.Cut)
 
         self.copyAction = QAction(QIcon(os.path.join("images", "svg", "copy.svg")), "&Copy", self)
@@ -98,8 +102,14 @@ class WorkspaceWindow(QMainWindow):
         self.pasteAction = QAction(QIcon(os.path.join("images", "svg", "clipboard.svg")), "&Paste", self)
         self.pasteAction.setShortcut(QKeySequence.Paste)
 
+        # Window Window Actions
+        self.openProjectTreeAction = QAction(QIcon(os.path.join("images", "svg", "git-branch.svg")),
+                                             "&Project Tree Window", self)
+        self.openProjectTreeAction.setStatusTip("Open project tree window")
+        self.openProjectTreeAction.setToolTip("Open project tree window")
+
         # Help Menu Actions
-        self.helpContentAction = QAction("&Help Content", self)
+        self.helpContentAction = QAction(QIcon(os.path.join("images", "svg", "help.svg")), "&Help Content", self)
         self.aboutAction = QAction("&About", self)
 
     def _connect_actions(self):
@@ -110,11 +120,14 @@ class WorkspaceWindow(QMainWindow):
         self.newPCAPAction.triggered.connect(self.new_pcap)
         self.openAction.triggered.connect(self.open_workspace)
         self.saveAction.triggered.connect(self.save)
+        self.deleteAction.triggered.connect(self.delete)
         self.exitAction.triggered.connect(self.exit)
         # Connect Edit actions
         self.cutAction.triggered.connect(self.cut_content)
         self.copyAction.triggered.connect(self.copy_content)
         self.pasteAction.triggered.connect(self.paste_content)
+        # Connect Windows actions
+        self.openProjectTreeAction.triggered.connect(self.open_project_tree)
         # Connect Help actions
         self.helpContentAction.triggered.connect(self.help_content)
         self.aboutAction.triggered.connect(self.about)
@@ -130,6 +143,7 @@ class WorkspaceWindow(QMainWindow):
         new_menu.addAction(self.newPCAPAction)
         file_menu.addAction(self.openAction)
         file_menu.addAction(self.saveAction)
+        file_menu.addAction(self.deleteAction)
         file_menu.addSeparator()
         file_menu.addAction(self.exitAction)
         # Edit Menu
@@ -137,6 +151,9 @@ class WorkspaceWindow(QMainWindow):
         edit_menu.addAction(self.cutAction)
         edit_menu.addAction(self.copyAction)
         edit_menu.addAction(self.pasteAction)
+        # Window Menu
+        windows_menu = menu_bar.addMenu('&Window')
+        windows_menu.addAction(self.openProjectTreeAction)
         # Help Menu
         help_menu = menu_bar.addMenu("&Help")
         help_menu.addAction(self.helpContentAction)
@@ -147,6 +164,7 @@ class WorkspaceWindow(QMainWindow):
         file_tool_bar.addAction(self.newProjectAction)
         file_tool_bar.addAction(self.openAction)
         file_tool_bar.addAction(self.saveAction)
+        file_tool_bar.addAction(self.deleteAction)
 
     def _create_status_bar(self):
         self.statusbar = self.statusBar()
@@ -158,7 +176,6 @@ class WorkspaceWindow(QMainWindow):
         separator = QAction(self)
         separator.setSeparator(True)
 
-        menu.addAction(self.newProjectAction)
         try:
             # Right-click a project
             if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Project:
@@ -168,10 +185,12 @@ class WorkspaceWindow(QMainWindow):
                 menu.addAction(self.newPCAPAction)
         except Exception:
             pass
+        menu.addAction(self.newProjectAction)
         menu.addAction(separator)
         menu.addAction(self.cutAction)
         menu.addAction(self.copyAction)
         menu.addAction(self.pasteAction)
+        menu.addAction(self.deleteAction)
 
         menu.exec(event.globalPos())
 
@@ -292,11 +311,44 @@ class WorkspaceWindow(QMainWindow):
 
     def save(self):
         # Logic for creating a new project
-        print("<b>File > Save<\b> clicked")
+        self.workspace_object.save()
+
+    def delete(self, project_item=None, dataset_item=None, pcap_item=None):
+        # Logic for deleting an item
+        if self.project_tree.selectedItems():
+            # Deleting a project
+            if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Project:
+                if not self.test_mode:
+                    project_item = self.project_tree.selectedItems()[0]
+                p = project_item.data(0, Qt.UserRole)
+                self.workspace_object.del_project(p)
+                QTreeWidget.invisibleRootItem(self.project_tree).removeChild(project_item)
+            # Deleting a dataset
+            elif type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
+                if not self.test_mode:
+                    dataset_item = self.project_tree.selectedItems()[0]
+                d = dataset_item.data(0, Qt.UserRole)
+                for p in self.workspace_object.project:
+                    for d in p.dataset:
+                        if d.name == dataset_item.text(0):
+                            p.del_dataset(old=d)
+                            dataset_item.parent().removeChild(dataset_item)
+            # Deleting a pcap
+            elif type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Pcap:
+                if not self.test_mode:
+                    pcap_item = self.project_tree.selectedItems()[0]
+                for p in self.workspace_object.project:
+                    for d in p.dataset:
+                        for cap in d.pcaps:
+                            if cap.name == pcap_item.text(0):
+                                d.del_pcap(cap)
+                                pcap_item.parent().removeChild(pcap_item)
+        else:
+            return False
 
     def exit(self):
         # Logic for exiting the program
-        print("<b>File > Exit<\b> clicked")
+        self.close()
 
     def cut_content(self):
         # Logic for cutting content
@@ -310,9 +362,12 @@ class WorkspaceWindow(QMainWindow):
         # Logic for pasting content
         print("<b>Edit > Paste<\b> clicked")
 
+    def open_project_tree(self):
+        self.dock_project_tree.show()
+
     def help_content(self):
         # Logic for help content
-        print("<b>Help > Help Content<\b> clicked")
+        webbrowser.open(os.path.join("documents", "Packet_Visualization.pdf"))
 
     def about(self):
         # Logic for about
@@ -363,7 +418,7 @@ class WorkspaceWindow(QMainWindow):
 
     def closeEvent(self, event):
         reply = QMessageBox.question(self, "Workspace Close", "Would you like to save this Workspace?",
-                                     QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
+                                     QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Yes)
 
         if reply == QMessageBox.Yes:
             self.workspace_object.save()
@@ -374,32 +429,6 @@ class WorkspaceWindow(QMainWindow):
             event.accept()
         else:
             event.ignore()
-
-    def remove_project(self, project=None):
-        if self.project_tree.selectedItems() and type(
-                self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Project or self.test_mode == True:
-            if self.test_mode == False:
-                project = self.project_tree.selectedItems()[0]
-            p = project.data(0, Qt.UserRole)
-            self.workspace_object.del_project(p)
-            QTreeWidget.invisibleRootItem(self.project_tree).removeChild(project)
-            return True
-        else:
-            return False
-
-    def remove_dataset(self, dataset_item=None):
-        if self.project_tree.selectedItems() and type(
-                self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset or self.test_mode == True:
-            if not self.test_mode:
-                dataset_item = self.project_tree.selectedItems()[0]
-            d = dataset_item.data(0, Qt.UserRole)
-            for p in self.workspace_object.project:
-                for d in p.dataset:
-                    if d.name == dataset_item.text(0):
-                        p.del_dataset(old=d)
-                        dataset_item.parent().removeChild(dataset_item)
-                        return True
-            return False
 
     def add_pcap_zip(self):
         try:
@@ -444,25 +473,6 @@ class WorkspaceWindow(QMainWindow):
                 return True
         except Exception:
             traceback.print_exc()
-
-    def remove_pcap(self, pcap_item=None):
-        try:
-            if self.project_tree.selectedItems() and type(
-                    self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Pcap or self.test_mode == True:
-                if not self.test_mode:
-                    pcap_item = self.project_tree.selectedItems()[0]
-
-                for p in self.workspace_object.project:
-                    for d in p.dataset:
-                        for cap in d.pcaps:
-                            if cap.name == pcap_item.text(0):
-                                d.del_pcap(cap)
-                                pcap_item.parent().removeChild(pcap_item)
-                                return True
-                return False
-        except Exception:
-            traceback.print_exc()
-            return False
 
     def analyze(self):
         if self.project_tree.selectedItems() and type(
