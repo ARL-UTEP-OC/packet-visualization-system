@@ -63,7 +63,7 @@ class Load:
 
     def load_project(self, workspace:Workspace, projects:list) -> list:
         for p in projects:
-            proj = Project(p['name'], p['c_time'])
+            proj = Project(p['name'], workspace.path, p['c_time'])
             self.load_dataset(proj, p['dataset'])
             workspace.add_project(proj)
             

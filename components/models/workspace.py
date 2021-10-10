@@ -9,7 +9,6 @@ class Workspace:
         else:
             self.location = location
         self.project = []
-        self.cwd = os.getcwd()
         self.open_existing = open_existing
         self.path = self.work_dir()
 
@@ -35,7 +34,6 @@ class Workspace:
             if os.path.isdir(path):
                 shutil.rmtree(path)
             os.mkdir(path)
-        os.chdir(path)
         return path
 
     def save(self) -> bool:
@@ -44,7 +42,7 @@ class Workspace:
             src = os.path.join(self.location, tail)
             dst = os.path.join(self.location, self.name)
             # Create the JSON file that will contain important information
-            save_file = ".save.json"
+            save_file = os.path.join(self.path, ".save.json")
             with open(save_file, 'w') as f:
                 f.write('{"name": "%s", "project": [' % (self.name))
                 for p in self.project:
@@ -53,9 +51,10 @@ class Workspace:
                         f.write(',')
                 f.write(']}')
             f.close()
-            if os.path.isfile("save.json"):
-                os.remove("save.json")
-            os.rename(save_file, "save.json")
+            old_save = os.path.join(self.path, "save.json")
+            if os.path.isfile(old_save):
+                os.remove(old_save)
+            os.rename(save_file, old_save)
             # Zip everything in the working directory
             shutil.make_archive(dst,'zip', src)
             return True
@@ -66,7 +65,6 @@ class Workspace:
         try:
             tail = "." + self.name
             path = os.path.join(self.location, tail)
-            os.chdir(self.cwd)
             shutil.rmtree(path)
             for p in self.project:
                 p.remove()
