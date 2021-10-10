@@ -15,7 +15,7 @@ class Pcap:
             self.m_data = m_data   # metadata 
 
             self.set_packet_data()
-            #self.calculate_total_packets() 
+            #self.calculate_total_packets()
             if not self.pcap_file == self.path:
                 shutil.copy(self.pcap_file, self.path)  # Copy user input into our directory
         except:
