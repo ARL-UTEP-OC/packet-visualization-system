@@ -11,6 +11,10 @@ from components.ui_components.workspace_gui_redesign import WorkspaceWindow
 
 
 class StartupWindow(QWidget):
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon(os.path.join("images", "logo.png")))
+    #window = StartupWindow()
     finished = pyqtSignal()
 
     def __init__(self, test_mode: bool = False):
@@ -93,11 +97,19 @@ class StartupWindow(QWidget):
         except Exception:
             traceback.print_exc()
 
+    def run_program(self):
+        # QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+        # application = QtWidgets.QApplication(sys.argv)
+        # self.init_window()
+        self.show()
+        sys.exit(self.app.exec_())
 
 if __name__ == '__main__':
-    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    '''QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon(os.path.join("images", "logo.png")))
     window = StartupWindow()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec_())'''
+    ui = StartupWindow()
+    ui.run_program()

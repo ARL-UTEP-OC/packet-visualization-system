@@ -1,4 +1,4 @@
-from components.ui_components.startup_gui import Ui_startup_window
+from components.ui_components.startup_gui_redesign import StartupWindow
 import components.models.context.database_context as _context
 from components.models.context.entities import Dataset, Pcap
 
@@ -9,6 +9,6 @@ class Main():
     def __del__(self):
         _context.session.close()
 
-    def init_program():
-        ui = Ui_startup_window()
+    def init_program(self):
+        ui = StartupWindow()
         ui.run_program()

@@ -19,8 +19,8 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    packages=setuptools.find_packages(include=['components', 'components.*'],exclude=["tests"]),
-    install_requires=['pyshark','PyQt5','sqlalchemy'],
+    packages=setuptools.find_packages(include=['components', 'components.*'], exclude=["tests"]),
+    install_requires=['pyshark', 'PyQt5', 'sqlalchemy', 'pandas', 'plotly', 'PyQtWebEngine', 'scapy'],
     include_package_data=True,
     python_requires=">=3.6",
 )
