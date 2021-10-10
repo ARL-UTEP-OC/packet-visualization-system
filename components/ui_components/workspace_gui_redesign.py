@@ -9,11 +9,11 @@ import plotly.offline as po
 import plotly.graph_objs as go
 import pandas as pd
 from scapy.all import *
-import datetime
+from datetime import datetime
 
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 
-from PyQt5.QtCore import Qt, QRect
+from PyQt5.QtCore import Qt, QRect, QObject, pyqtSignal, QThread
 from PyQt5.QtGui import QFont, QIcon, QKeySequence
 from PyQt5.QtWidgets import QMainWindow, QTreeWidget, QPushButton, QVBoxLayout, QProgressBar, QMenu, QWidget, QLabel, \
     QAction, QMessageBox, QDockWidget, QTextEdit, QInputDialog, QTreeWidgetItem, QFileDialog, QApplication, QToolBar
@@ -25,7 +25,48 @@ from components.models.pcap import Pcap
 from components.models.project import Project
 from components.models.workspace import Workspace
 from components.backend_components import Wireshark
-from components.backend_components.plot import Plot
+
+
+class Worker(QObject):
+    finished = pyqtSignal()
+    progress = pyqtSignal(int)
+    data = pyqtSignal(list)
+
+    def __init__(self, range, r_val, pcap: str = ''):
+        super().__init__()
+        self.range = range
+        self.r_val = r_val
+        self.pcap = pcap
+
+    def run(self):
+        if self.pcap != '':
+            self.progress.emit(5)
+            pcap = rdpcap(self.pcap)
+            date, value = [], []
+            for i in range(len(pcap)):
+                date.append(datetime.fromtimestamp(float(pcap[i].time)))
+                progress = int((i / len(pcap) * 100) * 0.45 + 5)
+                self.progress.emit(progress)
+
+            self.range = pd.date_range(date[0].replace(microsecond=0, second=0),
+                                       date[-1].replace(microsecond=0, second=0, minute=date[-1].minute + 1),
+                                       periods=100)
+            self.r_val = [0 for i in range(len(self.range))]
+
+            for d in range(len(date)):
+                for i in reversed(range(len(self.range))):
+                    if date[d] >= self.range[i]:
+                        self.r_val[i] += 1
+                        break
+                progress = int((d / len(date) * 100) + 50)
+                self.progress.emit(progress)
+        else:
+            self.progress.emit(50)
+            self.range, self.r_val = [datetime(2000, 1, 1), datetime(2001, 1, 1)], [0, 0]
+            self.progress.emit(100)
+
+        self.data.emit([self.range, self.r_val])
+        self.finished.emit()
 
 
 class WorkspaceWindow(QMainWindow):
@@ -45,10 +86,10 @@ class WorkspaceWindow(QMainWindow):
         self.dock_project_tree.setWidget(self.project_tree)
         self.dock_project_tree.setFloating(False)
         # Docked widget for Bandwidth vs. Time Graph
+        self.plot_range = []
+        self.plot_values = []
         self.pcap = ''
-        self.fig = None
-        self.fig_view = None
-        self.raw_html = None
+        self.fig_view = QWebEngineView()
         self.create_plot()
         self.dock_plot = QDockWidget("Bandwidth vs. Time Window", self)
         self.dock_plot.setWidget(self.fig_view)
@@ -226,6 +267,9 @@ class WorkspaceWindow(QMainWindow):
     def _create_status_bar(self):
         self.statusbar = self.statusBar()
         self.statusbar.showMessage("Ready", 3000)
+        self.progressBar = QProgressBar()
+        self.statusbar.addPermanentWidget(self.progressBar)
+        self.progressBar.setValue(0)
 
     def contextMenuEvent(self, event):
         # Right Click Menu
@@ -385,7 +429,7 @@ class WorkspaceWindow(QMainWindow):
             dataset_item = self.project_tree.selectedItems()[0]
             d = dataset_item.data(0, Qt.UserRole)
             self.pcap = d.mergeFilePath
-            self.create_plot()
+            self.update_plot()
 
     def export_csv(self):
         # Logic to export dataset or pcap to CSV
@@ -476,7 +520,7 @@ class WorkspaceWindow(QMainWindow):
 
     def cut_content(self):
         # Logic for cutting content
-        print("<b>Edit > Cut<\b> clicked")
+        self.create_plot()
 
     def copy_content(self):
         # Logic for copying content
@@ -628,50 +672,28 @@ class WorkspaceWindow(QMainWindow):
         return True
 
     def show_qt(self, fig):
-        self.raw_html = '<html><head><meta charset="utf-8" />'
-        self.raw_html += '<script src="https://cdn.plot.ly/plotly-latest.min.js"></script></head>'
-        self.raw_html += '<body>'
-        self.raw_html += po.plot(fig, include_plotlyjs=False, output_type='div')
-        self.raw_html += '</body></html>'
+        raw_html = '<html><head><meta charset="utf-8" />'
+        raw_html += '<script src="https://cdn.plot.ly/plotly-latest.min.js"></script></head>'
+        raw_html += '<body>'
+        raw_html += po.plot(fig, include_plotlyjs=False, output_type='div')
+        raw_html += '</body></html>'
 
         if self.fig_view == None:
             self.fig_view = QWebEngineView()
         # setHtml has a 2MB size limit, need to switch to setUrl on tmp file
         # for large figures.
-        self.fig_view.setHtml(self.raw_html)
-        # self.fig_view.show()
-        # self.fig_view.raise_()
+        self.fig_view.setHtml(raw_html)
 
     def create_plot(self):
-        # Load data
-        if self.pcap != '':
-            pcap = rdpcap(self.pcap)
-            date, value = [], []
-            for p in pcap:
-                date.append(datetime.datetime.fromtimestamp(float(p.time)))
-
-            ranges = pd.date_range(date[0].replace(microsecond=0, second=0),
-                                   date[-1].replace(microsecond=0, second=0, minute=date[-1].minute + 1), periods=20)
-            r_val = [0 for i in range(len(ranges))]
-
-            for d in date:
-                for i in reversed(range(len(ranges))):
-                    if d >= ranges[i]:
-                        r_val[i] += 1
-                        break;
-        else:
-            ranges, r_val = [datetime.date(2000, 1, 1), datetime.date(2001, 1, 1)], [0, 0]
-
         # Create figure
-        self.fig = go.Figure()
-        self.fig.add_trace(go.Scatter(x=ranges, y=r_val))
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=self.plot_range, y=self.plot_values))
 
         # Set title
-        self.fig.update_layout(
-            title_text="Bandwidth vs. Time")
+        fig.update_layout(title_text="Bandwidth vs. Time")
 
         # Add range slider
-        self.fig.update_layout(
+        fig.update_layout(
             xaxis=dict(
                 rangeselector=dict(
                     buttons=list([
@@ -684,4 +706,36 @@ class WorkspaceWindow(QMainWindow):
                 type="date"
             )
         )
-        fig_view = self.show_qt(self.fig)
+        self.show_qt(fig)
+
+    def reportProgress(self, n):
+        self.progressBar.setValue(n)
+
+    def report_plot_data(self, n):
+        self.plot_range = n[0]
+        self.plot_values = n[1]
+
+    def update_plot(self):
+        # Step 2: Create a QThread object
+        self.thread = QThread()
+        # Step 3: Create a worker object
+        self.worker = Worker(self.plot_range, self.plot_values, self.pcap)
+        # Step 4: Move worker to the thread
+        self.worker.moveToThread(self.thread)
+        # Step 5: Connect signals and slots
+        self.thread.started.connect(self.worker.run)
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        self.worker.progress.connect(self.reportProgress)
+        self.worker.data.connect(self.report_plot_data)
+        # Step 6: Start the thread
+        self.thread.start()
+
+        # Final resets
+        self.thread.finished.connect(
+            lambda: self.progressBar.setValue(0)
+        )
+        self.thread.finished.connect(
+            lambda: self.create_plot()
+        )
