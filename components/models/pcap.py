@@ -1,5 +1,7 @@
 import os
 import shutil
+import traceback
+
 import pyshark
 
 class Pcap:
@@ -19,6 +21,7 @@ class Pcap:
             if not self.pcap_file == self.path:
                 shutil.copy(self.pcap_file, self.path)  # Copy user input into our directory
         except:
+            traceback.print_exc()
             print("Error adding this pcap")
             self.name = None
 

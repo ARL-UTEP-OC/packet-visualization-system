@@ -10,13 +10,13 @@ class Dataset:
         self.path = os.path.join(parentPath, self.name)
         self.totalPackets = 0
         self.protocols = None
-        #self.create_folder()
-        #self.create_merge_file()
+        self.create_folder()
+        self.create_merge_file()
 
     def add_pcap(self, new: Pcap) -> list: #Replaced with DB Query
         self.pcaps.append(new)
-        # self.calculate_total_packets()
-        # self.merge_pcaps()
+        self.calculate_total_packets()
+        self.merge_pcaps()
         return self.pcaps
 
     def del_pcap(self, old: Pcap): # Replace with DB Query
