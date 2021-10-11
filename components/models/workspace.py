@@ -1,8 +1,11 @@
+import os
+import shutil
+
 from components.models.project import Project
-import os, shutil
+
 
 class Workspace:
-    def __init__(self, name:str, location:str, open_existing:bool = False) -> None:
+    def __init__(self, name: str, location: str, open_existing: bool = False) -> None:
         self.name = name
         if location == '':
             self.location = os.getcwd()
@@ -12,23 +15,23 @@ class Workspace:
         self.open_existing = open_existing
         self.path = self.work_dir()
 
-    def add_project(self, new:Project) -> list:
+    def add_project(self, new: Project) -> list:
         self.project.append(new)
         return self.project
 
-    def del_project(self, old:Project) -> list:
+    def del_project(self, old: Project) -> list:
         self.project.remove(old)
         old.remove()
         return self.project
 
-    def find_project(self, name:str) -> Project:
+    def find_project(self, name: str) -> Project:
         for p in self.project:
             if p.name == name:
                 return p
         return None
 
     def work_dir(self) -> str:
-        tail = "." + self.name # we want to work inside a temp, hidden folder
+        tail = "." + self.name  # we want to work inside a temp, hidden folder
         path = os.path.join(self.location, tail)
         if not self.open_existing:
             if os.path.isdir(path):
@@ -56,7 +59,7 @@ class Workspace:
                 os.remove(old_save)
             os.rename(save_file, old_save)
             # Zip everything in the working directory
-            shutil.make_archive(dst,'zip', src)
+            shutil.make_archive(dst, 'zip', src)
             return True
         except Exception:
             return False
@@ -68,7 +71,7 @@ class Workspace:
             shutil.rmtree(path)
             for p in self.project:
                 p.remove()
-            self.project = [] # unlink all projects
+            self.project = []  # unlink all projects
             return True
         except Exception:
             return False

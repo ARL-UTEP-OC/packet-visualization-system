@@ -110,8 +110,7 @@ class WorkspaceWindow(QMainWindow):
         self._create_status_bar()
 
         if existing_flag:
-            self.workspace_object = Load().open_zip(
-                os.path.join(workspace_object.location, workspace_object.name + ".zip"))
+            self.workspace_object = Load().open_zip(os.path.join(workspace_object.location, workspace_object.name + ".zip"))
             self.generate_existing_workspace()
 
     def _create_actions(self):
