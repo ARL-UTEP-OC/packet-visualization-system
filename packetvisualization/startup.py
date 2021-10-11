@@ -1,6 +1,6 @@
-from components.ui_components.startup_gui_redesign import StartupWindow
-import components.models.context.database_context as _context
-from components.models.context.entities import Dataset, Pcap
+from packetvisualization.ui_components.startup_gui_redesign import StartupWindow
+import packetvisualization.models.context.database_context as _context
+from packetvisualization.models.context.entities import Dataset, Pcap
 
 class Main():
     def __init__(self):

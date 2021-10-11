@@ -1,7 +1,7 @@
 import os
 import shutil
 
-from components.models.project import Project
+from packetvisualization.models.project import Project
 
 
 class Workspace:

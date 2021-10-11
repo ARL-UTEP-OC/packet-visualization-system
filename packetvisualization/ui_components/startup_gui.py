@@ -5,12 +5,12 @@ import traceback
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QFileDialog
 
-from components.backend_components.load import Load
-from components.models.dataset import Dataset
-from components.models.pcap import Pcap
-from components.models.project import Project
-from components.models.workspace import Workspace
-from components.ui_components.workspace_gui import Workspace_UI
+from packetvisualization.backend_components.load import Load
+from packetvisualization.models.dataset import Dataset
+from packetvisualization.models.pcap import Pcap
+from packetvisualization.models.project import Project
+from packetvisualization.models.workspace import Workspace
+from packetvisualization.ui_components.workspace_gui import Workspace_UI
 
 
 class Ui_startup_window(object):

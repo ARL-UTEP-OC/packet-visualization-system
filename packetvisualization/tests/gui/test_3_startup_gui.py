@@ -4,7 +4,7 @@ import sys
 import PyQt5
 from PyQt5 import QtCore, QtWidgets
 
-from components.ui_components.startup_gui import Ui_startup_window
+from packetvisualization.ui_components.startup_gui import Ui_startup_window
 
 cwd = None
 

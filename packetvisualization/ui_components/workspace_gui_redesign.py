@@ -19,14 +19,14 @@ from PyQt5.QtGui import QFont, QIcon, QKeySequence
 from PyQt5.QtWidgets import QMainWindow, QTreeWidget, QPushButton, QVBoxLayout, QProgressBar, QMenu, QWidget, QLabel, \
     QAction, QMessageBox, QDockWidget, QTextEdit, QInputDialog, QTreeWidgetItem, QFileDialog, QApplication, QToolBar
 
-from components.backend_components.load import Load
-# from components.models.context.entities import EntityOperations
-from components.models.dataset import Dataset
-from components.models.pcap import Pcap
-from components.models.project import Project
-from components.models.workspace import Workspace
-from components.backend_components import Wireshark
-from components.ui_components.table_gui import table_gui
+from packetvisualization.backend_components.load import Load
+# from packetvisualization.models.context.entities import EntityOperations
+from packetvisualization.models.dataset import Dataset
+from packetvisualization.models.pcap import Pcap
+from packetvisualization.models.project import Project
+from packetvisualization.models.workspace import Workspace
+from packetvisualization.backend_components import Wireshark
+from packetvisualization.ui_components.table_gui import table_gui
 
 
 class Worker(QObject):
@@ -111,7 +111,8 @@ class WorkspaceWindow(QMainWindow):
         self._create_status_bar()
 
         if existing_flag:
-            self.workspace_object = Load().open_zip(os.path.join(workspace_object.location, workspace_object.name + ".zip"))
+            self.workspace_object = Load().open_zip(
+                os.path.join(workspace_object.location, workspace_object.name + ".zip"))
             self.generate_existing_workspace()
 
     def _create_actions(self):
@@ -484,12 +485,12 @@ class WorkspaceWindow(QMainWindow):
                                                                                         'occurrence=f > ' + output_file)
                 elif platform.system() == "Linux":
                     os.system('tshark -r ' + dataset_file + ' -T fields -e frame.number -e '
-                                                                                        'ip.src -e ip.dst '
-                                                                                        '-e frame.len -e frame.time -e '
-                                                                                        'frame.time_relative -e _ws.col.Info '
-                                                                                        '-E header=y -E '
-                                                                                        'separator=, -E quote=d -E '
-                                                                                        'occurrence=f > ' + output_file)
+                                                            'ip.src -e ip.dst '
+                                                            '-e frame.len -e frame.time -e '
+                                                            'frame.time_relative -e _ws.col.Info '
+                                                            '-E header=y -E '
+                                                            'separator=, -E quote=d -E '
+                                                            'occurrence=f > ' + output_file)
 
                 return True
         except Exception:
@@ -753,7 +754,7 @@ class WorkspaceWindow(QMainWindow):
         raw_html += po.plot(fig, include_plotlyjs=False, output_type='div')
         raw_html += '</body></html>'
 
-        if self.fig_view == None:
+        if self.fig_view is None:
             self.fig_view = QWebEngineView()
         # setHtml has a 2MB size limit, need to switch to setUrl on tmp file
         # for large figures.

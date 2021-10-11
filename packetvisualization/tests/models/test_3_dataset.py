@@ -1,6 +1,6 @@
-from components.models.workspace import Workspace
-from components.models.project import Project
-from components.models.dataset import Dataset
+from packetvisualization.models.workspace import Workspace
+from packetvisualization.models.project import Project
+from packetvisualization.models.dataset import Dataset
 import os, pytest, hashlib
 
 cwd = None
