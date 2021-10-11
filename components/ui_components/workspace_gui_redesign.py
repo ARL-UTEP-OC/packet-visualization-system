@@ -19,13 +19,12 @@ from PyQt5.QtWidgets import QMainWindow, QTreeWidget, QPushButton, QVBoxLayout, 
     QAction, QMessageBox, QDockWidget, QTextEdit, QInputDialog, QTreeWidgetItem, QFileDialog, QApplication, QToolBar
 
 from components.backend_components.load import Load
-from components.models.context.entities import EntityOperations
+#from components.models.context.entities import EntityOperations
 from components.models.dataset import Dataset
 from components.models.pcap import Pcap
 from components.models.project import Project
 from components.models.workspace import Workspace
 from components.backend_components import Wireshark
-from components.backend_components.plot import Plot
 from components.ui_components.table_gui import table_gui
 
 class Worker(QObject):
@@ -68,9 +67,6 @@ class Worker(QObject):
 
         self.data.emit([self.range, self.r_val])
         self.finished.emit()
-from components.backend_components.plot import Plot
-from components.ui_components.table_gui import table_gui
-
 
 class WorkspaceWindow(QMainWindow):
     def __init__(self, workspace_object: Workspace, test_mode: bool = False,
@@ -421,7 +417,7 @@ class WorkspaceWindow(QMainWindow):
                     pcap_item.setData(0, Qt.UserRole, new_pcap)
                     dataset_item.addChild(pcap_item)
                 if self.pcap != "":
-                    self.create_plot()
+                    self.update_plot()
         except Exception:
             print("Error loading this pcap")
             traceback.print_exc()
@@ -516,7 +512,7 @@ class WorkspaceWindow(QMainWindow):
                         if d.name == dataset_item.text(0):
                             if d.mergeFilePath == self.pcap:
                                 self.pcap = ""
-                                self.create_plot()
+                                self.update_plot()
                             p.del_dataset(old=d)
                             dataset_item.parent().removeChild(dataset_item)
             # Deleting a pcap
@@ -530,7 +526,7 @@ class WorkspaceWindow(QMainWindow):
                                 d.del_pcap(cap)
                                 pcap_item.parent().removeChild(pcap_item)
                 if self.pcap != "":
-                    self.create_plot()
+                    self.update_plot()
         else:
             return False
 
@@ -690,70 +686,6 @@ class WorkspaceWindow(QMainWindow):
         except:
             traceback.print_exc()
 
-    def open_in_wireshark(self, pcap_item=None, dataset_item=None, merge_flag=False):
-        try:
-            if self.project_tree.selectedItems() and type(
-                    self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset or (
-                    self.test_mode == True and merge_flag == True):
-                if not self.test_mode:
-                    dataset_item = self.project_tree.selectedItems()[0]
-                d = dataset_item.data(0, Qt.UserRole)
-                Wireshark.openwireshark(d.mergeFilePath)
-                return True
-
-            if self.project_tree.selectedItems() and type(
-                    self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Pcap or self.test_mode == True:
-                if not self.test_mode:
-                    pcap_item = self.project_tree.selectedItems()[0]
-                cap = pcap_item.data(0, Qt.UserRole)
-                if self.test_mode:
-                    return True
-                Wireshark.openwireshark(cap.pcap_file)
-            else:
-                return False
-        except Exception:
-            traceback.print_exc()
-            return False
-
-    def convert_dataset_to_csv(self):
-        try:
-            if self.project_tree.selectedItems() and type(
-                    self.project_tree.selectedItems()[0].data(0,
-                                                              Qt.UserRole)) is Dataset or self.test_mode == True:
-                dataset_item = self.project_tree.selectedItems()[0]
-                dataset = dataset_item.data(0, Qt.UserRole)
-                dataset_file = dataset.mergeFilePath
-
-                output_file = QFileDialog.getSaveFileName(caption="Choose Output location", filter=".csv (*.csv)")[0]
-
-                os.system(
-                    'cd "C:\Program Files\Wireshark" & tshark -r ' + dataset_file + ' -T fields -e frame.number -e '
-                                                                                    'ip.src -e ip.dst '
-                                                                                    '-e frame.len -e frame.time -e '
-                                                                                    'frame.time_relative -e _ws.col.Info '
-                                                                                    '-E header=y -E '
-                                                                                    'separator=, -E quote=d -E '
-                                                                                    'occurrence=f > ' + output_file)
-                return True
-        except Exception:
-            traceback.print_exc()
-
-    def convert_dataset_to_json(self):
-        try:
-            if self.project_tree.selectedItems() and type(
-                    self.project_tree.selectedItems()[0].data(0,
-                                                              Qt.UserRole)) is Dataset or self.test_mode == True:
-                dataset_item = self.project_tree.selectedItems()[0]
-                dataset = dataset_item.data(0, Qt.UserRole)
-                dataset_file = dataset.mergeFilePath
-
-                output_file = QFileDialog.getSaveFileName(caption="Choose Output location", filter=".json (*.json)")[0]
-
-                os.system('cd "C:\Program Files\Wireshark" & tshark -r ' + dataset_file + ' > ' + output_file)
-                return True
-        except Exception:
-            traceback.print_exc()
-
     def get_pcap_path(self, full_path: str = None):
         file_filter = "Wireshark capture file (*.pcap)"
         initial_filter = "Wireshark capture file (*.pcap)"
@@ -831,6 +763,8 @@ class WorkspaceWindow(QMainWindow):
         self.plot_values = n[1]
 
     def update_plot(self):
+        self.progressbar.show()
+
         # Step 2: Create a QThread object
         self.thread = QThread()
         # Step 3: Create a worker object
@@ -851,6 +785,11 @@ class WorkspaceWindow(QMainWindow):
         self.thread.finished.connect(
             lambda: self.progressBar.setValue(0)
         )
+
+        self.thread.finished.connect(
+            lambda : self.progressbar.hide()
+        )
+
         self.thread.finished.connect(
             lambda: self.create_plot()
         )
