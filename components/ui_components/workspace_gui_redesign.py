@@ -179,7 +179,13 @@ class WorkspaceWindow(QMainWindow):
 
         self.progressbar = QProgressBar()
         self.progressbar.setFixedSize(250, 12)
+        self.progressbar.setTextVisible(False)
+        self.progressbar.setStyleSheet("QProgressBar::chunk "
+                                       "{"
+                                       "background-color: grey;"
+                                       "}")
         self.statusbar.addPermanentWidget(self.progressbar)
+        self.progressbar.hide()
 
     def contextMenuEvent(self, event):
         menu = QMenu(self.project_tree)
@@ -523,7 +529,7 @@ class WorkspaceWindow(QMainWindow):
                 self.dock_table = QDockWidget("Packet Table", self)
                 self.dock_table.setWidget(table)
                 self.dock_table.setFloating(False)
-                self.addDockWidget(Qt.LeftDockWidgetArea, self.dock_table)
+                self.addDockWidget(Qt.BottomDockWidgetArea, self.dock_table)
 
             return
         except:

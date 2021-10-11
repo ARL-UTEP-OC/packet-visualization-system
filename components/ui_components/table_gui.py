@@ -43,6 +43,7 @@ class table_gui(QTableWidget):
 
         value = (100/len(data))
         progressbar_value = 0
+        progressbar.show()
         i = 0
         for packet in data:
             self.setItem(i, 0, QTableWidgetItem(packet['_source']['layers']['frame'].get('frame.number')))
@@ -60,5 +61,6 @@ class table_gui(QTableWidget):
             progressbar_value = progressbar_value + value
             progressbar.setValue(progressbar_value)
 
-        #progressbar.setValue(0)
+        progressbar.setValue(0)
+        progressbar.hide()
         os.remove(self.temp_file)
