@@ -756,7 +756,7 @@ class WorkspaceWindow(QMainWindow):
         self.show_qt(fig)
 
     def reportProgress(self, n):
-        self.progressBar.setValue(n)
+        self.progressbar.setValue(n)
 
     def report_plot_data(self, n):
         self.plot_range = n[0]
@@ -783,7 +783,7 @@ class WorkspaceWindow(QMainWindow):
 
         # Final resets
         self.thread.finished.connect(
-            lambda: self.progressBar.setValue(0)
+            lambda: self.progressbar.setValue(0)
         )
 
         self.thread.finished.connect(
