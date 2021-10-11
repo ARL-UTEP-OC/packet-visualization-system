@@ -3,9 +3,9 @@ import os, shutil
 import platform
 
 class Dataset:
-    def __init__(self, name: str, parentPath: str) -> None:  # Not sure if we should pass entire Project object, need to ask team
+    def __init__(self, name: str, parentPath: str) -> None:
         self.name = name
-        self.pcaps = []
+        self.pcaps = [] # will use children key instead
         self.mergeFilePath = None
         self.path = os.path.join(parentPath, self.name)
         self.totalPackets = 0
@@ -13,13 +13,13 @@ class Dataset:
         self.create_folder()
         self.create_merge_file()
 
-    def add_pcap(self, new: Pcap) -> list:
+    def add_pcap(self, new: Pcap) -> list: #Replaced with DB Query
         self.pcaps.append(new)
-        # self.calculate_total_packets()
+        self.calculate_total_packets()
         self.merge_pcaps()
         return self.pcaps
 
-    def del_pcap(self, old: Pcap):
+    def del_pcap(self, old: Pcap): # Replace with DB Query
         self.pcaps.remove(old)
         if self.pcaps != []: # must have at least one pcap to merge
             self.merge_pcaps()
@@ -37,7 +37,7 @@ class Dataset:
             os.mkdir(self.path)
         return self.path
 
-    def create_merge_file(self) -> str:
+    def create_merge_file(self) -> str: # TODO: CHECK
         filename = self.name + ".pcap"
         path = os.path.join(self.path, filename)
         self.mergeFilePath = path
@@ -52,13 +52,13 @@ class Dataset:
                 f.write(',')
         f.write(']}')
 
-    def calculate_total_packets(self):
+    def calculate_total_packets(self):  # Don't Need
         for pcap in self.pcaps:
             self.totalPackets += pcap.total_packets
 
         return self.totalPackets
 
-    def merge_pcaps(self):
+    def merge_pcaps(self): # TODO: CHECK
         pcapPaths = ""
 
         if platform.system() == 'Windows':

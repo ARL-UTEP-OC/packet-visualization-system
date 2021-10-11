@@ -12,7 +12,7 @@ class Pcap:
             self.pcap_data = None  # packet capture object (packets within pcap file)
             self.total_packets = 0
             self.protocols = {}
-            self.m_data = m_data   # metadata 
+            self.m_data = m_data   # metadata will go to packet
 
             self.set_packet_data()
             #self.calculate_total_packets()
@@ -22,7 +22,7 @@ class Pcap:
             print("Error adding this pcap")
             self.name = None
 
-    def set_packet_data(self):
+    def set_packet_data(self): # Don't need
         self.pcap_data = pyshark.FileCapture(self.pcap_file)
         return self.pcap_data
 
@@ -51,11 +51,11 @@ class Pcap:
 
         # knows PCAP editable free text meta-data
     
-    def save(self, f) -> None:
+    def save(self, f) -> None: # TODO: Rework
         f.write('{"name": "%s", "m_data": "%s"' % (self.name, self.m_data))
         f.write('}')
 
-    def remove(self) -> bool:
+    def remove(self) -> bool: # Moved to entity operator
         return self.__del__()
 
     def __del__(self) -> bool:

@@ -19,13 +19,13 @@ from PyQt5.QtWidgets import QMainWindow, QTreeWidget, QPushButton, QVBoxLayout, 
     QAction, QMessageBox, QDockWidget, QTextEdit, QInputDialog, QTreeWidgetItem, QFileDialog, QApplication, QToolBar
 
 from components.backend_components.load import Load
-from components.models.context.entities import EntityOperations
+#from components.models.context.entities import EntityOperations
 from components.models.dataset import Dataset
 from components.models.pcap import Pcap
 from components.models.project import Project
 from components.models.workspace import Workspace
 from components.backend_components import Wireshark
-
+from components.ui_components.table_gui import table_gui
 
 class Worker(QObject):
     finished = pyqtSignal()
@@ -67,7 +67,6 @@ class Worker(QObject):
 
         self.data.emit([self.range, self.r_val])
         self.finished.emit()
-
 
 class WorkspaceWindow(QMainWindow):
     def __init__(self, workspace_object: Workspace, test_mode: bool = False,
@@ -128,6 +127,10 @@ class WorkspaceWindow(QMainWindow):
         self.newPCAPAction = QAction("New P&CAP", self)
         self.newPCAPAction.setStatusTip("Create a new pcap")
         self.newPCAPAction.setToolTip("Create a new pcap")
+
+        self.gen_table_action = QAction("View Packet Table", self)
+        self.gen_table_action.setStatusTip("View Packets in a PCAP")
+        self.gen_table_action.setToolTip("View Packets in a PCAP")
 
         self.openAction = QAction(QIcon(os.path.join("images", "svg", "folder-open.svg")), "&Open...", self)
         self.openAction.setShortcut("Ctrl+O")
@@ -199,6 +202,7 @@ class WorkspaceWindow(QMainWindow):
         self.newProjectAction.triggered.connect(self.new_project)
         self.newDatasetAction.triggered.connect(self.new_dataset)
         self.newPCAPAction.triggered.connect(self.new_pcap)
+        self.gen_table_action.triggered.connect(self.gen_table)
         self.openAction.triggered.connect(self.open_workspace)
         self.saveAction.triggered.connect(self.save)
         self.exitAction.triggered.connect(self.exit)
@@ -228,6 +232,7 @@ class WorkspaceWindow(QMainWindow):
         new_menu.addAction(self.newProjectAction)
         new_menu.addAction(self.newDatasetAction)
         new_menu.addAction(self.newPCAPAction)
+        new_menu.addAction(self.gen_table_action)
         file_menu.addAction(self.openAction)
         file_menu.addAction(self.saveAction)
         file_menu.addSeparator()
@@ -267,9 +272,16 @@ class WorkspaceWindow(QMainWindow):
     def _create_status_bar(self):
         self.statusbar = self.statusBar()
         self.statusbar.showMessage("Ready", 3000)
-        self.progressBar = QProgressBar()
-        self.statusbar.addPermanentWidget(self.progressBar)
-        self.progressBar.setValue(0)
+
+        self.progressbar = QProgressBar()
+        self.progressbar.setFixedSize(250, 12)
+        self.progressbar.setTextVisible(False)
+        self.progressbar.setStyleSheet("QProgressBar::chunk "
+                                       "{"
+                                       "background-color: grey;"
+                                       "}")
+        self.statusbar.addPermanentWidget(self.progressbar)
+        self.progressbar.hide()
 
     def contextMenuEvent(self, event):
         # Right Click Menu
@@ -394,6 +406,10 @@ class WorkspaceWindow(QMainWindow):
                 d = dataset_item.data(0, Qt.UserRole)
                 new_pcap = Pcap(file=file, path=d.path, name=pcap_name)
 
+                for cap in d.pcaps:
+                    if new_pcap.name == cap.name:
+                        return
+
                 if new_pcap.name is not None and new_pcap not in d.pcaps:
                     d.add_pcap(new_pcap)
                     pcap_item = QTreeWidgetItem()
@@ -401,7 +417,7 @@ class WorkspaceWindow(QMainWindow):
                     pcap_item.setData(0, Qt.UserRole, new_pcap)
                     dataset_item.addChild(pcap_item)
                 if self.pcap != "":
-                    self.create_plot()
+                    self.update_plot()
         except Exception:
             print("Error loading this pcap")
             traceback.print_exc()
@@ -496,7 +512,7 @@ class WorkspaceWindow(QMainWindow):
                         if d.name == dataset_item.text(0):
                             if d.mergeFilePath == self.pcap:
                                 self.pcap = ""
-                                self.create_plot()
+                                self.update_plot()
                             p.del_dataset(old=d)
                             dataset_item.parent().removeChild(dataset_item)
             # Deleting a pcap
@@ -510,7 +526,7 @@ class WorkspaceWindow(QMainWindow):
                                 d.del_pcap(cap)
                                 pcap_item.parent().removeChild(pcap_item)
                 if self.pcap != "":
-                    self.create_plot()
+                    self.update_plot()
         else:
             return False
 
@@ -520,7 +536,7 @@ class WorkspaceWindow(QMainWindow):
 
     def cut_content(self):
         # Logic for cutting content
-        self.create_plot()
+        print("<b>Edit > Cut<\b> clicked")
 
     def copy_content(self):
         # Logic for copying content
@@ -598,13 +614,18 @@ class WorkspaceWindow(QMainWindow):
                 with zipfile.ZipFile(location, 'r') as my_zip:
                     my_zip.extractall(extracted_folder)
 
+                namelist = []
+                for cap in dataset_obj.pcaps:
+                    namelist.append(cap.name)
+
                 for file in os.listdir(extracted_folder):
                     new_pcap = Pcap(file, dataset_obj.path, os.path.join(extracted_folder, file))
-                    dataset_obj.add_pcap(new_pcap)
-                    pcap_item = QTreeWidgetItem()
-                    pcap_item.setText(0, os.path.basename(file))
-                    pcap_item.setData(0, Qt.UserRole, new_pcap)
-                    dataset_item.addChild(pcap_item)
+                    if new_pcap.name not in namelist:
+                        dataset_obj.add_pcap(new_pcap)
+                        pcap_item = QTreeWidgetItem()
+                        pcap_item.setText(0, os.path.basename(file))
+                        pcap_item.setData(0, Qt.UserRole, new_pcap)
+                        dataset_item.addChild(pcap_item)
 
                 shutil.rmtree(extracted_folder)
                 return True
@@ -619,13 +640,19 @@ class WorkspaceWindow(QMainWindow):
                 location = QFileDialog.getExistingDirectory(caption="Select Folder of PCAP's")
                 dataset_item = self.project_tree.selectedItems()[0]
                 dataset = self.project_tree.selectedItems()[0].data(0, Qt.UserRole)
+
+                namelist = []
+                for cap in dataset.pcaps:
+                    namelist.append(cap.name)
+
                 for file in os.listdir(location):
-                    new_pcap = Pcap(file, dataset.path, os.path.join(location, file))
-                    dataset.add_pcap(new_pcap)
-                    pcap_item = QTreeWidgetItem()
-                    pcap_item.setText(0, os.path.basename(file))
-                    pcap_item.setData(0, Qt.UserRole, new_pcap)
-                    dataset_item.addChild(pcap_item)
+                    if new_pcap.name not in namelist:
+                        new_pcap = Pcap(file, dataset.path, os.path.join(location, file))
+                        dataset.add_pcap(new_pcap)
+                        pcap_item = QTreeWidgetItem()
+                        pcap_item.setText(0, os.path.basename(file))
+                        pcap_item.setData(0, Qt.UserRole, new_pcap)
+                        dataset_item.addChild(pcap_item)
                 return True
         except Exception:
             traceback.print_exc()
@@ -641,6 +668,23 @@ class WorkspaceWindow(QMainWindow):
 
     def remove_analysis(self):
         return
+
+    def gen_table(self):
+        try:
+            if self.project_tree.selectedItems() and type(
+                    self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Pcap:
+                pcap_item = self.project_tree.selectedItems()[0]
+                pcap_obj = pcap_item.data(0, Qt.UserRole)
+
+                table = table_gui(pcap_obj, self.progressbar)
+                self.dock_table = QDockWidget("Packet Table", self)
+                self.dock_table.setWidget(table)
+                self.dock_table.setFloating(False)
+                self.addDockWidget(Qt.BottomDockWidgetArea, self.dock_table)
+
+            return
+        except:
+            traceback.print_exc()
 
     def get_pcap_path(self, full_path: str = None):
         file_filter = "Wireshark capture file (*.pcap)"
@@ -661,13 +705,16 @@ class WorkspaceWindow(QMainWindow):
         for p in self.workspace_object.project:
             project_item = QTreeWidgetItem(self.project_tree)
             project_item.setText(0, p.name)
+            project_item.setData(0, Qt.UserRole, p)
             for d in p.dataset:
                 dataset_item = QTreeWidgetItem()
                 dataset_item.setText(0, d.name)
+                dataset_item.setData(0, Qt.UserRole, d)
                 project_item.addChild(dataset_item)
                 for cap in d.pcaps:
                     pcap_item = QTreeWidgetItem()
                     pcap_item.setText(0, cap.name)
+                    pcap_item.setData(0, Qt.UserRole, cap)
                     dataset_item.addChild(pcap_item)
         return True
 
@@ -709,13 +756,15 @@ class WorkspaceWindow(QMainWindow):
         self.show_qt(fig)
 
     def reportProgress(self, n):
-        self.progressBar.setValue(n)
+        self.progressbar.setValue(n)
 
     def report_plot_data(self, n):
         self.plot_range = n[0]
         self.plot_values = n[1]
 
     def update_plot(self):
+        self.progressbar.show()
+
         # Step 2: Create a QThread object
         self.thread = QThread()
         # Step 3: Create a worker object
@@ -734,8 +783,13 @@ class WorkspaceWindow(QMainWindow):
 
         # Final resets
         self.thread.finished.connect(
-            lambda: self.progressBar.setValue(0)
+            lambda: self.progressbar.setValue(0)
         )
+
+        self.thread.finished.connect(
+            lambda : self.progressbar.hide()
+        )
+
         self.thread.finished.connect(
             lambda: self.create_plot()
         )

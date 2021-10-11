@@ -15,7 +15,7 @@ Follow these steps:
 4. You can now run *python* and test the package. 
 5. Suggestion: The following is the way to run the system.
    1. from components.startup import Main
-   2. m = Main
+   2. m = Main()
    3. m.init_program()
 ***
 ## Dependencies
