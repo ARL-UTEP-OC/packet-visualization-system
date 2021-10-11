@@ -62,7 +62,8 @@ class Worker(QObject):
                 self.progress.emit(progress)
         else:
             self.progress.emit(50)
-            self.range, self.r_val = [datetime(2000, 1, 1), datetime(2001, 1, 1)], [0, 0]
+            #self.range, self.r_val = [datetime(2000, 1, 1), datetime(2001, 1, 1)], [0, 0]
+            self.range, self.r_val = [], []
             self.progress.emit(100)
 
         self.data.emit([self.range, self.r_val])
@@ -72,6 +73,8 @@ class WorkspaceWindow(QMainWindow):
     def __init__(self, workspace_object: Workspace, test_mode: bool = False,
                  existing_flag: bool = False):
         super().__init__()
+        self.icons = os.path.join(os.path.dirname(__file__), "images", "svg")
+        self.logo = os.path.join(os.path.dirname(__file__), "images", "logo.png")
         self.workspace_object = workspace_object
         self.test_mode = test_mode
 
@@ -111,11 +114,11 @@ class WorkspaceWindow(QMainWindow):
 
     def _create_actions(self):
         # File Menu Actions
-        self.newWorkspaceAction = QAction("New &Workspace", self)
+        self.newWorkspaceAction = QAction("&New Workspace", self)
         self.newWorkspaceAction.setStatusTip("Create a new workspace")
         self.newWorkspaceAction.setToolTip("Create a new workspace")
 
-        self.newProjectAction = QAction(QIcon(os.path.join("images", "svg", "add-circle.svg")), "New &Project", self)
+        self.newProjectAction = QAction(QIcon(os.path.join(self.icons, "add-circle.svg")), "New &Project", self)
         self.newProjectAction.setShortcut("Ctrl+N")
         self.newProjectAction.setStatusTip("Create a new project")
         self.newProjectAction.setToolTip("Create a new project")
@@ -128,52 +131,55 @@ class WorkspaceWindow(QMainWindow):
         self.newPCAPAction.setStatusTip("Create a new pcap")
         self.newPCAPAction.setToolTip("Create a new pcap")
 
-        self.gen_table_action = QAction("View Packet Table", self)
-        self.gen_table_action.setStatusTip("View Packets in a PCAP")
-        self.gen_table_action.setToolTip("View Packets in a PCAP")
-
-        self.openAction = QAction(QIcon(os.path.join("images", "svg", "folder-open.svg")), "&Open...", self)
-        self.openAction.setShortcut("Ctrl+O")
+        self.openAction = QAction("&Existing Workspace", self)
         self.openAction.setStatusTip("Open existing workspace")
         self.openAction.setToolTip("Open existing workspace")
 
-        self.saveAction = QAction(QIcon(os.path.join("images", "svg", "save.svg")), "&Save", self)
+        self.saveAction = QAction(QIcon(os.path.join(self.icons, "save.svg")), "&Save", self)
         self.saveAction.setShortcut("Ctrl+S")
         self.saveAction.setStatusTip("Save workspace")
         self.saveAction.setToolTip("Save workspace")
 
-        self.traceAction = QAction(QIcon(os.path.join("images", "svg", "pulse.svg")), "&Trace", self)
+        self.traceAction = QAction(QIcon(os.path.join(self.icons, "pulse.svg")), "&Trace", self)
         self.traceAction.setShortcut("Ctrl+T")
         self.traceAction.setStatusTip("Trace dataset on Bandwidth vs Time graph")
         self.traceAction.setToolTip("race dataset on Bandwidth vs Time graph")
 
-        self.exportCsvAction = QAction("Export Dataset/PCAP to CSV", self)
+        self.exportCsvAction = QAction("Export Dataset/PCAP to &CSV", self)
         self.exportCsvAction.setStatusTip("Export Dataset/PCAP to CSV")
         self.exportCsvAction.setToolTip("Export Dataset/PCAP to CSV")
 
-        self.exportJsonAction = QAction("Export Dataset/PCAP to JSON", self)
+        self.exportJsonAction = QAction("Export Dataset/PCAP to &JSON", self)
         self.exportJsonAction.setStatusTip("Export Dataset/PCAP to JSON")
         self.exportJsonAction.setToolTip("Export Dataset/PCAP to JSON")
 
-        self.exitAction = QAction("&Exit", self)
+        self.exitAction = QAction("E&xit", self)
         self.exitAction.setShortcut("Alt+F4")
         self.exitAction.setStatusTip("Exit workspace")
         self.exitAction.setToolTip("Exit workspace")
 
         # Edit Menu Actions
-        self.cutAction = QAction(QIcon(os.path.join("images", "svg", "cut.svg")), "Cu&t", self)
+        self.cutAction = QAction(QIcon(os.path.join(self.icons, "cut.svg")), "Cu&t", self)
         self.cutAction.setShortcut(QKeySequence.Cut)
+        self.cutAction.setEnabled(False)
 
-        self.copyAction = QAction(QIcon(os.path.join("images", "svg", "copy.svg")), "&Copy", self)
+        self.copyAction = QAction(QIcon(os.path.join(self.icons, "copy.svg")), "&Copy", self)
         self.copyAction.setShortcut(QKeySequence.Copy)
+        self.copyAction.setEnabled(False)
 
-        self.pasteAction = QAction(QIcon(os.path.join("images", "svg", "clipboard.svg")), "&Paste", self)
+        self.pasteAction = QAction(QIcon(os.path.join(self.icons, "clipboard.svg")), "&Paste", self)
         self.pasteAction.setShortcut(QKeySequence.Paste)
+        self.pasteAction.setEnabled(False)
 
-        self.deleteAction = QAction(QIcon(os.path.join("images", "svg", "trash.svg")), "&Delete", self)
+        self.deleteAction = QAction(QIcon(os.path.join(self.icons, "trash.svg")), "&Delete", self)
         self.deleteAction.setShortcut("Del")
         self.deleteAction.setStatusTip("Remove selected item")
         self.deleteAction.setToolTip("Remove item")
+
+        # View Menu Actions
+        self.gen_table_action = QAction(QIcon(os.path.join(self.icons, "list.svg")), "&Packet Table", self)
+        self.gen_table_action.setStatusTip("View Packets in a PCAP")
+        self.gen_table_action.setToolTip("View Packets in a PCAP")
 
         # Wireshark Menu Actions
         self.openWiresharkAction = QAction("Open &Wireshark", self)
@@ -182,19 +188,20 @@ class WorkspaceWindow(QMainWindow):
         self.openWiresharkAction.setToolTip("Open dataset or pcap in Wireshark")
 
         # Window Menu Actions
-        self.openProjectTreeAction = QAction(QIcon(os.path.join("images", "svg", "git-branch.svg")),
+        self.openProjectTreeAction = QAction(QIcon(os.path.join(self.icons, "git-branch.svg")),
                                              "&Project Tree Window", self)
         self.openProjectTreeAction.setStatusTip("Open project tree window")
         self.openProjectTreeAction.setToolTip("Open project tree window")
 
-        self.openPlotAction = QAction(QIcon(os.path.join("images", "svg", "time-outline.svg")),
+        self.openPlotAction = QAction(QIcon(os.path.join(self.icons, "time-outline.svg")),
                                       "&Bandwidth vs. Time Window", self)
         self.openPlotAction.setStatusTip("Open Bandwidth vs. Time window")
         self.openPlotAction.setToolTip("Open Bandwidth vs. Time window")
 
         # Help Menu Actions
-        self.helpContentAction = QAction(QIcon(os.path.join("images", "svg", "help.svg")), "&Help Content", self)
+        self.helpContentAction = QAction(QIcon(os.path.join(self.icons, "help.svg")), "&Help Content", self)
         self.aboutAction = QAction("&About", self)
+        self.aboutAction.setEnabled(False)
 
     def _connect_actions(self):
         # Connect File actions
@@ -227,13 +234,13 @@ class WorkspaceWindow(QMainWindow):
         menu_bar = self.menuBar()
         # File Menu
         file_menu = menu_bar.addMenu("&File")
-        new_menu = file_menu.addMenu("&New")
-        new_menu.addAction(self.newWorkspaceAction)
+        new_menu = file_menu.addMenu("&New...")
         new_menu.addAction(self.newProjectAction)
         new_menu.addAction(self.newDatasetAction)
         new_menu.addAction(self.newPCAPAction)
-        new_menu.addAction(self.gen_table_action)
-        file_menu.addAction(self.openAction)
+        open_menu = file_menu.addMenu(QIcon(os.path.join(self.icons, "folder.svg")), "&Open...")
+        open_menu.addAction(self.newWorkspaceAction)
+        open_menu.addAction(self.openAction)
         file_menu.addAction(self.saveAction)
         file_menu.addSeparator()
         file_menu.addAction(self.traceAction)
@@ -248,7 +255,11 @@ class WorkspaceWindow(QMainWindow):
         edit_menu.addAction(self.cutAction)
         edit_menu.addAction(self.copyAction)
         edit_menu.addAction(self.pasteAction)
+        edit_menu.addSeparator()
         edit_menu.addAction(self.deleteAction)
+        # View Menu
+        view_menu = menu_bar.addMenu("&View")
+        view_menu.addAction(self.gen_table_action)
         # Wireshark Menu
         wireshark_menu = menu_bar.addMenu('Wire&shark')
         wireshark_menu.addAction(self.openWiresharkAction)
@@ -265,7 +276,6 @@ class WorkspaceWindow(QMainWindow):
         file_tool_bar = QToolBar("File")
         self.addToolBar(Qt.LeftToolBarArea, file_tool_bar)
         file_tool_bar.addAction(self.newProjectAction)
-        file_tool_bar.addAction(self.openAction)
         file_tool_bar.addAction(self.saveAction)
         file_tool_bar.addAction(self.deleteAction)
 
