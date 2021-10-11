@@ -209,7 +209,6 @@ class WorkspaceWindow(QMainWindow):
         self.newProjectAction.triggered.connect(self.new_project)
         self.newDatasetAction.triggered.connect(self.new_dataset)
         self.newPCAPAction.triggered.connect(self.new_pcap)
-        self.gen_table_action.triggered.connect(self.gen_table)
         self.openAction.triggered.connect(self.open_workspace)
         self.saveAction.triggered.connect(self.save)
         self.exitAction.triggered.connect(self.exit)
@@ -221,6 +220,8 @@ class WorkspaceWindow(QMainWindow):
         self.copyAction.triggered.connect(self.copy_content)
         self.pasteAction.triggered.connect(self.paste_content)
         self.deleteAction.triggered.connect(self.delete)
+        # Connect View actions
+        self.gen_table_action.triggered.connect(self.gen_table)
         # Connect Wireshark actions
         self.openWiresharkAction.triggered.connect(self.open_wireshark)
         # Connect Windows actions
@@ -592,7 +593,7 @@ class WorkspaceWindow(QMainWindow):
 
     def help_content(self):
         # Logic for help content
-        webbrowser.open(os.path.join("documents", "Packet_Visualization.pdf"))
+        webbrowser.open(os.path.join(os.path.dirname(__file__), "documents", "Packet_Visualization.pdf"))
 
     def about(self):
         # Logic for about
