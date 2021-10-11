@@ -182,7 +182,7 @@ class WorkspaceWindow(QMainWindow):
         self.gen_table_action.setToolTip("View Packets in a PCAP")
 
         # Wireshark Menu Actions
-        self.openWiresharkAction = QAction("Open &Wireshark", self)
+        self.openWiresharkAction = QAction(QIcon(os.path.join(self.icons, "wireshark-icon.png")), "Open &Wireshark", self)
         self.openWiresharkAction.setShortcut("Ctrl+W")
         self.openWiresharkAction.setStatusTip("Open dataset or pcap in Wireshark")
         self.openWiresharkAction.setToolTip("Open dataset or pcap in Wireshark")
