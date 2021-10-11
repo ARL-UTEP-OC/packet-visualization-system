@@ -15,7 +15,6 @@ class StartupWindow(QWidget):
     app = QApplication(sys.argv)
     logo = os.path.join(os.path.dirname(__file__), "images", "logo.png")
     app.setWindowIcon(QIcon(logo))
-    #window = StartupWindow()
     finished = pyqtSignal()
 
     def __init__(self, test_mode: bool = False):
@@ -23,6 +22,7 @@ class StartupWindow(QWidget):
         self.test_mode = test_mode
         self.init_window()
         self.workspace = None
+        self.workspace_object = None
 
     def init_window(self):
         self.setWindowTitle("Welcome to PacketVisualizer")
@@ -89,9 +89,9 @@ class StartupWindow(QWidget):
 
                 if path != "":
                     if not self.test_mode:
-                        workspace_object = Workspace(name=os.path.basename(path.replace(".zip", "")),
+                        self.workspace_object = Workspace(name=os.path.basename(path.replace(".zip", "")),
                                                      location=os.path.dirname(path))
-                        self.workspace = WorkspaceWindow(workspace_object, existing_flag=True)
+                        self.workspace = WorkspaceWindow(self.workspace_object, existing_flag=True)
                         self.close()
                         self.workspace.show()
                         return True
@@ -99,18 +99,10 @@ class StartupWindow(QWidget):
             traceback.print_exc()
 
     def run_program(self):
-        # QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
-        # application = QtWidgets.QApplication(sys.argv)
-        # self.init_window()
         self.show()
         sys.exit(self.app.exec_())
 
+
 if __name__ == '__main__':
-    '''QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-    app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon(os.path.join("images", "logo.png")))
-    window = StartupWindow()
-    window.show()
-    sys.exit(app.exec_())'''
     ui = StartupWindow()
     ui.run_program()
