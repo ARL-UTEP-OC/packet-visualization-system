@@ -13,7 +13,8 @@ from components.ui_components.workspace_gui_redesign import WorkspaceWindow
 class StartupWindow(QWidget):
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon(os.path.join("images", "logo.png")))
+    logo = os.path.join(os.path.dirname(__file__), "images", "logo.png")
+    app.setWindowIcon(QIcon(logo))
     #window = StartupWindow()
     finished = pyqtSignal()
 
@@ -25,7 +26,7 @@ class StartupWindow(QWidget):
 
     def init_window(self):
         self.setWindowTitle("Welcome to PacketVisualizer")
-        self.setWindowIcon(QIcon(os.path.join("images", "logo.png")))
+        self.setWindowIcon(QIcon(self.logo))
         self.setFixedSize(600, 175)
 
         layout = QVBoxLayout()
@@ -34,7 +35,7 @@ class StartupWindow(QWidget):
 
         logo = QPushButton()
         logo.setFixedSize(100, 100)
-        logo.setStyleSheet("border-image : url(%s);" % (os.path.join("images", "logo.png")))
+        logo.setStyleSheet("border-image : url(%s);" % self.logo)
         info_layout.addWidget(logo)
 
         title_layout = QVBoxLayout()
