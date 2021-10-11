@@ -41,9 +41,9 @@ unit-test-job: # This job runs in the test stage.
   before_script:
     - echo "Installing Dependencies..."
     - apt-get -yq update
-    - apt-get -y install python3-pip python3-opencv
+    - apt-get -y install python3-pip ffmpeg libsm6 libxext6
     - python -V # Print out python version for debugging
-    - pip3 install virtualenv opencv-python
+    - pip3 install virtualenv
     - virtualenv venv
     - source venv/bin/activate
     - echo "Installing Dependencies..."
