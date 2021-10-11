@@ -21,7 +21,7 @@ class Dataset:
 
     def del_pcap(self, old: Pcap): # Replace with DB Query
         self.pcaps.remove(old)
-        if not self.pcaps: # must have at least one pcap to merge
+        if self.pcaps != []: # must have at least one pcap to merge
             self.merge_pcaps()
         os.remove(old.path) # delete file in dir
         old.remove()

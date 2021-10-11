@@ -1,7 +1,5 @@
 import os
 import shutil
-import traceback
-
 import pyshark
 
 class Pcap:
@@ -17,11 +15,10 @@ class Pcap:
             self.m_data = m_data   # metadata will go to packet
 
             self.set_packet_data()
-
+            #self.calculate_total_packets()
             if not self.pcap_file == self.path:
                 shutil.copy(self.pcap_file, self.path)  # Copy user input into our directory
         except:
-            traceback.print_exc()
             print("Error adding this pcap")
             self.name = None
 
@@ -40,16 +37,16 @@ class Pcap:
         return len(count)
 
     #return lists
-
-    def calculate_protocols(self) -> dict: # Don't need
+    #TODO:
+    def calculate_protocols(self) -> dict:
         print("create dictionary from base file, traverse packets and create dictionary based on protocol/occurances")
 
-
-    def calculate_timespan(self) -> str: # Dont need
+    #TODO:
+    def calculate_timespan(self) -> str:
         print("get last packet time, set as timespan")
         # knows original PCAP names
-
-    def get_pcap_name(self) -> str: # Dont need
+    #TODO:
+    def get_pcap_name(self) -> str:
         print("# knows where PCAP originated from")
 
         # knows PCAP editable free text meta-data

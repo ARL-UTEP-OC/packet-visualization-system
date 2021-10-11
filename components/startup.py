@@ -1,9 +1,6 @@
-from components.ui_components.startup_gui import Ui_startup_window
+from components.ui_components.startup_gui_redesign import StartupWindow
 import components.models.context.database_context as _context
-from components.models.dataset_ent import Dataset
-from components.models.pcap_ent import Pcap
-from components.backend_components.entity_operator import EntityOperations
-
+from components.models.context.entities import Dataset, Pcap
 
 class Main():
     def __init__(self):
@@ -13,5 +10,5 @@ class Main():
         _context.session.close()
 
     def init_program(self):
-        ui = Ui_startup_window()
+        ui = StartupWindow()
         ui.run_program()
