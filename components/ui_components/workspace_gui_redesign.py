@@ -19,13 +19,14 @@ from PyQt5.QtWidgets import QMainWindow, QTreeWidget, QPushButton, QVBoxLayout, 
     QAction, QMessageBox, QDockWidget, QTextEdit, QInputDialog, QTreeWidgetItem, QFileDialog, QApplication, QToolBar
 
 from components.backend_components.load import Load
-#from components.models.context.entities import EntityOperations
+# from components.models.context.entities import EntityOperations
 from components.models.dataset import Dataset
 from components.models.pcap import Pcap
 from components.models.project import Project
 from components.models.workspace import Workspace
 from components.backend_components import Wireshark
 from components.ui_components.table_gui import table_gui
+
 
 class Worker(QObject):
     finished = pyqtSignal()
@@ -62,12 +63,13 @@ class Worker(QObject):
                 self.progress.emit(progress)
         else:
             self.progress.emit(50)
-            #self.range, self.r_val = [datetime(2000, 1, 1), datetime(2001, 1, 1)], [0, 0]
+            # self.range, self.r_val = [datetime(2000, 1, 1), datetime(2001, 1, 1)], [0, 0]
             self.range, self.r_val = [], []
             self.progress.emit(100)
 
         self.data.emit([self.range, self.r_val])
         self.finished.emit()
+
 
 class WorkspaceWindow(QMainWindow):
     def __init__(self, workspace_object: Workspace, test_mode: bool = False,
@@ -182,7 +184,8 @@ class WorkspaceWindow(QMainWindow):
         self.gen_table_action.setToolTip("View Packets in a PCAP")
 
         # Wireshark Menu Actions
-        self.openWiresharkAction = QAction(QIcon(os.path.join(self.icons, "wireshark-icon.png")), "Open &Wireshark", self)
+        self.openWiresharkAction = QAction(QIcon(os.path.join(self.icons, "wireshark-icon.png")), "Open &Wireshark",
+                                           self)
         self.openWiresharkAction.setShortcut("Ctrl+W")
         self.openWiresharkAction.setStatusTip("Open dataset or pcap in Wireshark")
         self.openWiresharkAction.setToolTip("Open dataset or pcap in Wireshark")
@@ -798,7 +801,7 @@ class WorkspaceWindow(QMainWindow):
         )
 
         self.thread.finished.connect(
-            lambda : self.progressbar.hide()
+            lambda: self.progressbar.hide()
         )
 
         self.thread.finished.connect(
