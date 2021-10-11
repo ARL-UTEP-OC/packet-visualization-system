@@ -1,4 +1,5 @@
 import os
+import platform
 import shutil
 import sys
 import traceback
@@ -459,14 +460,24 @@ class WorkspaceWindow(QMainWindow):
 
                 output_file = QFileDialog.getSaveFileName(caption="Choose Output location", filter=".csv (*.csv)")[0]
 
-                os.system(
-                    'cd "C:\Program Files\Wireshark" & tshark -r ' + dataset_file + ' -T fields -e frame.number -e '
-                                                                                    'ip.src -e ip.dst '
-                                                                                    '-e frame.len -e frame.time -e '
-                                                                                    'frame.time_relative -e _ws.col.Info '
-                                                                                    '-E header=y -E '
-                                                                                    'separator=, -E quote=d -E '
-                                                                                    'occurrence=f > ' + output_file)
+                if platform.system() == "Windows":
+                    os.system(
+                        'cd "C:\Program Files\Wireshark" & tshark -r ' + dataset_file + ' -T fields -e frame.number -e '
+                                                                                        'ip.src -e ip.dst '
+                                                                                        '-e frame.len -e frame.time -e '
+                                                                                        'frame.time_relative -e _ws.col.Info '
+                                                                                        '-E header=y -E '
+                                                                                        'separator=, -E quote=d -E '
+                                                                                        'occurrence=f > ' + output_file)
+                elif platform.system() == "Linux":
+                    os.system('tshark -r ' + dataset_file + ' -T fields -e frame.number -e '
+                                                                                        'ip.src -e ip.dst '
+                                                                                        '-e frame.len -e frame.time -e '
+                                                                                        'frame.time_relative -e _ws.col.Info '
+                                                                                        '-E header=y -E '
+                                                                                        'separator=, -E quote=d -E '
+                                                                                        'occurrence=f > ' + output_file)
+
                 return True
         except Exception:
             traceback.print_exc()
@@ -483,7 +494,11 @@ class WorkspaceWindow(QMainWindow):
 
                 output_file = QFileDialog.getSaveFileName(caption="Choose Output location", filter=".json (*.json)")[0]
 
-                os.system('cd "C:\Program Files\Wireshark" & tshark -r ' + dataset_file + ' > ' + output_file)
+                if platform.system() == "Windows":
+                    os.system('cd "C:\Program Files\Wireshark" & tshark -r ' + dataset_file + ' > ' + output_file)
+                if platform.system() == "Linux":
+                    os.system('tshark -r ' + dataset_file + ' > ' + output_file)
+
                 return True
         except Exception:
             traceback.print_exc()

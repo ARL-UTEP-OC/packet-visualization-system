@@ -1,5 +1,6 @@
 import json
 import os
+import platform
 import shutil
 
 from PyQt5.QtWidgets import QApplication, QWidget, QTableWidget, QTableWidgetItem
@@ -30,7 +31,10 @@ class table_gui(QTableWidget):
         json_file = os.path.join(path, name)
         self.temp_file = json_file
 
-        os.system('cd "C:\Program Files\Wireshark" & tshark -r ' + pcap.pcap_file + ' -T json > ' + json_file)
+        if platform.system() == "Windows":
+            os.system('cd "C:\Program Files\Wireshark" & tshark -r ' + pcap.pcap_file + ' -T json > ' + json_file)
+        elif platform.system()=="Linux":
+            os.system('tshark -r ' + pcap.pcap_file + ' -T json > ' + json_file)
 
         return json_file
 
