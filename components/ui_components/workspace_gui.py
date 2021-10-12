@@ -12,6 +12,8 @@ from components.models.pcap import Pcap
 from components.models.project import Project
 from components.models.workspace import Workspace
 from components.backend_components import Wireshark
+from components.ui_components import filter_gui
+
 
 class Workspace_UI(QtWidgets.QMainWindow):
     def __init__(self, workspace_name: str, workspace_object: Workspace, test_mode:bool = False, existing_flag:bool = False):
@@ -75,6 +77,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
         remove_project_action = context_menu.addAction("Remove Project")
         remove_dataset_action = context_menu.addAction("Remove Dataset")
         remove_pcap_action = context_menu.addAction("Remove Pcap")
+        filter_wireshark_action = context_menu.addAction("Filter Wireshark")
 
         action = context_menu.exec_(self.mapToGlobal(event.pos()))
 
@@ -84,6 +87,8 @@ class Workspace_UI(QtWidgets.QMainWindow):
             self.remove_dataset()
         elif action == remove_pcap_action:
             self.remove_pcap()
+        elif action == filter_wireshark_action:
+            self.filter_wireshark()
 
     def closeEvent(self, event):
         reply = QMessageBox.question(self, "Workspace Close", "Would you like to save this Workspace?",
@@ -340,3 +345,14 @@ class Workspace_UI(QtWidgets.QMainWindow):
                     pcap_item.setText(0, cap.name)
                     dataset_item.addChild(pcap_item)
         return True
+
+    def filter_wireshark(self):
+        if self.project_tree.selectedItems() and self.check_if_item_is(self.project_tree.selectedItems()[0],"Dataset"):
+            if self.test_mode == False:
+                dataset_item = self.project_tree.selectedItems()[0]
+            for p in self.workspace_object.project:
+                for d in p.dataset:
+                    if d.name == dataset_item.text(0):
+                        ui = filter_gui.filter_window(d.mergeFilePath, self.project_tree, self.workspace_object)
+                        #ui.setupUi(d.mergeFilePath)
+                        #ui.filter_window.show()
