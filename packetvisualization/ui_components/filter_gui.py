@@ -34,7 +34,7 @@ class filter_window(QtWidgets.QWidget):
 
         form_layout.addRow("IP Address", self.ipFilter)
         form_layout.addRow("TCP Port", self.portFilter)
-        form_layout.addRow("File Name", self.newFileName)
+        form_layout.addRow("File Name*", self.newFileName)
         form_layout.addRow(QtWidgets.QPushButton("Submit", clicked=lambda: self.submit_filter_options()))
 
         self.show()
@@ -50,10 +50,11 @@ class filter_window(QtWidgets.QWidget):
         newFileName = self.findChild(QLineEdit, "newFileName")
         if newFileName.text() != "":
             for w in self.findChildren(QLineEdit):
-                if w.objectName() != "newFileName":
+                if w.objectName() != "newFileName" and w.text() != "":
                     wsFilter[w.objectName()] = w.text()
 
             Wireshark.filter(self.path, wsFilter, newFileName.text(), self.projectTree, self.workspace)
+            self.close()
 
         #print(self.path)
 

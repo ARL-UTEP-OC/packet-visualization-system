@@ -852,9 +852,9 @@ class WorkspaceWindow(QMainWindow):
         )
 
     def filter_wireshark(self):
-        print("in filter wireshark method")
+
         if self.project_tree.selectedItems(): # and self.check_if_item_is(self.project_tree.selectedItems()[0], "Dataset"):
-            print("is dataset")
+
             if self.test_mode == False:
                 dataset_item = self.project_tree.selectedItems()[0]
             for p in self.workspace_object.project:
