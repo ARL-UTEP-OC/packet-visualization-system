@@ -5,9 +5,8 @@ import subprocess
 from PyQt5.QtWidgets import QTreeWidget
 from PyQt5 import QtWidgets
 
-from components.models.project import Project
-from components.models.pcap import Pcap
-from components.models.workspace import Workspace
+from packetvisualization.models.pcap import Pcap
+from packetvisualization.models.workspace import Workspace
 
 
 def openwireshark(path):
