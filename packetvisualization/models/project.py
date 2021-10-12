@@ -1,4 +1,4 @@
-from components.models.dataset import Dataset
+from packetvisualization.models.dataset import Dataset
 from datetime import datetime
 import os, shutil
 

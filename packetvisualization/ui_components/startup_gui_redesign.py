@@ -6,8 +6,8 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
-from components.models.workspace import Workspace
-from components.ui_components.workspace_gui_redesign import WorkspaceWindow
+from packetvisualization.models.workspace import Workspace
+from packetvisualization.ui_components.workspace_gui_redesign import WorkspaceWindow
 
 
 class StartupWindow(QWidget):
@@ -90,7 +90,7 @@ class StartupWindow(QWidget):
                 if path != "":
                     if not self.test_mode:
                         self.workspace_object = Workspace(name=os.path.basename(path.replace(".zip", "")),
-                                                     location=os.path.dirname(path))
+                                                          location=os.path.dirname(path))
                         self.workspace = WorkspaceWindow(self.workspace_object, existing_flag=True)
                         self.close()
                         self.workspace.show()

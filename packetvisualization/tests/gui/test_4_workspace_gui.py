@@ -11,19 +11,19 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import QEvent
 from PyQt5.QtWidgets import QInputDialog, QMenu, QFileDialog, QAction, QMessageBox, QTreeWidget
 
-from components.models.dataset import Dataset
-from components.models.pcap import Pcap
-from components.models.project import Project
-from components.models.workspace import Workspace
-from components.backend_components import Wireshark
-from components.ui_components.workspace_gui import Workspace_UI
-from components.backend_components.load import Load
+from packetvisualization.models.dataset import Dataset
+from packetvisualization.models.pcap import Pcap
+from packetvisualization.models.project import Project
+from packetvisualization.models.workspace import Workspace
+from packetvisualization.backend_components import Wireshark
+from packetvisualization.ui_components.workspace_gui import Workspace_UI
+from packetvisualization.backend_components.load import Load
 
 @pytest.fixture(scope="session")
 def workspace_object():
     cwd = os.getcwd()
     original_cwd = os.getcwd()
-    file = os.path.join(cwd, "components", "tests", "examples", "myWorkspace", "myProject1", "myDataset1",
+    file = os.path.join(cwd, "packetvisualization", "tests", "examples", "myWorkspace", "myProject1", "myDataset1",
                         "sample2.pcap")
     workspace_object = Workspace(name="Test Workspace", location=cwd)
     project1 = Project("P1")
@@ -177,7 +177,7 @@ def test_add_dataset(workspace_object):
     test_workspace = Workspace_UI(workspace_name="Test Worskpace", workspace_object=workspace_object, test_mode=True, existing_flag=True)
 
     cwd = os.getcwd()
-    file = os.path.join(cwd, "..", "components", "tests", "examples", "myWorkspace", "myProject1", "myDataset1",
+    file = os.path.join(cwd, "..", "packetvisualization", "tests", "examples", "myWorkspace", "myProject1", "myDataset1",
                         "sample2.pcap")
     file = os.path.normpath(file)
     #cwd = os.path.join(cwd, "P1", "D1")
@@ -218,7 +218,7 @@ def test_add_pcap(workspace_object):
 
     #os.chdir("..")
     cwd = os.getcwd()
-    file = os.path.join(cwd, "..", "components", "tests", "examples", "myWorkspace", "myProject1", "myDataset1",
+    file = os.path.join(cwd, "..", "packetvisualization", "tests", "examples", "myWorkspace", "myProject1", "myDataset1",
                         "sample3.pcap")
     file = os.path.normpath(file)
 

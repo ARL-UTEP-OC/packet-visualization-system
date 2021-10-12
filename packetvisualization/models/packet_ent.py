@@ -1,5 +1,5 @@
 from sqlalchemy.orm import relationship
-from components.models.context.database_context import Base, session
+from packetvisualization.models.context.database_context import Base, session
 from sqlalchemy import Column, Integer, String, Float, ForeignKey
 
 class Packet(Base):

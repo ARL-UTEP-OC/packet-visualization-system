@@ -1,4 +1,4 @@
-from components.models.workspace import Workspace
+from packetvisualization.models.workspace import Workspace
 import os, pytest, hashlib
 
 cwd = None

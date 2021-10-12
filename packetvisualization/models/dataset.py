@@ -1,4 +1,4 @@
-from components.models.pcap import Pcap
+from packetvisualization.models.pcap import Pcap
 import os, shutil
 import platform
 

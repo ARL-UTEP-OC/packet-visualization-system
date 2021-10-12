@@ -11,18 +11,18 @@ from PyQt5.QtCore import QEvent
 from PyQt5.QtWidgets import QInputDialog, QMenu, QFileDialog, QAction, QMessageBox, QTreeWidget, QProgressBar, \
     QTableWidget
 
-from components.backend_components.entity_operator import EntityOperations
-from components.backend_components.load import Load
-from components.models import dataset
-# from components.models.context.entities import EntityOperations
-from components.models.dataset import Dataset
-from components.models.pcap import Pcap
-from components.models.project import Project
-from components.models.workspace import Workspace
-from components.backend_components import Wireshark
-from components.ui_components.table_gui import table_gui
-from components.models.dataset_ent import Dataset as datasetEnt
-from components.models.pcap_ent import Pcap as pcapEnt
+from packetvisualization.backend_components.entity_operator import EntityOperations
+from packetvisualization.backend_components.load import Load
+from packetvisualization.models import dataset
+# from packetvisualization.models.context.entities import EntityOperations
+from packetvisualization.models.dataset import Dataset
+from packetvisualization.models.pcap import Pcap
+from packetvisualization.models.project import Project
+from packetvisualization.models.workspace import Workspace
+from packetvisualization.backend_components import Wireshark
+from packetvisualization.ui_components.table_gui import table_gui
+from packetvisualization.models.dataset_ent import Dataset as datasetEnt
+from packetvisualization.models.pcap_ent import Pcap as pcapEnt
 
 
 class Workspace_UI(QtWidgets.QMainWindow):

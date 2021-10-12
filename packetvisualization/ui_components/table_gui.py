@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QTableWidget, QTableWidgetIte
 import sys
 from PyQt5 import QtGui
 
-from components.models.pcap import Pcap
+from packetvisualization.models.pcap import Pcap
 
 
 class table_gui(QTableWidget):
