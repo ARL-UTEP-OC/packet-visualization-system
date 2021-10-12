@@ -1,5 +1,5 @@
 import os
-import platform
+import platform as pf
 import shutil
 import sys
 import traceback
@@ -317,6 +317,11 @@ class WorkspaceWindow(QMainWindow):
             # Right-click a pcap
             if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Pcap:
                 menu.addAction(self.openWiresharkAction)
+                export_menu = menu.addMenu("View")
+                export_menu.addAction(self.gen_table_action)
+                export_menu = menu.addMenu("Export")
+                export_menu.addAction(self.exportCsvAction)
+                export_menu.addAction(self.exportJsonAction)
 
         separator1 = QAction(self)
         separator1.setSeparator(True)
@@ -465,33 +470,41 @@ class WorkspaceWindow(QMainWindow):
     def export_csv(self):
         # Logic to export dataset or pcap to CSV
         try:
-            if self.project_tree.selectedItems() and type(
-                    self.project_tree.selectedItems()[0].data(0,
-                                                              Qt.UserRole)) is Dataset or self.test_mode == True:
-                dataset_item = self.project_tree.selectedItems()[0]
-                dataset = dataset_item.data(0, Qt.UserRole)
-                dataset_file = dataset.mergeFilePath
+            if self.project_tree.selectedItems():
+                input_file = ''
+                if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
+                    dataset_item = self.project_tree.selectedItems()[0]
+                    dataset = dataset_item.data(0, Qt.UserRole)
+                    input_file = dataset.mergeFilePath
+                if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Pcap:
+                    pcap_item = self.project_tree.selectedItems()[0]
+                    pcap = pcap_item.data(0, Qt.UserRole)
+                    input_file = pcap.path
 
-                output_file = QFileDialog.getSaveFileName(caption="Choose Output location", filter=".csv (*.csv)")[0]
+                if input_file != '':
+                    output_file = QFileDialog.getSaveFileName(caption="Choose Output location", filter=".csv (*.csv)")[
+                        0]
 
-                if platform.system() == "Windows":
-                    os.system(
-                        'cd "C:\Program Files\Wireshark" & tshark -r ' + dataset_file + ' -T fields -e frame.number -e '
-                                                                                        'ip.src -e ip.dst '
-                                                                                        '-e frame.len -e frame.time -e '
-                                                                                        'frame.time_relative -e _ws.col.Info '
-                                                                                        '-E header=y -E '
-                                                                                        'separator=, -E quote=d -E '
-                                                                                        'occurrence=f > ' + output_file)
-                elif platform.system() == "Linux":
-                    os.system('tshark -r ' + dataset_file + ' -T fields -e frame.number -e '
-                                                            'ip.src -e ip.dst '
-                                                            '-e frame.len -e frame.time -e '
-                                                            'frame.time_relative -e _ws.col.Info '
-                                                            '-E header=y -E '
-                                                            'separator=, -E quote=d -E '
-                                                            'occurrence=f > ' + output_file)
-
+                    if pf.system() == "Windows":
+                        os.system(
+                            'cd "C:\Program Files\Wireshark" & tshark -r ' + input_file + ' -T fields -e frame.number -e '
+                                                                                          'ip.src -e ip.dst '
+                                                                                          '-e frame.len -e frame.time -e '
+                                                                                          'frame.time_relative -e _ws.col.Info '
+                                                                                          '-E header=y -E '
+                                                                                          'separator=, -E quote=d -E '
+                                                                                          'occurrence=f > ' + output_file)
+                    elif pf.system() == "Linux":
+                        os.system('tshark -r ' + input_file + ' -T fields -e frame.number -e '
+                                                              'ip.src -e ip.dst '
+                                                              '-e frame.len -e frame.time -e '
+                                                              'frame.time_relative -e _ws.col.Info '
+                                                              '-E header=y -E '
+                                                              'separator=, -E quote=d -E '
+                                                              'occurrence=f > ' + output_file)
+                    self.statusbar.showMessage("Export CSV Successful", 3000)
+                else:
+                    self.statusbar.showMessage("No Dataset/PCAP selected to Export", 3000)
                 return True
         except Exception:
             traceback.print_exc()
@@ -499,27 +512,36 @@ class WorkspaceWindow(QMainWindow):
     def export_json(self):
         # Logic to export dataset or pcap to JSON
         try:
-            if self.project_tree.selectedItems() and type(
-                    self.project_tree.selectedItems()[0].data(0,
-                                                              Qt.UserRole)) is Dataset or self.test_mode == True:
-                dataset_item = self.project_tree.selectedItems()[0]
-                dataset = dataset_item.data(0, Qt.UserRole)
-                dataset_file = dataset.mergeFilePath
+            if self.project_tree.selectedItems():
+                input_file = ''
+                if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
+                    dataset_item = self.project_tree.selectedItems()[0]
+                    dataset = dataset_item.data(0, Qt.UserRole)
+                    input_file = dataset.mergeFilePath
+                if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Pcap:
+                    pcap_item = self.project_tree.selectedItems()[0]
+                    pcap = pcap_item.data(0, Qt.UserRole)
+                    input_file = pcap.path
 
-                output_file = QFileDialog.getSaveFileName(caption="Choose Output location", filter=".json (*.json)")[0]
+                if input_file != '':
+                    output_file = QFileDialog.getSaveFileName(caption="Choose Output location", filter=".json (*.json)")[0]
 
-                if platform.system() == "Windows":
-                    os.system('cd "C:\Program Files\Wireshark" & tshark -r ' + dataset_file + ' > ' + output_file)
-                if platform.system() == "Linux":
-                    os.system('tshark -r ' + dataset_file + ' > ' + output_file)
-
+                    if pf.system() == "Windows":
+                        os.system('cd "C:\Program Files\Wireshark" & tshark -r ' + input_file + ' > ' + output_file)
+                    if pf.system() == "Linux":
+                        os.system('tshark -r ' + input_file + ' > ' + output_file)
+                    self.statusbar.showMessage("Export JSON Successful", 3000)
+                else:
+                    self.statusbar.showMessage("No Dataset/PCAP selected to Export", 3000)
                 return True
         except Exception:
             traceback.print_exc()
 
     def save(self):
         # Logic for creating a new project
+        self.statusbar.showMessage("Saving...")
         self.workspace_object.save()
+        self.statusbar.showMessage("Saved", 3000)
 
     def delete(self, project_item=None, dataset_item=None, pcap_item=None):
         # Logic for deleting an item
