@@ -9,10 +9,11 @@ import zipfile
 import plotly.offline as po
 import plotly.graph_objs as go
 import pandas as pd
+from PyQt5.QtWebEngineWidgets import QWebEngineView
 from scapy.all import *
 from datetime import datetime
 
-from PyQt5.QtWebEngineWidgets import QWebEngineView
+#from PyQt5.QtWebEngineWidgets import QWebEngineView
 
 from PyQt5.QtCore import Qt, QRect, QObject, pyqtSignal, QThread
 from PyQt5.QtGui import QFont, QIcon, QKeySequence
@@ -26,6 +27,7 @@ from packetvisualization.models.pcap import Pcap
 from packetvisualization.models.project import Project
 from packetvisualization.models.workspace import Workspace
 from packetvisualization.backend_components import Wireshark
+from packetvisualization.ui_components import filter_gui
 from packetvisualization.ui_components.table_gui import table_gui
 
 
@@ -134,6 +136,8 @@ class WorkspaceWindow(QMainWindow):
         self.newPCAPAction.setStatusTip("Create a new pcap")
         self.newPCAPAction.setToolTip("Create a new pcap")
 
+        self.filterWiresharkAction = QAction("Filter Wireshark", self)
+
         self.openAction = QAction("&Existing Workspace", self)
         self.openAction.setStatusTip("Open existing workspace")
         self.openAction.setToolTip("Open existing workspace")
@@ -228,6 +232,7 @@ class WorkspaceWindow(QMainWindow):
         self.gen_table_action.triggered.connect(self.gen_table)
         # Connect Wireshark actions
         self.openWiresharkAction.triggered.connect(self.open_wireshark)
+        self.filterWiresharkAction.triggered.connect(self.filter_wireshark)
         # Connect Windows actions
         self.openProjectTreeAction.triggered.connect(self.open_window_project_tree)
         self.openPlotAction.triggered.connect(self.open_window_plot)
@@ -311,6 +316,7 @@ class WorkspaceWindow(QMainWindow):
                 menu.addAction(self.newPCAPAction)
                 menu.addAction(self.traceAction)
                 menu.addAction(self.openWiresharkAction)
+                menu.addAction(self.filterWiresharkAction)
                 export_menu = menu.addMenu("Export")
                 export_menu.addAction(self.exportCsvAction)
                 export_menu.addAction(self.exportJsonAction)
@@ -844,3 +850,14 @@ class WorkspaceWindow(QMainWindow):
         self.thread.finished.connect(
             lambda: self.create_plot()
         )
+
+    def filter_wireshark(self):
+
+        if self.project_tree.selectedItems(): # and self.check_if_item_is(self.project_tree.selectedItems()[0], "Dataset"):
+
+            if self.test_mode == False:
+                dataset_item = self.project_tree.selectedItems()[0]
+            for p in self.workspace_object.project:
+                for d in p.dataset:
+                    if d.name == dataset_item.text(0):
+                        ui = filter_gui.filter_window(d.mergeFilePath, self.project_tree, self.workspace_object)
