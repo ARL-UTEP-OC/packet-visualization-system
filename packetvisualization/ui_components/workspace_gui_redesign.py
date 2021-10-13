@@ -533,9 +533,9 @@ class WorkspaceWindow(QMainWindow):
                     output_file = QFileDialog.getSaveFileName(caption="Choose Output location", filter=".json (*.json)")[0]
 
                     if pf.system() == "Windows":
-                        os.system('cd "C:\Program Files\Wireshark" & tshark -r ' + input_file + ' > ' + output_file)
+                        os.system('cd "C:\Program Files\Wireshark" & tshark -r ' + input_file + ' -T json > ' + output_file)
                     if pf.system() == "Linux":
-                        os.system('tshark -r ' + input_file + ' > ' + output_file)
+                        os.system('tshark -r ' + input_file + ' -T json > ' + output_file)
                     self.statusbar.showMessage("Export JSON Successful", 3000)
                 else:
                     self.statusbar.showMessage("No Dataset/PCAP selected to Export", 3000)
