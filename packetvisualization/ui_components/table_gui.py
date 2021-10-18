@@ -39,7 +39,7 @@ class table_gui(QTableWidget):
         return json_file
 
     def populate_table(self, pcap_json, progressbar):
-        with open(pcap_json) as file:
+        with open(pcap_json, encoding="ISO-8859-1") as file:
             data = json.load(file)
             file.close()
 
