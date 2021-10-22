@@ -7,50 +7,40 @@ class Pcap:
     def __init__(self, name: str ,path: str, file: str, m_data = "") -> None:
         try:
             self.name = name
+            self.directory = path
             self.path = os.path.join(path, self.name)  # Save location for PCAP File
             self.pcap_file = file  # pcap recieved from user
-            self.pcap_data = None  # packet capture object (packets within pcap file)
             self.total_packets = 0
             self.protocols = {}
             self.m_data = m_data   # metadata will go to packet
+            self.json_file = None
 
-            self.set_packet_data()
-            #self.calculate_total_packets()
             if not self.pcap_file == self.path:
                 shutil.copy(self.pcap_file, self.path)  # Copy user input into our directory
+
+            self.create_json_file() # create empty json
+            self.toJson()
+
+
         except:
             print("Error adding this pcap")
             self.name = None
 
-    def set_packet_data(self): # Don't need
-        self.pcap_data = pyshark.FileCapture(self.pcap_file)
-        return self.pcap_data
 
-    def calculate_total_packets(self) -> int:
-        count =[]
+    def create_json_file(self):
+        filename = self.name + ".json"
+        path = os.path.join(self.directory, filename)
+        self.json_file= path
+        fp = open(path, 'a')
+        fp.close()
 
-        def counter(*args):
-            count.append(args[0])
+    def toJson(self):
+        os.system('cd "C:\Program Files\Wireshark" & tshark -r ' + self.pcap_file + ' -T json > ' + self.json_file)
 
-        self.pcap_data.apply_on_packets(counter)
-        self.total_packets = len(count)
-        return len(count)
+    def clearJson(self):
+        print("Test")
+        # Remove json file after DB insert
 
-    #return lists
-    #TODO:
-    def calculate_protocols(self) -> dict:
-        print("create dictionary from base file, traverse packets and create dictionary based on protocol/occurances")
-
-    #TODO:
-    def calculate_timespan(self) -> str:
-        print("get last packet time, set as timespan")
-        # knows original PCAP names
-    #TODO:
-    def get_pcap_name(self) -> str:
-        print("# knows where PCAP originated from")
-
-        # knows PCAP editable free text meta-data
-    
     def save(self, f) -> None: # TODO: Rework
         f.write('{"name": "%s", "m_data": "%s"' % (self.name, self.m_data))
         f.write('}')

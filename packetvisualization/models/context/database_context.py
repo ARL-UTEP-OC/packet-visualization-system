@@ -21,7 +21,7 @@ class DbContext:
 
 # Implementation example
 context = DbContext()
-packet = {'_id': 3, 'name': 'test-packet', 'meta': ['testing1', 'testing2']}
+# packet = {'_id': 3, 'name': 'test-packet', 'meta': ['testing1', 'testing2']}
 # To create a new collections table replace the name 'Packets' with yourtable name
-packets_doc = context.db.Packets
-result = packets_doc.insert_one(packet)
+# packets_doc = context.db.Packets
+# result = packets_doc.insert_one(packet)
