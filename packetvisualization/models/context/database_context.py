@@ -6,6 +6,7 @@ from decouple import config
 
 class DbContext:
     db = Database
+    # Find our connection string in the .env file in the root directory
     dbString = config('DBSTRING')
 
     def __init__(self):
@@ -21,6 +22,6 @@ class DbContext:
 # Implementation example
 context = DbContext()
 packet = {'_id': 3, 'name': 'test-packet', 'meta': ['testing1', 'testing2']}
-
+# To create a new collections table replace the name 'Packets' with yourtable name
 packets_doc = context.db.Packets
 result = packets_doc.insert_one(packet)
