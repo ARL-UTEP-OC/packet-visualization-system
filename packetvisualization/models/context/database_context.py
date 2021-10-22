@@ -20,7 +20,7 @@ class DbContext:
         subprocess.call([f'mongodump --uri {self.dbString} --out "-" --quiet > col.bson']);
 
 # Implementation example
-context = DbContext()
+#context = DbContext()
 # packet = {'_id': 3, 'name': 'test-packet', 'meta': ['testing1', 'testing2']}
 # To create a new collections table replace the name 'Packets' with yourtable name
 # packets_doc = context.db.Packets

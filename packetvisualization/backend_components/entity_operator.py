@@ -2,8 +2,10 @@ from packetvisualization.models.context.database_context import DbContext
 from pymongo import MongoClient,InsertOne
 import json
 
+# context = DbContext()
 
 class EntityOperations:
+
 
     def fix_dictionary(self,d):  # Function to replace any key with '.' in name
         new = {}
@@ -25,3 +27,5 @@ class EntityOperations:
                 requesting.append(InsertOne(jsonObj))
 
         collection.bulk_write(requesting)
+
+
