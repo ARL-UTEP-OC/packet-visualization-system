@@ -13,7 +13,9 @@ greenlet==1.1.2
 idna==3.2
 importlib-metadata==4.8.1
 iniconfig==1.1.1
+joblib==1.1.0
 keyring==23.2.1
+liac-arff==2.5.0
 lxml==4.6.3
 numpy==1.21.2
 packaging==21.0
@@ -44,8 +46,12 @@ requests==2.26.0
 requests-toolbelt==0.9.1
 rfc3986==1.5.0
 scapy==2.4.5
+scikit-learn==1.0
+scipy==1.7.1
 six==1.16.0
+sklearn==0.0
 tenacity==8.0.1
+threadpoolctl==3.0.0
 toml==0.10.2
 tomli==1.2.1
 tqdm==4.62.3
