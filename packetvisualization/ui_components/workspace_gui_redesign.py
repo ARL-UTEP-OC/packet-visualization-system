@@ -7,6 +7,7 @@ import webbrowser
 import zipfile
 
 import plotly.offline as po
+import plotly.express as px
 import plotly.graph_objs as go
 import pandas as pd
 from PyQt5.QtWebEngineWidgets import QWebEngineView
@@ -101,10 +102,22 @@ class WorkspaceWindow(QMainWindow):
         self.dock_plot = QDockWidget("Bandwidth vs. Time Window", self)
         self.dock_plot.setWidget(self.fig_view)
         self.dock_plot.setFloating(False)
+        # Docked widget for Classifier
+        self.classifier_plot_view = QWebEngineView()
+        # TODO: X and Y data is going to be provided by Classifier class, once that happens we can fix this.
+        data_frame = pd.DataFrame()
+        data_frame['instance_number'] = [3, 2, 1]
+        data_frame['cluster'] = [1, 2, 3]
+        self.create_classifier_plot(data_frame)
+        self.classifier_window = QDockWidget("Cluster per instance", self)
+        self.classifier_window.setWidget(self.classifier_plot_view)
+        self.classifier_window.setFloating(True)
+        self.classifier_window.hide()
 
         self.setCentralWidget(self.dock_project_tree)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.dock_project_tree)
         self.addDockWidget(Qt.RightDockWidgetArea, self.dock_plot)
+        # self.addDockWidget(Qt.RightDockWidgetArea, self.classifier_window)
 
         self._create_actions()
         self._create_menu_bar()
@@ -188,6 +201,11 @@ class WorkspaceWindow(QMainWindow):
         self.gen_table_action.setStatusTip("View Packets in a PCAP")
         self.gen_table_action.setToolTip("View Packets in a PCAP")
 
+        # self.gen_table_action = QAction(QIcon(os.path.join(self.icons, "list.svg")), "&Packet Table", self)
+        self.classifier_action = QAction("&Classify Packets", self)
+        self.classifier_action.setStatusTip("Classify selected pcap data")
+        self.classifier_action.setToolTip("Classify selected pcap data")
+
         # Wireshark Menu Actions
         self.openWiresharkAction = QAction(QIcon(os.path.join(self.icons, "wireshark-icon.png")), "Open &Wireshark",
                                            self)
@@ -230,6 +248,7 @@ class WorkspaceWindow(QMainWindow):
         self.deleteAction.triggered.connect(self.delete)
         # Connect View actions
         self.gen_table_action.triggered.connect(self.gen_table)
+        self.classifier_action.triggered.connect(self.display_classifier_options)
         # Connect Wireshark actions
         self.openWiresharkAction.triggered.connect(self.open_wireshark)
         self.filterWiresharkAction.triggered.connect(self.filter_wireshark)
@@ -270,6 +289,7 @@ class WorkspaceWindow(QMainWindow):
         # View Menu
         view_menu = menu_bar.addMenu("&View")
         view_menu.addAction(self.gen_table_action)
+        view_menu.addAction(self.classifier_action)
         # Wireshark Menu
         wireshark_menu = menu_bar.addMenu('Wire&shark')
         wireshark_menu.addAction(self.openWiresharkAction)
@@ -317,6 +337,7 @@ class WorkspaceWindow(QMainWindow):
                 menu.addAction(self.traceAction)
                 menu.addAction(self.openWiresharkAction)
                 menu.addAction(self.filterWiresharkAction)
+                menu.addAction(self.classifier_action)
                 export_menu = menu.addMenu("Export")
                 export_menu.addAction(self.exportCsvAction)
                 export_menu.addAction(self.exportJsonAction)
@@ -788,6 +809,19 @@ class WorkspaceWindow(QMainWindow):
         # for large figures.
         self.fig_view.setHtml(raw_html)
 
+    def show_classifier_qt(self, fig):
+        raw_html = '<html><head><meta charset="utf-8" />'
+        raw_html += '<script src="https://cdn.plot.ly/plotly-latest.min.js"></script></head>'
+        raw_html += '<body>'
+        raw_html += po.plot(fig, include_plotlyjs=False, output_type='div')
+        raw_html += '</body></html>'
+
+        if self.classifier_plot_view is None:
+            self.classifier_plot_view = QWebEngineView()
+        # setHtml has a 2MB size limit, need to switch to setUrl on tmp file
+        # for large figures.
+        self.classifier_plot_view.setHtml(raw_html)
+
     def create_plot(self):
         # Create figure
         fig = go.Figure()
@@ -811,6 +845,12 @@ class WorkspaceWindow(QMainWindow):
             )
         )
         self.show_qt(fig)
+
+    def create_classifier_plot(self, df):
+        fig = px.scatter(df, x="cluster", y="instance_number",
+                         color='cluster', color_continuous_scale=px.colors.sequential.Bluered_r)
+        # fig.show()
+        self.show_classifier_qt(fig)
 
     def reportProgress(self, n):
         self.progressbar.setValue(n)
@@ -861,3 +901,14 @@ class WorkspaceWindow(QMainWindow):
                 for d in p.dataset:
                     if d.name == dataset_item.text(0):
                         ui = filter_gui.filter_window(d.mergeFilePath, self.project_tree, self.workspace_object)
+
+    def display_classifier_options(self):
+        # TODO: Classifier actions will run in here
+        print('Called display_classifier_options')
+        # TODO: X and Y data is going to be provided by Classifier class, once that happens we can fix this.
+        data_frame = pd.DataFrame()
+        data_frame['instance_number'] = [3, 2, 1]
+        data_frame['cluster'] = [1, 2, 3]
+        self.create_classifier_plot(data_frame)
+        self.classifier_window.show()
+        return
