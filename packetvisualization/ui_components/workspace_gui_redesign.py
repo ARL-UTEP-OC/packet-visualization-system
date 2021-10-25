@@ -751,7 +751,7 @@ class WorkspaceWindow(QMainWindow):
                 pcap_item = self.project_tree.selectedItems()[0]
                 pcap_obj = pcap_item.data(0, Qt.UserRole)
 
-                table = table_gui(pcap_obj, self.progressbar, self.db)
+                table = table_gui(pcap_obj, self.progressbar, self.db, self)
                 self.dock_table = QDockWidget("Packet Table", self)
                 self.dock_table.setWidget(table)
                 self.dock_table.setFloating(False)
