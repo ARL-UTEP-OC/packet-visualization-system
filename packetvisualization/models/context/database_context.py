@@ -2,7 +2,7 @@ import pymongo
 import subprocess
 from pymongo.database import Database
 from decouple import config
-
+import certifi
 
 class DbContext:
     db = Database
@@ -10,7 +10,7 @@ class DbContext:
     dbString = config('DBSTRING')
 
     def __init__(self):
-        client = pymongo.MongoClient(f'{self.dbString}?retryWrites=true&w=majority')
+        client = pymongo.MongoClient(f'{self.dbString}?retryWrites=true&w=majority', tlsCAFile=certifi.where())
         self.db = client.PracticumDB
         print(self.db.list_collections())
 
@@ -20,8 +20,8 @@ class DbContext:
         subprocess.call([f'mongodump --uri {self.dbString} --out "-" --quiet > col.bson']);
 
 # Implementation example
-context = DbContext()
-packet = {'_id': 3, 'name': 'test-packet', 'meta': ['testing1', 'testing2']}
+# context = DbContext()
+# packet = {'_id': 3, 'name': 'test-packet', 'meta': ['testing1', 'testing2']}
 # To create a new collections table replace the name 'Packets' with yourtable name
-packets_doc = context.db.Packets
-result = packets_doc.insert_one(packet)
+# packets_doc = context.db.Packets
+# result = packets_doc.insert_one(packet)
