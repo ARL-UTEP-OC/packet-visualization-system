@@ -1,4 +1,5 @@
 from packetvisualization.models.pcap import Pcap
+from packetvisualization.backend_components.entity_operator import EntityOperations
 import os, shutil
 import platform
 
@@ -7,22 +8,23 @@ class Dataset:
         self.name = name
         self.pcaps = [] # will use children key instead
         self.mergeFilePath = None
+        self.jsonFilePath = None
         self.path = os.path.join(parentPath, self.name)
         self.totalPackets = 0
         self.protocols = None
         self.create_folder()
-        self.create_merge_file()
+        # self.create_merge_file()
+        # self.create_json_file()
 
-    def add_pcap(self, new: Pcap) -> list: #Replaced with DB Query
+    def add_pcap(self, new: Pcap) -> list:
         self.pcaps.append(new)
-        self.calculate_total_packets()
-        self.merge_pcaps()
+
         return self.pcaps
 
     def del_pcap(self, old: Pcap): # Replace with DB Query
         self.pcaps.remove(old)
-        if self.pcaps != []: # must have at least one pcap to merge
-            self.merge_pcaps()
+        # if self.pcaps != []: # must have at least one pcap to merge
+        #     self.merge_pcaps()
         os.remove(old.path) # delete file in dir
         old.remove()
         return self.pcaps
@@ -37,12 +39,12 @@ class Dataset:
             os.mkdir(self.path)
         return self.path
 
-    def create_merge_file(self) -> str: # TODO: CHECK
-        filename = self.name + ".pcap"
-        path = os.path.join(self.path, filename)
-        self.mergeFilePath = path
-        fp = open(path, 'a')
-        fp.close()
+    # def create_merge_file(self) -> str: # TODO: CHECK
+    #     filename = self.name + ".pcap"
+    #     path = os.path.join(self.path, filename)
+    #     self.mergeFilePath = path
+    #     fp = open(path, 'a')
+    #     fp.close()
 
     def save(self, f) -> None: # Save file
         f.write('{"name": "%s", "totalPackets": %s, "pcaps": [' % (self.name, self.totalPackets))
@@ -52,28 +54,21 @@ class Dataset:
                 f.write(',')
         f.write(']}')
 
-    def calculate_total_packets(self):  # Don't Need
-        for pcap in self.pcaps:
-            self.totalPackets += pcap.total_packets
-
-        return self.totalPackets
-
-    def merge_pcaps(self): # TODO: CHECK
-        pcapPaths = ""
-
-        if platform.system() == 'Windows':
-            for pcap in self.pcaps:
-                pcapPaths += pcap.path + " "
-
-            os.system('cd "C:\\Program Files\\Wireshark\\" & mergecap -w %s %s' % (self.mergeFilePath, pcapPaths))
-            print("")
-        elif platform.system() == 'Linux':
-            for pcap in self.pcaps:
-                pcapPaths += pcap.path + " "
-
-            os.system('mergecap -w %s %s' % (self.mergeFilePath, pcapPaths))
-            print("Linux")
-
+    # def merge_pcaps(self): # TODO: CHECK
+    #     pcapPaths = ""
+    #
+    #     if platform.system() == 'Windows':
+    #         for pcap in self.pcaps:
+    #             pcapPaths += pcap.path + " "
+    #
+    #         os.system('cd "C:\\Program Files\\Wireshark\\" & mergecap -w %s %s' % (self.mergeFilePath, pcapPaths))
+    #         print("")
+    #     elif platform.system() == 'Linux':
+    #         for pcap in self.pcaps:
+    #             pcapPaths += pcap.path + " "
+    #
+    #         os.system('mergecap -w %s %s' % (self.mergeFilePath, pcapPaths))
+    #         print("Linux")
 
     def remove(self) -> bool:
         return self.__del__()

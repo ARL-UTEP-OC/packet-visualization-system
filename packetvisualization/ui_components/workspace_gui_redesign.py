@@ -7,6 +7,7 @@ import webbrowser
 import zipfile
 
 import plotly.offline as po
+import plotly.express as px
 import plotly.graph_objs as go
 import pandas as pd
 from PyQt5.QtWebEngineWidgets import QWebEngineView
@@ -18,10 +19,13 @@ from datetime import datetime
 from PyQt5.QtCore import Qt, QRect, QObject, pyqtSignal, QThread
 from PyQt5.QtGui import QFont, QIcon, QKeySequence
 from PyQt5.QtWidgets import QMainWindow, QTreeWidget, QPushButton, QVBoxLayout, QProgressBar, QMenu, QWidget, QLabel, \
-    QAction, QMessageBox, QDockWidget, QTextEdit, QInputDialog, QTreeWidgetItem, QFileDialog, QApplication, QToolBar
+    QAction, QMessageBox, QDockWidget, QTextEdit, QInputDialog, QTreeWidgetItem, QFileDialog, QApplication, QToolBar, \
+    QTableWidgetItem
 
+from packetvisualization.backend_components.entity_operator import EntityOperations
 from packetvisualization.backend_components.load import Load
 # from packetvisualization.models.context.entities import EntityOperations
+from packetvisualization.models.context.database_context import DbContext
 from packetvisualization.models.dataset import Dataset
 from packetvisualization.models.pcap import Pcap
 from packetvisualization.models.project import Project
@@ -101,16 +105,32 @@ class WorkspaceWindow(QMainWindow):
         self.dock_plot = QDockWidget("Bandwidth vs. Time Window", self)
         self.dock_plot.setWidget(self.fig_view)
         self.dock_plot.setFloating(False)
+        # Docked widget for Classifier
+        self.classifier_plot_view = QWebEngineView()
+        # TODO: X and Y data is going to be provided by Classifier class, once that happens we can fix this.
+        data_frame = pd.DataFrame()
+        data_frame['instance_number'] = [3, 2, 1]
+        data_frame['cluster'] = [1, 2, 3]
+        self.create_classifier_plot(data_frame)
+        self.classifier_window = QDockWidget("Cluster per instance", self)
+        self.classifier_window.setWidget(self.classifier_plot_view)
+        self.classifier_window.setFloating(True)
+        self.classifier_window.hide()
 
         self.setCentralWidget(self.dock_project_tree)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.dock_project_tree)
         self.addDockWidget(Qt.RightDockWidgetArea, self.dock_plot)
+        # self.addDockWidget(Qt.RightDockWidgetArea, self.classifier_window)
 
         self._create_actions()
         self._create_menu_bar()
         self._create_tool_bar()
         self._connect_actions()
         self._create_status_bar()
+
+        self.context = DbContext()
+        self.db = self.context.db
+        self.eo = EntityOperations()
 
         if existing_flag:
             self.workspace_object = Load().open_zip(
@@ -188,6 +208,11 @@ class WorkspaceWindow(QMainWindow):
         self.gen_table_action.setStatusTip("View Packets in a PCAP")
         self.gen_table_action.setToolTip("View Packets in a PCAP")
 
+        # self.gen_table_action = QAction(QIcon(os.path.join(self.icons, "list.svg")), "&Packet Table", self)
+        self.classifier_action = QAction("&Classify Packets", self)
+        self.classifier_action.setStatusTip("Classify selected pcap data")
+        self.classifier_action.setToolTip("Classify selected pcap data")
+
         # Wireshark Menu Actions
         self.openWiresharkAction = QAction(QIcon(os.path.join(self.icons, "wireshark-icon.png")), "Open &Wireshark",
                                            self)
@@ -230,6 +255,7 @@ class WorkspaceWindow(QMainWindow):
         self.deleteAction.triggered.connect(self.delete)
         # Connect View actions
         self.gen_table_action.triggered.connect(self.gen_table)
+        self.classifier_action.triggered.connect(self.display_classifier_options)
         # Connect Wireshark actions
         self.openWiresharkAction.triggered.connect(self.open_wireshark)
         self.filterWiresharkAction.triggered.connect(self.filter_wireshark)
@@ -270,6 +296,7 @@ class WorkspaceWindow(QMainWindow):
         # View Menu
         view_menu = menu_bar.addMenu("&View")
         view_menu.addAction(self.gen_table_action)
+        view_menu.addAction(self.classifier_action)
         # Wireshark Menu
         wireshark_menu = menu_bar.addMenu('Wire&shark')
         wireshark_menu.addAction(self.openWiresharkAction)
@@ -304,45 +331,51 @@ class WorkspaceWindow(QMainWindow):
         self.progressbar.hide()
 
     def contextMenuEvent(self, event):
-        # Right Click Menu
-        menu = QMenu(self.project_tree)
+        try:
+            # Right Click Menu
+            menu = QMenu(self.project_tree)
 
-        if self.project_tree.selectedItems():
-            # Right-click a project
-            if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Project:
-                menu.addAction(self.newDatasetAction)
-            # Right-click a dataset
-            if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
-                menu.addAction(self.newPCAPAction)
-                menu.addAction(self.traceAction)
-                menu.addAction(self.openWiresharkAction)
-                menu.addAction(self.filterWiresharkAction)
-                export_menu = menu.addMenu("Export")
-                export_menu.addAction(self.exportCsvAction)
-                export_menu.addAction(self.exportJsonAction)
-            # Right-click a pcap
-            if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Pcap:
-                menu.addAction(self.openWiresharkAction)
-                export_menu = menu.addMenu("View")
-                export_menu.addAction(self.gen_table_action)
-                export_menu = menu.addMenu("Export")
-                export_menu.addAction(self.exportCsvAction)
-                export_menu.addAction(self.exportJsonAction)
+            if self.project_tree.selectedItems():
+                # Right-click a project
+                if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Project:
+                    menu.addAction(self.newDatasetAction)
+                # Right-click a dataset
+                if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
+                    menu.addAction(self.newPCAPAction)
+                    menu.addAction(self.traceAction)
+                    menu.addAction(self.openWiresharkAction)
+                    menu.addAction(self.filterWiresharkAction)
+                    menu.addAction(self.classifier_action)
+                    view_menu = menu.addMenu("View")
+                    view_menu.addAction(self.gen_table_action)
+                    export_menu = menu.addMenu("Export")
+                    export_menu.addAction(self.exportCsvAction)
+                    export_menu.addAction(self.exportJsonAction)
+                # Right-click a pcap
+                if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Pcap:
+                    menu.addAction(self.openWiresharkAction)
+                    export_menu = menu.addMenu("View")
+                    export_menu.addAction(self.gen_table_action)
+                    export_menu = menu.addMenu("Export")
+                    export_menu.addAction(self.exportCsvAction)
+                    export_menu.addAction(self.exportJsonAction)
 
-        separator1 = QAction(self)
-        separator1.setSeparator(True)
-        menu.addAction(separator1)
-        menu.addAction(self.cutAction)
-        menu.addAction(self.copyAction)
-        menu.addAction(self.pasteAction)
-        menu.addAction(self.deleteAction)
+            separator1 = QAction(self)
+            separator1.setSeparator(True)
+            menu.addAction(separator1)
+            menu.addAction(self.cutAction)
+            menu.addAction(self.copyAction)
+            menu.addAction(self.pasteAction)
+            menu.addAction(self.deleteAction)
 
-        separator2 = QAction(self)
-        separator2.setSeparator(True)
-        menu.addAction(separator2)
-        menu.addAction(self.newProjectAction)
+            separator2 = QAction(self)
+            separator2.setSeparator(True)
+            menu.addAction(separator2)
+            menu.addAction(self.newProjectAction)
 
-        menu.exec(event.globalPos())
+            menu.exec(event.globalPos())
+        except:
+            traceback.print_exc()
 
     def new_workspace(self, file=None):
         # Logic for creating a new workspace
@@ -408,6 +441,9 @@ class WorkspaceWindow(QMainWindow):
                         pcap_item.setText(0, pcap_name)
                         pcap_item.setData(0, Qt.UserRole, new_pcap)
                         child_item.addChild(pcap_item)
+
+                        mytable = self.db[dataset.name]
+                        self.eo.insert_packets(new_pcap.json_file, mytable ,dataset.name, new_pcap.name)
                     else:
                         child_item.parent().removeChild(child_item)
                         p.del_dataset(dataset)
@@ -442,6 +478,9 @@ class WorkspaceWindow(QMainWindow):
                     pcap_item.setText(0, pcap_name)
                     pcap_item.setData(0, Qt.UserRole, new_pcap)
                     dataset_item.addChild(pcap_item)
+
+                    mytable = self.db[d.name]
+                    self.eo.insert_packets(new_pcap.json_file, mytable, d.name, new_pcap.name)
                 if self.pcap != "":
                     self.update_plot()
         except Exception:
@@ -733,7 +772,18 @@ class WorkspaceWindow(QMainWindow):
                 pcap_item = self.project_tree.selectedItems()[0]
                 pcap_obj = pcap_item.data(0, Qt.UserRole)
 
-                table = table_gui(pcap_obj, self.progressbar)
+                table = table_gui(pcap_obj, self.progressbar, self.db)
+                self.dock_table = QDockWidget("Packet Table", self)
+                self.dock_table.setWidget(table)
+                self.dock_table.setFloating(False)
+                self.addDockWidget(Qt.BottomDockWidgetArea, self.dock_table)
+
+            if self.project_tree.selectedItems() and type(
+                    self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
+                dataset_item = self.project_tree.selectedItems()[0]
+                dataset_obj = dataset_item.data(0, Qt.UserRole)
+
+                table = table_gui(dataset_obj, self.progressbar, self.db)
                 self.dock_table = QDockWidget("Packet Table", self)
                 self.dock_table.setWidget(table)
                 self.dock_table.setFloating(False)
@@ -788,6 +838,19 @@ class WorkspaceWindow(QMainWindow):
         # for large figures.
         self.fig_view.setHtml(raw_html)
 
+    def show_classifier_qt(self, fig):
+        raw_html = '<html><head><meta charset="utf-8" />'
+        raw_html += '<script src="https://cdn.plot.ly/plotly-latest.min.js"></script></head>'
+        raw_html += '<body>'
+        raw_html += po.plot(fig, include_plotlyjs=False, output_type='div')
+        raw_html += '</body></html>'
+
+        if self.classifier_plot_view is None:
+            self.classifier_plot_view = QWebEngineView()
+        # setHtml has a 2MB size limit, need to switch to setUrl on tmp file
+        # for large figures.
+        self.classifier_plot_view.setHtml(raw_html)
+
     def create_plot(self):
         # Create figure
         fig = go.Figure()
@@ -811,6 +874,12 @@ class WorkspaceWindow(QMainWindow):
             )
         )
         self.show_qt(fig)
+
+    def create_classifier_plot(self, df):
+        fig = px.scatter(df, x="cluster", y="instance_number",
+                         color='cluster', color_continuous_scale=px.colors.sequential.Bluered_r)
+        # fig.show()
+        self.show_classifier_qt(fig)
 
     def reportProgress(self, n):
         self.progressbar.setValue(n)
@@ -861,3 +930,14 @@ class WorkspaceWindow(QMainWindow):
                 for d in p.dataset:
                     if d.name == dataset_item.text(0):
                         ui = filter_gui.filter_window(d.mergeFilePath, self.project_tree, self.workspace_object)
+
+    def display_classifier_options(self):
+        # TODO: Classifier actions will run in here
+        print('Called display_classifier_options')
+        # TODO: X and Y data is going to be provided by Classifier class, once that happens we can fix this.
+        data_frame = pd.DataFrame()
+        data_frame['instance_number'] = [3, 2, 1]
+        data_frame['cluster'] = [1, 2, 3]
+        self.create_classifier_plot(data_frame)
+        self.classifier_window.show()
+        return

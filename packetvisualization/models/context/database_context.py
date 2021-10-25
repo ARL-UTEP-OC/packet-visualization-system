@@ -1,11 +1,27 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+import pymongo
+import subprocess
+from pymongo.database import Database
+from decouple import config
+import certifi
 
+class DbContext:
+    db = Database
+    # Find our connection string in the .env file in the root directory
+    dbString = config('DBSTRING')
 
-Base = declarative_base()
-engine = create_engine('sqlite:///packets.sqlite', echo =True)
-# Base.metadata.create_all(bind=engine)  # here
+    def __init__(self):
+        client = pymongo.MongoClient(f'{self.dbString}?retryWrites=true&w=majority', tlsCAFile=certifi.where())
+        self.db = client.PracticumDB
+        print(self.db.list_collections())
 
-Session = sessionmaker(bind=engine)
-session = Session()
+    def destroy_session(self):
+        # TODO: Fix this, until this is fixed we have to manually delete the DB data
+        # mongodump -d yourDB -c "your/colName" --out "-" --quiet > col.bson
+        subprocess.call([f'mongodump --uri {self.dbString} --out "-" --quiet > col.bson']);
+
+# Implementation example
+# context = DbContext()
+# packet = {'_id': 3, 'name': 'test-packet', 'meta': ['testing1', 'testing2']}
+# To create a new collections table replace the name 'Packets' with yourtable name
+# packets_doc = context.db.Packets
+# result = packets_doc.insert_one(packet)
