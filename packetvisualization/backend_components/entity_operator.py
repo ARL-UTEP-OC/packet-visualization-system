@@ -1,47 +1,34 @@
-from sqlalchemy.orm import relationship
-from packetvisualization.models.context.database_context import Base, session
-from sqlalchemy import Column, Integer, String, Float, ForeignKey
-
-from packetvisualization.models import pcap_ent as Pcap
-from packetvisualization.models import dataset_ent as Dataset
+from packetvisualization.models.context.database_context import DbContext
+from pymongo import MongoClient,InsertOne, DeleteMany
+import json
 
 
+class EntityOperator:
 
-class EntityOperations():
+    def fix_dictionary(self,d):  # Function to replace any key with '.' in name
+        new = {}
+        for k, v in d.items():
+            if isinstance(v, dict):
+                v = self.fix_dictionary(v)
+            new[k.replace('.', '-')] = v
+        return new
 
-    def insert_dataset(self, dataset):
-        session.add(dataset)
-        session.commit()
+    def insert_packets(self, json_file, collection, dataset_name, pcap_name):  # take json with packet information and bulk insert into DB
+        requesting = []
+        with open(json_file, encoding="ISO-8859-1") as f:
+            packet_data = json.load(f)  # list of packets w/data as json object
+            for jsonObj in packet_data:
+                jsonObj["parent_dataset"] = dataset_name
+                jsonObj["parent_pcap"] = pcap_name
+                jsonObj = self.fix_dictionary(jsonObj)  # replace all key instances of "." with "-"
 
-    def remove_dataset(self, dataset_entity):
-        # print("Test")
-        session.delete(dataset_entity)
-        session.commit()
+                requesting.append(InsertOne(jsonObj))
 
-    def insert_pcap(self, pcap):
-        session.add(pcap)
-        session.commit()
+        collection.bulk_write(requesting)
 
-    def remove_pcap(self, pcap_entity):
-        print("test")
-        session.delete(pcap_entity)
-        session.commit()
+    def delete_packets(self, collection, parent, name):
+        query = {parent: name}
+        collection.delete_many(query)
 
-    def add_and_commit(self, entity_type, entity_list):
-        session.bulk_save_objects([entity_type() for _ in entity_list])
-        session.commit()
-
-    """
-    We will need to bulk insert packet data
-    """
-
-    # def bulk_insert_packet(self, packets_to_insert):
-    #     """
-    #     packets_to_insert = [
-    #         packet(...),
-    #         packet(...),
-    #         packet(...)
-    #     ]
-    #     """
-    #     # session.bulk_save_objects(packets_to_insert)
-    #     self.add_and_commit(Packet, packets_to_insert)
+    def delete_collection(self, collection):
+        collection.drop()

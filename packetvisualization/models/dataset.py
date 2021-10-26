@@ -1,4 +1,5 @@
 from packetvisualization.models.pcap import Pcap
+from packetvisualization.backend_components.entity_operator import EntityOperator
 import os, shutil
 import platform
 
@@ -7,16 +8,18 @@ class Dataset:
         self.name = name
         self.pcaps = [] # will use children key instead
         self.mergeFilePath = None
+        self.jsonFilePath = None
         self.path = os.path.join(parentPath, self.name)
         self.totalPackets = 0
         self.protocols = None
         self.create_folder()
         self.create_merge_file()
+        # self.create_json_file()
 
-    def add_pcap(self, new: Pcap) -> list: #Replaced with DB Query
+    def add_pcap(self, new: Pcap) -> list:
         self.pcaps.append(new)
-        self.calculate_total_packets()
         self.merge_pcaps()
+
         return self.pcaps
 
     def del_pcap(self, old: Pcap): # Replace with DB Query
@@ -37,7 +40,7 @@ class Dataset:
             os.mkdir(self.path)
         return self.path
 
-    def create_merge_file(self) -> str: # TODO: CHECK
+    def create_merge_file(self):
         filename = self.name + ".pcap"
         path = os.path.join(self.path, filename)
         self.mergeFilePath = path
@@ -52,13 +55,7 @@ class Dataset:
                 f.write(',')
         f.write(']}')
 
-    def calculate_total_packets(self):  # Don't Need
-        for pcap in self.pcaps:
-            self.totalPackets += pcap.total_packets
-
-        return self.totalPackets
-
-    def merge_pcaps(self): # TODO: CHECK
+    def merge_pcaps(self):
         pcapPaths = ""
 
         if platform.system() == 'Windows':
@@ -73,7 +70,6 @@ class Dataset:
 
             os.system('mergecap -w %s %s' % (self.mergeFilePath, pcapPaths))
             print("Linux")
-
 
     def remove(self) -> bool:
         return self.__del__()

@@ -14,9 +14,8 @@ Follow these steps:
 3. Once in run: *pip install -e .*
 4. You can now run *python* and test the package. 
 5. Suggestion: The following is the way to run the system.
-   1. from components.startup import Main
-   2. m = Main()
-   3. m.init_program()
+   1. import packetvisualization
+   2. packetvisualization.run()
 ***
 ## Dependencies
 We treat dependencies via dev_requirements.txt, which will install everything we need in order for the package to work.
