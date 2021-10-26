@@ -22,7 +22,7 @@ from PyQt5.QtWidgets import QMainWindow, QTreeWidget, QPushButton, QVBoxLayout, 
     QAction, QMessageBox, QDockWidget, QTextEdit, QInputDialog, QTreeWidgetItem, QFileDialog, QApplication, QToolBar, \
     QTableWidgetItem
 
-from packetvisualization.backend_components.entity_operator import EntityOperations
+from packetvisualization.backend_components.entity_operator import EntityOperator
 from packetvisualization.backend_components.load import Load
 # from packetvisualization.models.context.entities import EntityOperations
 from packetvisualization.models.context.database_context import DbContext
@@ -143,7 +143,7 @@ class WorkspaceWindow(QMainWindow):
 
         self.context = DbContext()
         self.db = self.context.db
-        self.eo = EntityOperations()
+        self.eo = EntityOperator()
 
         if existing_flag:
             self.workspace_object = Load().open_zip(

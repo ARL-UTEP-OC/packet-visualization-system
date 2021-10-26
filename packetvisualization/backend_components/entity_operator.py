@@ -3,7 +3,7 @@ from pymongo import MongoClient,InsertOne, DeleteMany
 import json
 
 
-class EntityOperations:
+class EntityOperator:
 
     def fix_dictionary(self,d):  # Function to replace any key with '.' in name
         new = {}

@@ -11,7 +11,7 @@ from PyQt5.QtCore import QEvent
 from PyQt5.QtWidgets import QInputDialog, QMenu, QFileDialog, QAction, QMessageBox, QTreeWidget, QProgressBar, \
     QTableWidget
 
-from packetvisualization.backend_components.entity_operator import EntityOperations
+from packetvisualization.backend_components.entity_operator import EntityOperator
 from packetvisualization.backend_components.load import Load
 from packetvisualization.models import dataset
 # from packetvisualization.models.context.entities import EntityOperations
@@ -95,7 +95,7 @@ class Workspace_UI(QtWidgets.QMainWindow):
             self.progress_bar = QProgressBar(self)
             self.progress_bar.setGeometry(15, 518, 221, 23)
 
-            self.ent_operator = EntityOperations()
+            self.ent_operator = EntityOperator()
 
             if existing_flag:
                 self.generate_existing_workspace()
