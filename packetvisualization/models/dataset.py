@@ -1,5 +1,5 @@
 from packetvisualization.models.pcap import Pcap
-from packetvisualization.backend_components.entity_operator import EntityOperator
+# from packetvisualization.backend_components.entity_operator import EntityOperator
 import os, shutil
 import platform
 
