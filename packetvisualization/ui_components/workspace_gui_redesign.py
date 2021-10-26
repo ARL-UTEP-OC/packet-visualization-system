@@ -21,8 +21,9 @@ from PyQt5.QtGui import QFont, QIcon, QKeySequence
 from PyQt5.QtWidgets import QMainWindow, QTreeWidget, QPushButton, QVBoxLayout, QProgressBar, QMenu, QWidget, QLabel, \
     QAction, QMessageBox, QDockWidget, QTextEdit, QInputDialog, QTreeWidgetItem, QFileDialog, QApplication, QToolBar, \
     QTableWidgetItem
+from packetvisualization.backend_components.controller import Controller
 
-from packetvisualization.backend_components.entity_operator import EntityOperator
+from packetvisualization.backend_components.entity_operator import EntityOperations
 from packetvisualization.backend_components.load import Load
 # from packetvisualization.models.context.entities import EntityOperations
 from packetvisualization.models.context.database_context import DbContext
@@ -143,7 +144,8 @@ class WorkspaceWindow(QMainWindow):
 
         self.context = DbContext()
         self.db = self.context.db
-        self.eo = EntityOperator()
+        self.eo = EntityOperations()
+        self.controller = Controller()
 
         if existing_flag:
             self.workspace_object = Load().open_zip(
@@ -645,6 +647,8 @@ class WorkspaceWindow(QMainWindow):
 
     def exit(self):
         # Logic for exiting the program
+        if os.path.exists("tEmPpCaP.pcap"):
+            os.remove("tEmPpCaP.pcap")
         self.close()
 
     def cut_content(self):
@@ -708,9 +712,13 @@ class WorkspaceWindow(QMainWindow):
         if reply == QMessageBox.Yes:
             self.workspace_object.save()
             self.workspace_object.__del__()
+            if os.path.exists("tEmPpCaP.pcap"):
+                os.remove("tEmPpCaP.pcap")
             event.accept()
         elif reply == QMessageBox.No:
             self.workspace_object.__del__()
+            if os.path.exists("tEmPpCaP.pcap"):
+                os.remove("tEmPpCaP.pcap")
             event.accept()
         else:
             event.ignore()
@@ -789,7 +797,7 @@ class WorkspaceWindow(QMainWindow):
                 pcap_item = self.project_tree.selectedItems()[0]
                 pcap_obj = pcap_item.data(0, Qt.UserRole)
 
-                table = table_gui(pcap_obj, self.progressbar, self.db)
+                table = table_gui(pcap_obj, self.progressbar, self.db, self)
                 self.dock_table = QDockWidget("Packet Table", self)
                 self.dock_table.setWidget(table)
                 self.dock_table.setFloating(False)
@@ -800,7 +808,7 @@ class WorkspaceWindow(QMainWindow):
                 dataset_item = self.project_tree.selectedItems()[0]
                 dataset_obj = dataset_item.data(0, Qt.UserRole)
 
-                table = table_gui(dataset_obj, self.progressbar, self.db)
+                table = table_gui(dataset_obj, self.progressbar, self.db, self)
                 self.dock_table = QDockWidget("Packet Table", self)
                 self.dock_table.setWidget(table)
                 self.dock_table.setFloating(False)
@@ -893,7 +901,7 @@ class WorkspaceWindow(QMainWindow):
         self.show_qt(fig)
 
     def create_classifier_plot(self, df):
-        fig = px.scatter(df, x="cluster", y="instance_number",
+        fig = px.scatter(df, x='cluster', y='instance_number',
                          color='cluster', color_continuous_scale=px.colors.sequential.Bluered_r)
         # fig.show()
         self.show_classifier_qt(fig)
@@ -949,12 +957,20 @@ class WorkspaceWindow(QMainWindow):
                         ui = filter_gui.filter_window(d.mergeFilePath, self.project_tree, self.workspace_object)
 
     def display_classifier_options(self):
-        # TODO: Classifier actions will run in here
         print('Called display_classifier_options')
-        # TODO: X and Y data is going to be provided by Classifier class, once that happens we can fix this.
-        data_frame = pd.DataFrame()
-        data_frame['instance_number'] = [3, 2, 1]
-        data_frame['cluster'] = [1, 2, 3]
-        self.create_classifier_plot(data_frame)
+        # data_frame = pd.DataFrame()
+        # data_frame['instance_number'] = [3, 2, 1]
+        # data_frame['cluster'] = [1, 2, 3]
+        results = pd.DataFrame()
+        try:
+            if self.project_tree.selectedItems():
+                if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
+                    dataset_item = self.project_tree.selectedItems()[0]
+                    dataset = dataset_item.data(0, Qt.UserRole)
+                    results = self.controller.classify_dataset(dataset.name)
+        except:
+            raise ''
+
+        self.create_classifier_plot(results)
         self.classifier_window.show()
         return

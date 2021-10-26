@@ -1,11 +1,12 @@
 from packetvisualization.models.context.database_context import DbContext
-from pymongo import MongoClient,InsertOne, DeleteMany
+from pymongo import MongoClient, InsertOne, DeleteMany
 import json
 
 
-class EntityOperator:
+class EntityOperations:
+    context = DbContext()
 
-    def fix_dictionary(self,d):  # Function to replace any key with '.' in name
+    def fix_dictionary(self, d):  # Function to replace any key with '.' in name
         new = {}
         for k, v in d.items():
             if isinstance(v, dict):
@@ -13,7 +14,8 @@ class EntityOperator:
             new[k.replace('.', '-')] = v
         return new
 
-    def insert_packets(self, json_file, collection, dataset_name, pcap_name):  # take json with packet information and bulk insert into DB
+    def insert_packets(self, json_file, collection, dataset_name,
+                       pcap_name):  # take json with packet information and bulk insert into DB
         requesting = []
         with open(json_file, encoding="ISO-8859-1") as f:
             packet_data = json.load(f)  # list of packets w/data as json object
@@ -32,3 +34,14 @@ class EntityOperator:
 
     def delete_collection(self, collection):
         collection.drop()
+
+    def get_packet_data_by_dataset(self, dataset_name: str):
+        collection = self.context.db[dataset_name]
+        query = {'parent_dataset': dataset_name}
+        context_results = list(collection.find(query, {
+            '_id': 0,
+            '_source.layers.ip.ip-dst': 1,
+            '_source.layers.ip.ip-src': 1,
+            '_source.layers.udp.udp-srcport': 1,
+            '_source.layers.udp.udp-dstport': 1, }))
+        return context_results
