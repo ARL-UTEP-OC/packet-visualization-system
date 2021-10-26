@@ -30,8 +30,8 @@ def openwireshark(path):
 
 
 def filter(path: str, wsFilter, newFileName, projectTree: QTreeWidget, workspace: Workspace):
-
-    splitPath = path.split("\\")
+    splitPath = path.split(os.sep)
+    #splitPath = path.split("\\")
     datasetName = splitPath[len(splitPath) - 2]
     projectName = splitPath[len(splitPath) - 3]
 
@@ -50,27 +50,47 @@ def filter(path: str, wsFilter, newFileName, projectTree: QTreeWidget, workspace
     cmd = r"C:\Program Files\Wireshark\tshark -r " + path + r' -w ' + newFilePath + '.pcap -Y '
     for key, value in wsFilter.items():
 
-        if key == list(wsFilter.keys())[0]:
-            cmd += f"\"{key} == {value}"
-        else:
-            cmd += f"{key} == {value}"
+        cmd += f"\"{value}\""
 
-        if key != list(wsFilter)[-1]:
-            cmd += " && "
-        else:
-            cmd += "\""
+        # if key == list(wsFilter.keys())[0]:
+        #     cmd += f"\"{key} == {value}"
+        # else:
+        #     cmd += f"{key} == {value}"
+        #
+        # if key != list(wsFilter)[-1]:
+        #     cmd += " && "
+        # else:
+        #     cmd += "\""
 
-    #subprocess.Popen(cmd)
-    subprocess.call(cmd)
+    # subprocess.Popen(cmd)
+    print(cmd)
+    error = subprocess.run(cmd, stderr=subprocess.PIPE)
+    error = error.stderr.decode('utf-8')
+    if not error:
+        new_pcap = Pcap(file=newFilePath + ".pcap", path=dataset.path, name=newFileName + ".pcap")
+        filterFolderExist = False
+        dataset_item = projectTree.selectedItems()[0]
+        for i in range(dataset_item.childCount()):
+            if dataset_item.child(i).text(0) == "Wireshark Filtered Pcaps":
+                filterFolderExist = True
+                pcap_item = QtWidgets.QTreeWidgetItem()
+                pcap_item.setText(0, newFileName + ".pcap")
+                pcap_item.setData(0, Qt.UserRole, new_pcap)
+                dataset_item.child(i).addChild(pcap_item)
+                break
+        if filterFolderExist == False:
+            filterFolder = QtWidgets.QTreeWidgetItem()
+            filterFolder.setText(0,"Wireshark Filtered Pcaps")
+            dataset_item.addChild(filterFolder)
+            pcap_item = QtWidgets.QTreeWidgetItem()
+            pcap_item.setText(0, newFileName + ".pcap")
+            pcap_item.setData(0, Qt.UserRole, new_pcap)
+            filterFolder.addChild(pcap_item)
 
-    new_pcap = Pcap(file=newFilePath + ".pcap", path=dataset.path, name=newFileName + ".pcap")
+        #dataset_item.addChild(pcap_item)
 
-    dataset_item = projectTree.selectedItems()[0]
-    pcap_item = QtWidgets.QTreeWidgetItem()
-    pcap_item.setText(0, newFileName + ".pcap")
-    pcap_item.setData(0, Qt.UserRole, new_pcap)
-    dataset_item.addChild(pcap_item)
+        dataset.add_pcap(new=new_pcap)
 
-    dataset.add_pcap(new=new_pcap)
+    return error
 
 

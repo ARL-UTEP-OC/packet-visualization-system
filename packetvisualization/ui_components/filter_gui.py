@@ -23,18 +23,21 @@ class filter_window(QtWidgets.QWidget):
         form_layout = QFormLayout()
         self.setLayout(form_layout)
 
-        self.ipFilter = QtWidgets.QLineEdit(self)
-        self.ipFilter.setObjectName("ip.addr")
+        self.cmd = QtWidgets.QLineEdit(self)
+        self.cmd.setObjectName("cmd")
 
-        self.portFilter = QtWidgets.QLineEdit(self)
-        self.portFilter.setObjectName("tcp.port")
+        # self.portFilter = QtWidgets.QLineEdit(self)
+        # self.portFilter.setObjectName("tcp.port")
 
         self.newFileName = QtWidgets.QLineEdit(self)
         self.newFileName.setObjectName("newFileName")
 
-        form_layout.addRow("IP Address", self.ipFilter)
-        form_layout.addRow("TCP Port", self.portFilter)
+        self.errorMsg = QtWidgets.QLabel()
+
+        form_layout.addRow("Display Filter", self.cmd)
+        # form_layout.addRow("TCP Port", self.portFilter)
         form_layout.addRow("File Name*", self.newFileName)
+        form_layout.addRow(self.errorMsg)
         form_layout.addRow(QtWidgets.QPushButton("Submit", clicked=lambda: self.submit_filter_options()))
 
         self.show()
@@ -53,8 +56,13 @@ class filter_window(QtWidgets.QWidget):
                 if w.objectName() != "newFileName" and w.text() != "":
                     wsFilter[w.objectName()] = w.text()
 
-            Wireshark.filter(self.path, wsFilter, newFileName.text(), self.projectTree, self.workspace)
-            self.close()
+            error = Wireshark.filter(self.path, wsFilter, newFileName.text(), self.projectTree, self.workspace)
+            print(error)
+            if not error:
+                self.close()
+            else:
+                # print(error)
+                self.errorMsg.setText(f"{error}")
 
         #print(self.path)
 
