@@ -61,10 +61,10 @@ class table_gui(QTableWidget):
         self.mark_action = QAction("Mark/Unmark Packet", self)
         self.mark_action.triggered.connect(self.mark_packet)
 
-        self.tag_action = QAction("Add Tag,", self)
+        self.tag_action = QAction("Add Tag", self)
         self.tag_action.triggered.connect(self.add_tag)
 
-        self.remove_tag_action = QAction("Remove Tag,", self)
+        self.remove_tag_action = QAction("Remove Tag", self)
         self.remove_tag_action.triggered.connect(self.remove_tag)
 
         self.create_dataset_action = QAction("Create Dataset", self)
