@@ -645,6 +645,8 @@ class WorkspaceWindow(QMainWindow):
 
     def exit(self):
         # Logic for exiting the program
+        if os.path.exists("tEmPpCaP.pcap"):
+            os.remove("tEmPpCaP.pcap")
         self.close()
 
     def cut_content(self):
@@ -708,9 +710,13 @@ class WorkspaceWindow(QMainWindow):
         if reply == QMessageBox.Yes:
             self.workspace_object.save()
             self.workspace_object.__del__()
+            if os.path.exists("tEmPpCaP.pcap"):
+                os.remove("tEmPpCaP.pcap")
             event.accept()
         elif reply == QMessageBox.No:
             self.workspace_object.__del__()
+            if os.path.exists("tEmPpCaP.pcap"):
+                os.remove("tEmPpCaP.pcap")
             event.accept()
         else:
             event.ignore()
