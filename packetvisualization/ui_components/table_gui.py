@@ -1,4 +1,5 @@
 import os
+import platform
 import shutil
 import subprocess
 import traceback
@@ -69,6 +70,9 @@ class table_gui(QTableWidget):
         self.create_dataset_action = QAction("Create Dataset", self)
         self.create_dataset_action.triggered.connect(self.create_dataset)
 
+        self.tagged_create_dataset_action = QAction("Create Dataset", self)
+        self.tagged_create_dataset_action.triggered.connect(lambda : self.create_dataset(tagged= True))
+
         self.viewASCII_action = QAction("View as ASCII", self)
         self.viewASCII_action.triggered.connect(self.view_as_ASCII)
 
@@ -92,6 +96,7 @@ class table_gui(QTableWidget):
 
         tagged_menu = menu.addMenu("Tagged")
         tagged_menu.addAction(self.view_tagged_in_wireshark_action)
+        tagged_menu.addAction(self.tagged_create_dataset_action)
 
         view_menu = menu.addMenu("View")
         view_menu.addAction(self.viewASCII_action)
@@ -116,10 +121,18 @@ class table_gui(QTableWidget):
 
             output_file = os.path.join(os.getcwd(), "tEmPpCaP.pcap")
 
-            infile = self.obj.path
-            os.system(
-                'cd "C:\Program Files\Wireshark" & tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
-            sp = subprocess.Popen("C:\Program Files\Wireshark\wireshark -r " + output_file)
+            if type(self.obj) == Pcap:
+                infile = self.obj.path
+            else:
+                infile = self.obj.mergeFilePath
+
+            if (platform.system()=="Windows"):
+                os.system(
+                    'cd "C:\Program Files\Wireshark" & tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
+                subprocess.Popen("C:\Program Files\Wireshark\wireshark -r " + output_file)
+            elif (platform.system()=="Linux"):
+                os.system('tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
+                subprocess.Popen("wireshark -r " + output_file)
         except:
             traceback.print_exc()
 
@@ -136,10 +149,18 @@ class table_gui(QTableWidget):
 
                 output_file = os.path.join(os.getcwd(), "tEmPpCaP.pcap")
 
-                infile = self.obj.path
-                os.system(
-                    'cd "C:\Program Files\Wireshark" & tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
-                subprocess.Popen("C:\Program Files\Wireshark\wireshark -r " + output_file)
+                if type(self.obj) == Pcap:
+                    infile = self.obj.path
+                else:
+                    infile = self.obj.mergeFilePath
+
+                if (platform.system() == "Windows"):
+                    os.system(
+                        'cd "C:\Program Files\Wireshark" & tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
+                    subprocess.Popen("C:\Program Files\Wireshark\wireshark -r " + output_file)
+                elif (platform.system() == "Linux"):
+                    os.system('tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
+                    subprocess.Popen("wireshark -r " + output_file)
         except:
             traceback.print_exc()
 
@@ -240,23 +261,37 @@ class table_gui(QTableWidget):
         except:
             traceback.print_exc()
 
-    def create_dataset(self):
+    def create_dataset(self, tagged: bool = None):
         try:
             list = []
-            if self.selectedItems():
-                selected = self.selectedItems()
-                row_list = []
-                for item in selected:
-                    if item.row() not in row_list:
-                        frame_number = self.item(item.row(), 0).text()
-                        list.append(frame_number)
-                        row_list.append(item.row())
+            if not tagged:
+                if self.selectedItems():
+                    selected = self.selectedItems()
+                    row_list = []
+                    for item in selected:
+                        if item.row() not in row_list:
+                            frame_number = self.item(item.row(), 0).text()
+                            list.append(frame_number)
+                            row_list.append(item.row())
+            if tagged:
+                tag = QInputDialog.getText(self, "Tag Name Entry", "Enter Tag name:")[0]
+                for i in range(self.rowCount()):
+                    if self.item(i, 0).data(Qt.UserRole) == tag:
+                        list.append(self.item(i, 0).text())
 
             frame_string = gen_frame_string(list)
             output_file = os.path.join(os.getcwd(), "tEmPpCaP.pcap")
-            infile = self.obj.path
-            os.system(
-                'cd "C:\Program Files\Wireshark" & tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
+
+            if type(self.obj) == Pcap:
+                infile = self.obj.path
+            else:
+                infile = self.obj.mergeFilePath
+
+            if (platform.system() == "Windows"):
+                os.system(
+                    'cd "C:\Program Files\Wireshark" & tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
+            elif (platform.system() == "Linux"):
+                os.system('tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
 
             items = []
             for p in self.workspace.workspace_object.project:
