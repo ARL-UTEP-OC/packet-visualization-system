@@ -9,7 +9,7 @@ class Load:
     def __init__(self):
         self.workspace = None
 
-    def open_zip(self, path: str) -> str:
+    def open_zip(self, path: str) -> Workspace:
         try:
             if not os.path.isfile(path):
                 raise Exception
@@ -19,7 +19,6 @@ class Load:
             head, tail = os.path.split(root)
             tail = "." + tail
             working_dir = os.path.join(head, tail)
-            print(working_dir, path)
             if os.path.isdir(working_dir):
                 shutil.rmtree(working_dir)
             shutil.unpack_archive(path, working_dir)
@@ -28,7 +27,7 @@ class Load:
             print("Error while trying to read ZIP file.")
             return None
 
-    def open_dir(self, path: str) -> str:
+    def open_dir(self, path: str) -> Workspace:
         try:
             if not os.path.isdir(path):
                 raise Exception

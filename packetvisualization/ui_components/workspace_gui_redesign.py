@@ -84,22 +84,23 @@ class WorkspaceWindow(QMainWindow):
     logo = os.path.join(os.path.dirname(__file__), "images", "logo.png")
     app.setWindowIcon(QIcon(logo))
 
-    def __init__(self, workspace_path: str, test_mode: bool = False, existing_flag: bool = False) -> None:
+    def __init__(self, workspace_path: str, existing_flag: bool = False) -> None:
         """Initialization function for a new workspace window.
 
-        :param workspace_object: backend object containing links to all associated datasets
-        :type workspace_object: Workspace
-        :param test_mode: flag set for testing
-        :type test_mode: bool
+        :param workspace_path: directory where workspace is saved
+        :type workspace_path: str
         :param existing_flag: flag set if opening an existing workspace
         :type existing_flag: bool
         """
         super().__init__()
         self.icons = os.path.join(os.path.dirname(__file__), "images", "svg")
         self.logo = os.path.join(os.path.dirname(__file__), "images", "logo.png")
-        self.workspace_object = Workspace(name=os.path.basename(workspace_path),
-                                          location=os.path.dirname(workspace_path))
-        self.test_mode = test_mode
+        self.test_mode = False
+        if existing_flag:
+            self.workspace_object = Load().open_zip(workspace_path)
+        else:
+            self.workspace_object = Workspace(name=os.path.basename(workspace_path),
+                                              location=os.path.dirname(workspace_path))
         self.setWindowTitle("PacketVisualizer - " + self.workspace_object.name)
         self.resize(1000, 600)
 
@@ -131,13 +132,13 @@ class WorkspaceWindow(QMainWindow):
         self.create_classifier_plot(data_frame)
         self.classifier_window = QDockWidget("Cluster per instance", self)
         self.classifier_window.setWidget(self.classifier_plot_view)
-        self.classifier_window.setFloating(True)
-        self.classifier_window.hide()
+        self.classifier_window.setFloating(False)
+        self.classifier_window.close()
 
         self.setCentralWidget(self.dock_project_tree)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.dock_project_tree)
         self.addDockWidget(Qt.RightDockWidgetArea, self.dock_plot)
-        # self.addDockWidget(Qt.RightDockWidgetArea, self.classifier_window)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.classifier_window)
 
         self._create_actions()
         self._create_menu_bar()
@@ -151,8 +152,6 @@ class WorkspaceWindow(QMainWindow):
         self.controller = Controller()
 
         if existing_flag:
-            self.workspace_object = Load().open_zip(
-                os.path.join(self.workspace_object.location, self.workspace_object.name + ".zip"))
             self.generate_existing_workspace()
 
     def run(self):
@@ -980,6 +979,16 @@ class WorkspaceWindow(QMainWindow):
 
 if __name__ == "__main__":
     args = len(sys.argv)
-    ui = WorkspaceWindow(sys.argv[1])
-    #ui = WorkspaceWindow(sys.argv[1], sys.argv[2])
-    ui.run()
+    try:
+        path = os.path.realpath(sys.argv[1])
+        if args == 2:
+            ui = WorkspaceWindow(path)
+        elif args == 3:
+            if sys.argv[2] == 'True':
+                ui = WorkspaceWindow(path, True)
+            else:
+                ui = WorkspaceWindow(path)
+        ui.run()
+    except Exception:
+        traceback.print_exc()
+
