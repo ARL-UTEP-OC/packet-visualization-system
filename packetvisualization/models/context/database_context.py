@@ -13,7 +13,7 @@ class DbContext:
         # CLOUD
         # client = pymongo.MongoClient(f'{self.dbString}?retryWrites=true&w=majority', tlsCAFile=certifi.where())
         # LOCAL
-        client = pymongo.MongoClient(f'{self.dbString}', tlsCAFile=certifi.where())
+        client = pymongo.MongoClient(f'{self.dbString}')
         self.db = client.PracticumDB
         # print(self.db.list_collections())
 
