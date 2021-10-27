@@ -162,10 +162,6 @@ class WorkspaceWindow(QMainWindow):
         """Creates all actions that will be used in the application
         """
         # File Menu Actions
-        self.newWorkspaceAction = QAction("&New Workspace", self)
-        self.newWorkspaceAction.setStatusTip("Create a new workspace")
-        self.newWorkspaceAction.setToolTip("Create a new workspace")
-
         self.newProjectAction = QAction(QIcon(os.path.join(self.icons, "add-circle.svg")), "New &Project", self)
         self.newProjectAction.setShortcut("Ctrl+N")
         self.newProjectAction.setStatusTip("Create a new project")
@@ -181,9 +177,13 @@ class WorkspaceWindow(QMainWindow):
 
         self.filterWiresharkAction = QAction("Filter Wireshark", self)
 
-        self.openAction = QAction("&Existing Workspace", self)
-        self.openAction.setStatusTip("Open existing workspace")
-        self.openAction.setToolTip("Open existing workspace")
+        self.openNewAction = QAction("&New Workspace", self)
+        self.openNewAction.setStatusTip("Open a new workspace")
+        self.openNewAction.setToolTip("Open a new workspace")
+
+        self.openExistingAction = QAction("&Existing Workspace", self)
+        self.openExistingAction.setStatusTip("Open existing workspace")
+        self.openExistingAction.setToolTip("Open existing workspace")
 
         self.saveAction = QAction(QIcon(os.path.join(self.icons, "save.svg")), "&Save", self)
         self.saveAction.setShortcut("Ctrl+S")
@@ -263,11 +263,11 @@ class WorkspaceWindow(QMainWindow):
         """Connects all actions to a method to be executed
         """
         # Connect File actions
-        self.newWorkspaceAction.triggered.connect(self.new_workspace)
+        self.openNewAction.triggered.connect(self.open_new_workspace)
         self.newProjectAction.triggered.connect(self.new_project)
         self.newDatasetAction.triggered.connect(self.new_dataset)
         self.newPCAPAction.triggered.connect(self.new_pcap)
-        self.openAction.triggered.connect(self.open_workspace)
+        self.openExistingAction.triggered.connect(self.open_existing_workspace)
         self.saveAction.triggered.connect(self.save)
         self.exitAction.triggered.connect(self.exit)
         self.traceAction.triggered.connect(self.trace_dataset)
@@ -308,8 +308,8 @@ class WorkspaceWindow(QMainWindow):
         new_menu.addAction(self.newDatasetAction)
         new_menu.addAction(self.newPCAPAction)
         open_menu = file_menu.addMenu(QIcon(os.path.join(self.icons, "folder.svg")), "&Open...")
-        open_menu.addAction(self.newWorkspaceAction)
-        open_menu.addAction(self.openAction)
+        open_menu.addAction(self.openNewAction)
+        open_menu.addAction(self.openExistingAction)
         file_menu.addAction(self.saveAction)
         file_menu.addSeparator()
         file_menu.addAction(self.traceAction)
@@ -413,21 +413,6 @@ class WorkspaceWindow(QMainWindow):
 
         menu.exec(event.globalPos())
 
-    def new_workspace(self, filename: str = None) -> None:
-        """Prompts user to select save location and opens up a new workspace window
-
-        :param filename: save directory of the new workspace
-        :type filename: str
-        """
-        # Logic for creating a new workspace
-        if not self.test_mode:
-            filename = QFileDialog.getSaveFileName(caption="Choose Workspace location")[0]
-
-        if filename != '':
-            new_workspace_object = Workspace(name=os.path.basename(filename), location=os.path.dirname(filename))
-            self.workspace = WorkspaceWindow(new_workspace_object)
-            self.workspace.show()
-
     def new_project(self, text=None):
         # Logic for creating a new project
         if not self.test_mode:
@@ -523,22 +508,25 @@ class WorkspaceWindow(QMainWindow):
             print("Error loading this pcap")
             traceback.print_exc()
 
-    def open_workspace(self):
-        # Logic for opening an existing project
-        try:
-            if not self.test_mode:
-                file_filter = "zip(*.zip)"
-                path = QFileDialog.getOpenFileName(caption="Open existing Workspace", filter=file_filter)[0]
+    def open_new_workspace(self) -> None:
+        """Prompts user to select save location and opens up a new workspace window
+        """
+        directory = QFileDialog.getSaveFileName(caption="Choose Workspace location")[0]
 
-                if path != "":
-                    if not self.test_mode:
-                        workspace_object = Workspace(name=os.path.basename(path.replace(".zip", "")),
-                                                     location=os.path.dirname(path))
-                        self.workspace = WorkspaceWindow(workspace_object, existing_flag=True)
-                        self.workspace.show()
-                        return True
-        except Exception:
-            traceback.print_exc()
+        if directory != '':
+            self.workspace = WorkspaceWindow(workspace_path=directory)
+            self.workspace.show()
+
+    def open_existing_workspace(self) -> None:
+        """Prompts user to select saved zip file and opens an existing workspace window
+        """
+        file_filter = "zip(*.zip)"
+        file_path = QFileDialog.getOpenFileName(caption="Open existing Workspace", filter=file_filter)[0]
+
+        if file_path != "":
+            if not self.test_mode:
+                self.workspace = WorkspaceWindow(workspace_path=file_path, existing_flag=True)
+                self.workspace.show()
 
     def trace_dataset(self):
         if self.project_tree.selectedItems() and type(
@@ -991,4 +979,3 @@ if __name__ == "__main__":
         ui.run()
     except Exception:
         traceback.print_exc()
-

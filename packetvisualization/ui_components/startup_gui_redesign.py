@@ -96,7 +96,7 @@ class StartupWindow(QWidget):
         path = QFileDialog.getOpenFileName(caption="Open existing Workspace", filter=file_filter)[0]
         if path != "":
             gui_path = os.path.join('packetvisualization', 'ui_components', 'workspace_gui_redesign.py')
-            subprocess.Popen(['python3', gui_path, path.replace(".zip", ""), 'True'])
+            subprocess.Popen(['python3', gui_path, path, 'True'])
             self.close()'''
 
     def run_program(self):
