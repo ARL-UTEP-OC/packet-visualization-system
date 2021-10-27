@@ -79,8 +79,12 @@ class WorkspaceWindow(QMainWindow):
     dataset to a project. A user can then add/delete a PCAP to a dataset where analysis can be performed on the whole
     dataset or selected packets.
     """
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    app = QApplication(sys.argv)
+    logo = os.path.join(os.path.dirname(__file__), "images", "logo.png")
+    app.setWindowIcon(QIcon(logo))
 
-    def __init__(self, workspace_object: Workspace, test_mode: bool = False, existing_flag: bool = False) -> None:
+    def __init__(self, workspace_path: str, test_mode: bool = False, existing_flag: bool = False) -> None:
         """Initialization function for a new workspace window.
 
         :param workspace_object: backend object containing links to all associated datasets
@@ -93,7 +97,8 @@ class WorkspaceWindow(QMainWindow):
         super().__init__()
         self.icons = os.path.join(os.path.dirname(__file__), "images", "svg")
         self.logo = os.path.join(os.path.dirname(__file__), "images", "logo.png")
-        self.workspace_object = workspace_object
+        self.workspace_object = Workspace(name=os.path.basename(workspace_path),
+                                          location=os.path.dirname(workspace_path))
         self.test_mode = test_mode
         self.setWindowTitle("PacketVisualizer - " + self.workspace_object.name)
         self.resize(1000, 600)
@@ -147,8 +152,12 @@ class WorkspaceWindow(QMainWindow):
 
         if existing_flag:
             self.workspace_object = Load().open_zip(
-                os.path.join(workspace_object.location, workspace_object.name + ".zip"))
+                os.path.join(self.workspace_object.location, self.workspace_object.name + ".zip"))
             self.generate_existing_workspace()
+
+    def run(self):
+        self.show()
+        sys.exit(self.app.exec_())
 
     def _create_actions(self) -> None:
         """Creates all actions that will be used in the application
@@ -967,3 +976,10 @@ class WorkspaceWindow(QMainWindow):
         self.create_classifier_plot(results)
         self.classifier_window.show()
         return
+
+
+if __name__ == "__main__":
+    args = len(sys.argv)
+    ui = WorkspaceWindow(sys.argv[1])
+    #ui = WorkspaceWindow(sys.argv[1], sys.argv[2])
+    ui.run()

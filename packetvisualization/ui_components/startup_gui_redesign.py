@@ -1,4 +1,5 @@
 import os
+import subprocess
 import sys
 import traceback
 
@@ -66,7 +67,7 @@ class StartupWindow(QWidget):
 
         self.setLayout(layout)
 
-    def open_new_workspace(self, path=None):
+    '''def open_new_workspace(self, path=None):
         try:
             if not self.test_mode:
                 path = QFileDialog.getSaveFileName(caption="Choose Workspace location")[0]
@@ -79,7 +80,14 @@ class StartupWindow(QWidget):
                 return True
         except Exception:
             traceback.print_exc()
-            return False
+            return False'''
+
+    def open_new_workspace(self):
+        path = QFileDialog.getSaveFileName(caption="Choose Workspace location")[0]
+        if path != '':
+            gui_path = os.path.join('packetvisualization', 'ui_components', 'workspace_gui_redesign.py')
+            subprocess.Popen(['python3', gui_path, path, '>', f'{path}/output.log'])
+        self.close()
 
     def open_existing_workspace(self, path=None):
         try:
