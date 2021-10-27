@@ -1,6 +1,6 @@
 #
 # from sqlalchemy.orm import relationship
-# from packetvisualization.models.context.database_context import Base, session
+# from packetvisualization.backend.context.database_context import Base, session
 # from sqlalchemy import Column, Integer, String, Float, ForeignKey
 # """
 # We are using sqlalchemy ORM
