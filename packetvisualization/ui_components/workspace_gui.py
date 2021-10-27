@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import QInputDialog, QMenu, QFileDialog, QAction, QMessageB
 from packetvisualization.backend_components.entity_operator import EntityOperator
 from packetvisualization.backend_components.load import Load
 from packetvisualization.models import dataset
-# from packetvisualization.models.context.entities import EntityOperations
+# from packetvisualization.backend.context.entities import EntityOperations
 from packetvisualization.models.dataset import Dataset
 from packetvisualization.models.pcap import Pcap
 from packetvisualization.models.project import Project
