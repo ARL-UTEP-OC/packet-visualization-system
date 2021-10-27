@@ -10,8 +10,14 @@ class Classifier:
     centroids = []
 
     def __init__(self, cluster_number, context_results=None) -> None:
+        """
+        Data preprocessing
+        """
         self.try_parse_context_to_dataframe(context_results)
         self.calculate_categorical_values()
+        """
+        Running the Classifying algorithm
+        """
         self.classify_dataset(cluster_number)
 
     def try_parse_context_to_dataframe(self, context_results):
