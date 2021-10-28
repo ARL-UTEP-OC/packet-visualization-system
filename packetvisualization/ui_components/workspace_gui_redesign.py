@@ -31,47 +31,8 @@ from packetvisualization.models.project import Project
 from packetvisualization.models.workspace import Workspace
 from packetvisualization.backend_components import Wireshark
 from packetvisualization.ui_components import filter_gui
+from packetvisualization.ui_components.plot_worker import PlotWorker
 from packetvisualization.ui_components.table_gui import table_gui
-
-
-class Worker(QObject):
-    finished = pyqtSignal()
-    progress = pyqtSignal(int)
-    data = pyqtSignal(list)
-
-    def __init__(self, data):
-        super().__init__()
-        self.db_data = data
-
-    def run(self):
-        if self.db_data:
-            date = []
-
-            for packet in self.db_data:
-                time_epoch = float(packet['_source']['layers']['frame'].get('frame-time_epoch'))
-                if time_epoch is not None:
-                    date.append(datetime.fromtimestamp(time_epoch))
-
-            self.plot_x = pd.date_range(date[0].replace(microsecond=0, second=0),
-                                        date[-1].replace(microsecond=0, second=0, minute=date[-1].minute + 1),
-                                        periods=100)
-            self.plot_y = [0 for i in range(len(self.plot_x))]
-
-            for d in range(len(date)):
-                for i in reversed(range(len(self.plot_x))):
-                    if date[d] >= self.plot_x[i]:
-                        self.plot_y[i] += 1
-                        break
-                progress = int(d / len(date) * 100)
-                self.progress.emit(progress)
-        else:
-            self.progress.emit(50)
-            # self.range, self.r_val = [datetime(2000, 1, 1), datetime(2001, 1, 1)], [0, 0]
-            self.plot_x, self.plot_y = [], []
-            self.progress.emit(100)
-
-        self.data.emit([self.plot_x, self.plot_y])
-        self.finished.emit()
 
 
 class WorkspaceWindow(QMainWindow):
@@ -914,25 +875,25 @@ class WorkspaceWindow(QMainWindow):
         # Step 1: Begin showing progress bar
         self.progressbar.show()
         # Step 2: Create a QThread object
-        self.thread = QThread()
+        self.thread_1 = QThread()
         # Step 3: Create a worker object
-        self.worker = Worker(self.traced_data)
+        self.worker_1 = PlotWorker(self.traced_data)
         # Step 4: Move worker to the thread
-        self.worker.moveToThread(self.thread)
+        self.worker_1.moveToThread(self.thread_1)
         # Step 5: Connect signals and slots
-        self.thread.started.connect(self.worker.run)
-        self.worker.finished.connect(self.thread.quit)
-        self.worker.finished.connect(self.worker.deleteLater)
-        self.thread.finished.connect(self.thread.deleteLater)
-        self.worker.progress.connect(self.report_progress)
-        self.worker.data.connect(self.report_plot_data)
+        self.thread_1.started.connect(self.worker_1.run)
+        self.worker_1.finished.connect(self.thread_1.quit)
+        self.worker_1.finished.connect(self.worker_1.deleteLater)
+        self.thread_1.finished.connect(self.thread_1.deleteLater)
+        self.worker_1.progress.connect(self.report_progress)
+        self.worker_1.data.connect(self.report_plot_data)
         # Step 6: Start the thread
-        self.thread.start()
+        self.thread_1.start()
 
         # Final resets
-        self.thread.finished.connect(lambda: self.progressbar.setValue(0))
-        self.thread.finished.connect(lambda: self.progressbar.hide())
-        self.thread.finished.connect(lambda: self.fig_view.setHtml(create_plot(self.plot_x, self.plot_y)))
+        self.thread_1.finished.connect(lambda: self.progressbar.setValue(0))
+        self.thread_1.finished.connect(lambda: self.progressbar.hide())
+        self.thread_1.finished.connect(lambda: self.fig_view.setHtml(create_plot(self.plot_x, self.plot_y)))
 
     def filter_wireshark(self):
 
