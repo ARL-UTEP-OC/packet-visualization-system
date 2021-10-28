@@ -28,13 +28,21 @@ def field_dictionary():
 
 
 def gen_frame_string(list_in):
+    frame_string_list = []
     frame_string = ""
     for i in range(len(list_in)):
-        if i == 0:
+        if frame_string == "":
             frame_string += "frame.number==" + str(list_in[i])
         else:
             frame_string += " || frame.number==" + str(list_in[i])
-    return frame_string
+
+        if i % 250 == 0 and i != 0:
+            frame_string_list.append(frame_string)
+            frame_string = ""
+
+    frame_string_list.append(frame_string)
+
+    return frame_string_list
 
 
 class table_gui(QTableWidget):
@@ -67,11 +75,14 @@ class table_gui(QTableWidget):
         self.remove_tag_action = QAction("Remove Tag", self)
         self.remove_tag_action.triggered.connect(self.remove_tag)
 
+        self.analyze_action = QAction("Analyze", self)
+        self.analyze_action.triggered.connect(self.analyze)
+
         self.create_dataset_action = QAction("Create Dataset", self)
         self.create_dataset_action.triggered.connect(self.create_dataset)
 
         self.tagged_create_dataset_action = QAction("Create Dataset", self)
-        self.tagged_create_dataset_action.triggered.connect(lambda : self.create_dataset(tagged= True))
+        self.tagged_create_dataset_action.triggered.connect(lambda: self.create_dataset(tagged=True))
 
         self.viewASCII_action = QAction("View as ASCII", self)
         self.viewASCII_action.triggered.connect(self.view_as_ASCII)
@@ -92,6 +103,7 @@ class table_gui(QTableWidget):
         menu.addAction(self.tag_action)
         menu.addAction(self.remove_tag_action)
         menu.addAction(self.create_dataset_action)
+        menu.addAction(self.analyze_action)
         menu.addAction(self.view_in_wireshark_action)
 
         tagged_menu = menu.addMenu("Tagged")
@@ -117,22 +129,41 @@ class table_gui(QTableWidget):
                         list.append(frame_number)
                         row_list.append(item.row())
 
-            frame_string = gen_frame_string(list)
-
-            output_file = os.path.join(os.getcwd(), "tEmPpCaP.pcap")
+            frame_string_list = gen_frame_string(list)
+            temp_mergecap = os.path.join(os.getcwd(), "tEmPmErGeCaP.pcap")
 
             if type(self.obj) == Pcap:
                 infile = self.obj.path
             else:
                 infile = self.obj.mergeFilePath
 
-            if (platform.system()=="Windows"):
+            i = 0
+            pcap_list = []
+            for frame_string in frame_string_list:
+                if (platform.system() == "Windows"):
+                    output_file = os.path.join(os.getcwd(), "tEmPpCaP" + str(i) + ".pcap")
+                    os.system(
+                        'cd "C:\Program Files\Wireshark" & tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
+                elif (platform.system() == "Linux"):
+                    os.system('tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
+
+                pcap_list.append(output_file)
+                i += 1
+
+            if (platform.system() == "Windows"):
                 os.system(
-                    'cd "C:\Program Files\Wireshark" & tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
-                subprocess.Popen("C:\Program Files\Wireshark\wireshark -r " + output_file)
-            elif (platform.system()=="Linux"):
-                os.system('tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
-                subprocess.Popen("wireshark -r " + output_file)
+                    'cd "C:\Program Files\Wireshark" & mergecap -w ' + temp_mergecap + " " + (' '.join(pcap_list)))
+            elif (platform.system() == "Linux"):
+                os.system('mergecap -w ' + temp_mergecap + " " + (' '.join(pcap_list)))
+
+            for pcap in pcap_list:
+                if os.path.exists(pcap):
+                    os.remove(pcap)
+
+            if (platform.system() == "Windows"):
+                subprocess.Popen("C:\Program Files\Wireshark\wireshark -r " + temp_mergecap)
+            elif (platform.system() == "Linux"):
+                subprocess.Popen("wireshark -r " + temp_mergecap)
         except:
             traceback.print_exc()
 
@@ -141,43 +172,74 @@ class table_gui(QTableWidget):
             list = []
             tag = QInputDialog.getText(self, "Tag Name Entry", "Enter Tag name:")[0]
             for i in range(self.rowCount()):
-                if self.item(i, 0).data(Qt.UserRole) == tag:
+                if tag in self.item(i, 0).data(Qt.UserRole):
                     list.append(self.item(i, 0).text())
 
             if len(list) > 0:
-                frame_string = gen_frame_string(list)
-
-                output_file = os.path.join(os.getcwd(), "tEmPpCaP.pcap")
+                frame_string_list = gen_frame_string(list)
+                temp_mergecap = os.path.join(os.getcwd(), "tEmPmErGeCaP.pcap")
 
                 if type(self.obj) == Pcap:
                     infile = self.obj.path
                 else:
                     infile = self.obj.mergeFilePath
 
+                i = 0
+                pcap_list = []
+                for frame_string in frame_string_list:
+                    if (platform.system() == "Windows"):
+                        output_file = os.path.join(os.getcwd(), "tEmPpCaP" + str(i) + ".pcap")
+                        os.system(
+                            'cd "C:\Program Files\Wireshark" & tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
+                    elif (platform.system() == "Linux"):
+                        os.system('tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
+
+                    pcap_list.append(output_file)
+                    i += 1
+
+                # Mergecap the pcaps
                 if (platform.system() == "Windows"):
                     os.system(
-                        'cd "C:\Program Files\Wireshark" & tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
-                    subprocess.Popen("C:\Program Files\Wireshark\wireshark -r " + output_file)
+                        'cd "C:\Program Files\Wireshark" & mergecap -w ' + temp_mergecap + " " + (' '.join(pcap_list)))
                 elif (platform.system() == "Linux"):
-                    os.system('tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
-                    subprocess.Popen("wireshark -r " + output_file)
+                    os.system('mergecap -w ' + temp_mergecap + " " + (' '.join(pcap_list)))
+
+                # Remove pcap files
+                for pcap in pcap_list:
+                    if os.path.exists(pcap):
+                        os.remove(pcap)
+
+                # Open the mergecap in wireshark
+                if (platform.system() == "Windows"):
+                    subprocess.Popen("C:\Program Files\Wireshark\wireshark -r " + temp_mergecap)
+                elif (platform.system() == "Linux"):
+                    subprocess.Popen("wireshark -r " + temp_mergecap)
         except:
             traceback.print_exc()
 
     def add_tag(self):
-        if self.selectedItems():
-            selected = self.selectedItems()
-            row_list = []
-            tag = QInputDialog.getText(self, "Tag Name Entry", "Enter Tag name:")[0]
-            for item in selected:
-                if item.row() not in row_list and tag != "":
-                    self.item(item.row(), 0).setData(Qt.UserRole, tag)
-                    self.item(item.row(), 0).setIcon(QIcon(os.path.join(self.icons, "pricetag.svg")))
-                    self.item(item.row(), 0).setToolTip(tag)
-                    self.item(item.row(), 0).setStatusTip(tag)
+        try:
+            if self.selectedItems():
+                selected = self.selectedItems()
+                row_list = []
+                tag = QInputDialog.getText(self, "Tag Name Entry", "Enter Tag name:")[0]
+                for item in selected:
+                    if item.row() not in row_list and tag != "":
+                        tag_list = self.item(item.row(), 0).data(Qt.UserRole)[1]
+                        tag_list.append(tag)
+                        packet_id = self.item(item.row(), 0).data(Qt.UserRole)[0]
+                        self.item(item.row(), 0).setData(Qt.UserRole, [packet_id, tag_list])
+                        self.item(item.row(), 0).setIcon(QIcon(os.path.join(self.icons, "pricetag.svg")))
+                        tooltip = ""
+                        for t in tag_list:
+                            tooltip += t + " "
+                        self.item(item.row(), 0).setToolTip(tooltip)
+                        self.item(item.row(), 0).setStatusTip(tooltip)
 
-                    row_list.append(item.row())
-        return
+                        row_list.append(item.row())
+            return
+        except:
+            traceback.print_exc()
 
     def remove_tag(self):
         try:
@@ -186,7 +248,8 @@ class table_gui(QTableWidget):
                 row_list = []
                 for item in selected:
                     if item.row() not in row_list:
-                        self.item(item.row(), 0).setData(Qt.UserRole, None)
+                        packet_id = self.item(item.row(), 0).data(Qt.UserRole)[0]
+                        self.item(item.row(), 0).setData(Qt.UserRole, [packet_id, []])
                         self.item(item.row(), 0).setIcon(QIcon())
                         self.item(item.row(), 0).setStatusTip(None)
                         self.item(item.row(), 0).setToolTip(None)
@@ -276,22 +339,41 @@ class table_gui(QTableWidget):
             if tagged:
                 tag = QInputDialog.getText(self, "Tag Name Entry", "Enter Tag name:")[0]
                 for i in range(self.rowCount()):
-                    if self.item(i, 0).data(Qt.UserRole) == tag:
+                    if tag in self.item(i, 0).data(Qt.UserRole):
                         list.append(self.item(i, 0).text())
 
-            frame_string = gen_frame_string(list)
-            output_file = os.path.join(os.getcwd(), "tEmPpCaP.pcap")
+            frame_string_list = gen_frame_string(list)
+            temp_mergecap = os.path.join(os.getcwd(), "tEmPmErGeCaP.pcap")
 
             if type(self.obj) == Pcap:
                 infile = self.obj.path
             else:
                 infile = self.obj.mergeFilePath
 
+            i = 0
+            pcap_list = []
+            for frame_string in frame_string_list:
+                if (platform.system() == "Windows"):
+                    output_file = os.path.join(os.getcwd(), "tEmPpCaP" + str(i) + ".pcap")
+                    os.system(
+                        'cd "C:\Program Files\Wireshark" & tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
+                elif (platform.system() == "Linux"):
+                    os.system('tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
+
+                pcap_list.append(output_file)
+                i += 1
+
+            # Mergecap the pcaps
             if (platform.system() == "Windows"):
                 os.system(
-                    'cd "C:\Program Files\Wireshark" & tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
+                    'cd "C:\Program Files\Wireshark" & mergecap -w ' + temp_mergecap + " " + (' '.join(pcap_list)))
             elif (platform.system() == "Linux"):
-                os.system('tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
+                os.system('mergecap -w ' + temp_mergecap + " " + (' '.join(pcap_list)))
+
+            # Remove pcap files
+            for pcap in pcap_list:
+                if os.path.exists(pcap):
+                    os.remove(pcap)
 
             items = []
             for p in self.workspace.workspace_object.project:
@@ -316,7 +398,7 @@ class table_gui(QTableWidget):
 
                     # Add PCAP object && project tree item
                     base = os.path.splitext(self.obj.name)[0]
-                    new_pcap = Pcap(file=output_file, path=dataset_object.path, name="sub_"+base+".pcap")
+                    new_pcap = Pcap(file=temp_mergecap, path=dataset_object.path, name="sub_" + base + ".pcap")
                     dataset_object.add_pcap(new_pcap)
                     pcap_item = QTreeWidgetItem()
                     pcap_item.setText(0, new_pcap.name)
@@ -330,11 +412,37 @@ class table_gui(QTableWidget):
         except:
             traceback.print_exc()
 
+    def analyze(self):
+        list = []
+        if self.selectedItems():
+            selected = self.selectedItems()
+            row_list = []
+            for item in selected:
+                if item.row() not in row_list:
+                    packet_id = self.item(item.row(), 0).data(Qt.UserRole)[0]
+                    list.append(packet_id)
+                    row_list.append(item.row())
+
+        obj = self.obj
+        db = self.workspace.db
+
+        if type(obj) is Pcap:
+            dataset_name = os.path.basename(obj.directory)
+            collection = db[dataset_name]
+            data = collection.find({"_id": {"$in": list}})
+        elif type(obj) is Dataset:
+            dataset_name = obj.name
+            collection = db[dataset_name]
+            data = collection.find({"_id": {"$in": list}})
+
+        for packet in data:
+            print(packet)
+
     def populate_table(self, obj, progressbar, db):
         if type(obj) is Pcap:
             dataset_name = os.path.basename(obj.directory)
             collection = db[dataset_name]
-            query = {'parent_pcap': obj.name}
+            query = {'parent_dataset': dataset_name, 'parent_pcap': obj.name}
             data = collection.find(query)
         elif type(obj) is Dataset:
             dataset_name = obj.name
@@ -350,6 +458,7 @@ class table_gui(QTableWidget):
         for packet in data:
             frame_number_item = QTableWidgetItem(str(i + 1))
             self.setItem(i, 0, frame_number_item)
+            frame_number_item.setData(Qt.UserRole, [packet['_id'], []])
             self.dict["frame-number"] += 1
 
             self.setItem(i, 1, QTableWidgetItem(packet['_source']['layers']['frame'].get('frame-time_relative')))
