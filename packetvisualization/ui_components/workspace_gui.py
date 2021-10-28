@@ -21,8 +21,7 @@ from packetvisualization.models.project import Project
 from packetvisualization.models.workspace import Workspace
 from packetvisualization.backend_components import Wireshark
 from packetvisualization.ui_components.table_gui import table_gui
-from packetvisualization.models.dataset_ent import Dataset as datasetEnt
-from packetvisualization.models.pcap_ent import Pcap as pcapEnt
+
 
 
 class Workspace_UI(QtWidgets.QMainWindow):
