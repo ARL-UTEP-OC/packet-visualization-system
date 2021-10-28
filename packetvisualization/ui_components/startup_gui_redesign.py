@@ -7,7 +7,6 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
-from packetvisualization.models.workspace import Workspace
 from packetvisualization.ui_components.workspace_gui_redesign import WorkspaceWindow
 
 
@@ -27,16 +26,18 @@ class StartupWindow(QWidget):
     def init_window(self):
         self.setWindowTitle("Welcome to PacketVisualizer")
         self.setWindowIcon(QIcon(self.logo))
-        self.setFixedSize(600, 175)
+        self.setFixedSize(700, 175)
 
-        layout = QVBoxLayout()
+        layout = QHBoxLayout()
 
         info_layout = QHBoxLayout()
 
-        logo = QPushButton()
-        logo.setFixedSize(100, 100)
-        logo.setStyleSheet("border-image : url(%s);" % self.logo)
-        info_layout.addWidget(logo)
+        label = QLabel(self)
+        pixmap = QPixmap(self.logo)
+        pixmap = pixmap.scaled(150, 150)
+        label.setPixmap(pixmap)
+        label.setFixedSize(150, 150)
+        layout.addWidget(label)
 
         title_layout = QVBoxLayout()
 
@@ -49,9 +50,6 @@ class StartupWindow(QWidget):
         sub_text.setAlignment(Qt.AlignHCenter)
         title_layout.addWidget(sub_text)
 
-        info_layout.addLayout(title_layout)
-        layout.addLayout(info_layout)
-
         button_layout = QHBoxLayout()
 
         new_button = QPushButton("New Workspace", self)
@@ -62,7 +60,9 @@ class StartupWindow(QWidget):
         existing_button.clicked.connect(self.open_existing_workspace)
         button_layout.addWidget(existing_button)
 
-        layout.addLayout(button_layout)
+        title_layout.addLayout(button_layout)
+        info_layout.addLayout(title_layout)
+        layout.addLayout(info_layout)
 
         self.setLayout(layout)
 
