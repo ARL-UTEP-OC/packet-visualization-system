@@ -54,6 +54,8 @@ class WorkspaceWindow(QMainWindow):
         :type existing_flag: bool
         """
         super().__init__()
+        self.eo = EntityOperations()
+        self.db = None
         self.icons = os.path.join(os.path.dirname(__file__), "images", "svg")
         self.logo = os.path.join(os.path.dirname(__file__), "images", "logo.png")
         self.test_mode = False
@@ -62,6 +64,7 @@ class WorkspaceWindow(QMainWindow):
         else:
             self.workspace_object = Workspace(name=os.path.basename(workspace_path),
                                               location=os.path.dirname(workspace_path))
+            self.db = self.eo.create_db(self.workspace_object.name)  # create DB with workspace name
         self.setWindowTitle("PacketVisualizer - " + self.workspace_object.name)
         self.resize(1000, 600)
 
@@ -108,8 +111,7 @@ class WorkspaceWindow(QMainWindow):
         self._create_status_bar()
 
         self.context = DbContext()
-        self.db = self.context.db
-        self.eo = EntityOperations()
+        # self.db = self.context.db  # here
         self.controller = Controller()
 
         if existing_flag:
@@ -573,6 +575,7 @@ class WorkspaceWindow(QMainWindow):
         """ Function to save a workspace and all associated data
         """
         self.status_bar.showMessage("Saving...")
+        #here-----------------------------------------DUMP function-------------------------------------
         self.workspace_object.save()
         self.status_bar.showMessage("Saved", 3000)
 
@@ -688,6 +691,7 @@ class WorkspaceWindow(QMainWindow):
                 os.remove("tEmPpCaP.pcap")
             event.accept()
         elif reply == QMessageBox.No:
+            self.eo.remove_db(self.workspace_object.name)
             self.workspace_object.__del__()
             if os.path.exists("tEmPpCaP.pcap"):
                 os.remove("tEmPpCaP.pcap")
@@ -806,6 +810,7 @@ class WorkspaceWindow(QMainWindow):
             return None, None, full_path
 
     def generate_existing_workspace(self):
+        # here -----------------------------------Load Dump---------------------------------------------------
         for p in self.workspace_object.project:
             project_item = QTreeWidgetItem(self.project_tree)
             project_item.setText(0, p.name)

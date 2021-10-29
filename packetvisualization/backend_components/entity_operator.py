@@ -6,17 +6,16 @@ import os
 
 class EntityOperations:
     context = DbContext()
+    client = context.client
 
-    def create_db(self,workspace_name, client):  # create new DB when we have a new workspace
-        mydb = client[workspace_name]
+    def create_db(self,workspace_name):  # create new DB when we have a new workspace
+        mydb = self.client[workspace_name]
         return mydb
 
-    def remove_db(self, workspace_name, client):  # Use when we don't save workspace
-        client.drop_database(workspace_name)
+    def remove_db(self, workspace_name):  # Use when we don't save workspace
+        self.client.drop_database(workspace_name)
 
     def dump_db(self, workspace_name, save_dir):
-        # x = "mongodump --db " + workspace_name + " --out " + workspace_directory
-
         os.system("mongodump --db " + workspace_name + " --out " + save_dir)
 
     def restore_db(self, workspace_name, save_location):
