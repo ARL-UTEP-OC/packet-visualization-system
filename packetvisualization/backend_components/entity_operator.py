@@ -21,6 +21,10 @@ class EntityOperations:
     def restore_db(self, workspace_name, save_location):
         os.system("mongorestore --db " + workspace_name + " --drop " + save_location)
 
+    def set_db(self, workspace_name):
+        db = self.client[workspace_name]
+        return db
+
     def fix_dictionary(self, d):  # Function to replace any key with '.' in name
         new = {}
         for k, v in d.items():

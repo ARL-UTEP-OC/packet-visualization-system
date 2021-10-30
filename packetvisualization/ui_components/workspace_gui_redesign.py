@@ -61,9 +61,14 @@ class WorkspaceWindow(QMainWindow):
         self.test_mode = False
         if existing_flag:
             self.workspace_object = Load().open_zip(workspace_path)
+            restore_path = os.path.join(self.workspace_object.dump_path,self.workspace_object.name)
+            print(restore_path)
+            self.eo.restore_db(self.workspace_object.name, restore_path)
+            self.db = self.eo.set_db(self.workspace_object.name)
         else:
             self.workspace_object = Workspace(name=os.path.basename(workspace_path),
                                               location=os.path.dirname(workspace_path))
+            self.workspace_object.create_dump_dir(self.workspace_object.dump_path)
             self.db = self.eo.create_db(self.workspace_object.name)  # create DB with workspace name
         self.setWindowTitle("PacketVisualizer - " + self.workspace_object.name)
         self.resize(1000, 600)
@@ -575,7 +580,8 @@ class WorkspaceWindow(QMainWindow):
         """ Function to save a workspace and all associated data
         """
         self.status_bar.showMessage("Saving...")
-        #here-----------------------------------------DUMP function-------------------------------------
+
+        self.eo.dump_db(self.workspace_object.name, self.workspace_object.dump_path)
         self.workspace_object.save()
         self.status_bar.showMessage("Saved", 3000)
 
@@ -685,7 +691,8 @@ class WorkspaceWindow(QMainWindow):
                                      QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Yes)
 
         if reply == QMessageBox.Yes:
-            self.workspace_object.save()
+            self.save()
+            self.eo.remove_db(self.workspace_object.name)
             self.workspace_object.__del__()
             if os.path.exists("tEmPpCaP.pcap"):
                 os.remove("tEmPpCaP.pcap")
@@ -825,6 +832,10 @@ class WorkspaceWindow(QMainWindow):
                     pcap_item.setText(0, cap.name)
                     pcap_item.setData(0, Qt.UserRole, cap)
                     dataset_item.addChild(pcap_item)
+
+
+
+
         return True
 
     def show_classifier_qt(self, fig):
