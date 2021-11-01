@@ -1,3 +1,5 @@
+import traceback
+
 from packetvisualization.models.workspace import Workspace
 from packetvisualization.models.project import Project
 from packetvisualization.models.dataset import Dataset
@@ -62,6 +64,7 @@ class Load:
         except Exception:
             print("Unable to read save file. File may be corrupted.")
             shutil.rmtree(path)
+            traceback.print_exc()
             return None
 
     def load_project(self, workspace: Workspace, projects: list) -> list:

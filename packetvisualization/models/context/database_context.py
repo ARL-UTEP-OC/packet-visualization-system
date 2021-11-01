@@ -13,8 +13,8 @@ class DbContext:
         # CLOUD
         # client = pymongo.MongoClient(f'{self.dbString}?retryWrites=true&w=majority', tlsCAFile=certifi.where())
         # LOCAL
-        client = pymongo.MongoClient(f'{self.dbString}')
-        self.db = client.PracticumDB
+        self.client = pymongo.MongoClient(f'{self.dbString}')
+        # self.db = client.PracticumDB
         # print(self.db.list_collections())
 
     def destroy_session(self):
