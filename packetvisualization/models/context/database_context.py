@@ -10,9 +10,12 @@ class DbContext:
     dbString = config('DBSTRING')
 
     def __init__(self):
-        client = pymongo.MongoClient(f'{self.dbString}?retryWrites=true&w=majority', tlsCAFile=certifi.where())
+        # CLOUD
+        # client = pymongo.MongoClient(f'{self.dbString}?retryWrites=true&w=majority', tlsCAFile=certifi.where())
+        # LOCAL
+        client = pymongo.MongoClient(f'{self.dbString}')
         self.db = client.PracticumDB
-        print(self.db.list_collections())
+        # print(self.db.list_collections())
 
     def destroy_session(self):
         # TODO: Fix this, until this is fixed we have to manually delete the DB data

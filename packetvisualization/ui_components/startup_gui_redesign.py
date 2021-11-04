@@ -1,4 +1,5 @@
 import os
+import subprocess
 import sys
 import traceback
 
@@ -6,7 +7,6 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
-from packetvisualization.models.workspace import Workspace
 from packetvisualization.ui_components.workspace_gui_redesign import WorkspaceWindow
 
 
@@ -17,9 +17,8 @@ class StartupWindow(QWidget):
     app.setWindowIcon(QIcon(logo))
     finished = pyqtSignal()
 
-    def __init__(self, test_mode: bool = False):
+    def __init__(self):
         super().__init__()
-        self.test_mode = test_mode
         self.init_window()
         self.workspace = None
         self.workspace_object = None
@@ -27,16 +26,18 @@ class StartupWindow(QWidget):
     def init_window(self):
         self.setWindowTitle("Welcome to PacketVisualizer")
         self.setWindowIcon(QIcon(self.logo))
-        self.setFixedSize(600, 175)
+        self.setFixedSize(700, 175)
 
-        layout = QVBoxLayout()
+        layout = QHBoxLayout()
 
         info_layout = QHBoxLayout()
 
-        logo = QPushButton()
-        logo.setFixedSize(100, 100)
-        logo.setStyleSheet("border-image : url(%s);" % self.logo)
-        info_layout.addWidget(logo)
+        label = QLabel(self)
+        pixmap = QPixmap(self.logo)
+        pixmap = pixmap.scaled(150, 150)
+        label.setPixmap(pixmap)
+        label.setFixedSize(150, 150)
+        layout.addWidget(label)
 
         title_layout = QVBoxLayout()
 
@@ -49,9 +50,6 @@ class StartupWindow(QWidget):
         sub_text.setAlignment(Qt.AlignHCenter)
         title_layout.addWidget(sub_text)
 
-        info_layout.addLayout(title_layout)
-        layout.addLayout(info_layout)
-
         button_layout = QHBoxLayout()
 
         new_button = QPushButton("New Workspace", self)
@@ -62,41 +60,44 @@ class StartupWindow(QWidget):
         existing_button.clicked.connect(self.open_existing_workspace)
         button_layout.addWidget(existing_button)
 
-        layout.addLayout(button_layout)
+        title_layout.addLayout(button_layout)
+        info_layout.addLayout(title_layout)
+        layout.addLayout(info_layout)
 
         self.setLayout(layout)
 
     def open_new_workspace(self, path=None):
-        try:
-            if not self.test_mode:
-                path = QFileDialog.getSaveFileName(caption="Choose Workspace location")[0]
+        path = QFileDialog.getSaveFileName(caption="Choose Workspace location")[0]
 
-            if path != '':
-                workspace_object = Workspace(name=os.path.basename(path), location=os.path.dirname(path))
-                self.workspace = WorkspaceWindow(workspace_object)
-                self.close()
-                self.workspace.show()
-                return True
-        except Exception:
-            traceback.print_exc()
-            return False
+        if path != '':
+            self.workspace = WorkspaceWindow(path)
+            self.close()
+            self.workspace.show()
 
-    def open_existing_workspace(self, path=None):
-        try:
-            if not self.test_mode:
-                file_filter = "zip(*.zip)"
-                path = QFileDialog.getOpenFileName(caption="Open existing Workspace", filter=file_filter)[0]
+    '''def open_new_workspace(self):
+        path = QFileDialog.getSaveFileName(caption="Choose Workspace location")[0]
+        if path != "":
+            gui_path = os.path.join('packetvisualization', 'ui_components', 'workspace_gui_redesign.py')
+            subprocess.Popen(['python3', gui_path, path])
+            self.close()'''
 
-                if path != "":
-                    if not self.test_mode:
-                        self.workspace_object = Workspace(name=os.path.basename(path.replace(".zip", "")),
-                                                          location=os.path.dirname(path))
-                        self.workspace = WorkspaceWindow(self.workspace_object, existing_flag=True)
-                        self.close()
-                        self.workspace.show()
-                        return True
-        except Exception:
-            traceback.print_exc()
+    def open_existing_workspace(self):
+        file_filter = "zip(*.zip)"
+        path = QFileDialog.getOpenFileName(caption="Open existing Workspace", filter=file_filter)[0]
+
+        if path != "":
+            self.workspace = WorkspaceWindow(path, existing_flag=True)
+            self.close()
+            self.workspace.show()
+            return True
+
+    '''def open_existing_workspace(self):
+        file_filter = "zip(*.zip)"
+        path = QFileDialog.getOpenFileName(caption="Open existing Workspace", filter=file_filter)[0]
+        if path != "":
+            gui_path = os.path.join('packetvisualization', 'ui_components', 'workspace_gui_redesign.py')
+            subprocess.Popen(['python3', gui_path, path, 'True'])
+            self.close()'''
 
     def run_program(self):
         self.show()
