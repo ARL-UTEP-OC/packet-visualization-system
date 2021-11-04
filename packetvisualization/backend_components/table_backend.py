@@ -28,7 +28,7 @@ class TableBackend:
 
         return frame_string_list
 
-    def query_id(self, obj_in, db_in, list_in):
+    def query_id(self, obj_in, db_in, list_in, test_mode: bool = False):
         """Queries the database via collection id's and return a cursor object that contains
         all collection items with the id's from list_in
         """
@@ -38,17 +38,23 @@ class TableBackend:
         data = None
 
         if type(obj) is Pcap:
+            if test_mode:
+                return True
             dataset_name = os.path.basename(obj.directory)
             collection = db[dataset_name]
             data = collection.find({"_id": {"$in": list_in}})
         elif type(obj) is Dataset:
+            if test_mode:
+                return True
             dataset_name = obj.name
             collection = db[dataset_name]
             data = collection.find({"_id": {"$in": list_in}})
+        else:
+            return False
 
         return data
 
-    def query_pcap(self, obj_in, db_in):
+    def query_pcap(self, obj_in, db_in, test_mode: bool = False):
         """Queries the database via collection parent_pcaps or parent_datasets and returns a cursor object that contains
         all collection items that contain the specified parent_pcap or parent_dataset
         """
@@ -57,15 +63,21 @@ class TableBackend:
         data = None
 
         if type(obj) is Pcap:
+            if test_mode:
+                return True
             dataset_name = os.path.basename(obj.directory)
             collection = db[dataset_name]
             query = {'parent_dataset': dataset_name, 'parent_pcap': obj.name}
             data = collection.find(query)
         elif type(obj) is Dataset:
+            if test_mode:
+                return True
             dataset_name = obj.name
             collection = db[dataset_name]
             query = {'parent_dataset': obj.name}
             data = collection.find(query)
+        else:
+            return False
 
         return data
 
@@ -83,11 +95,14 @@ class TableBackend:
             ascii += str(ord(char)) + " "
         return ascii
 
-    def gen_pcap_from_frames(self, frame_string_list_in, infile_in):
+    def gen_pcap_from_frames(self, frame_string_list_in, infile_in, progressbar):
         """Generates multiple pcaps using tshark's display filter and the frame string list generated from
         gen_frame_string. These pcaps are then merged together into tEmPmErGcap.pcap using tshark's mergecap. Finally
         the pcaps generated will be deleted from the system and teh temp_mergecap is returned.
         """
+        value = (100/(len(frame_string_list_in) + 1))
+        progressbar_value = 0
+        progressbar.show()
         temp_mergecap = os.path.join(os.getcwd(), "tEmPmErGeCaP.pcap")
         i = 0
         pcap_list = []
@@ -101,12 +116,17 @@ class TableBackend:
 
             pcap_list.append(output_file)
             i += 1
+            progressbar_value = progressbar_value + value
+            progressbar.setValue(progressbar_value)
 
         if platform.system() == "Windows":  # Merge pcaps in pcap_list into tEmPmErGe.pcap
             os.system(
                 'cd "C:\Program Files\Wireshark" & mergecap -w ' + temp_mergecap + " " + (' '.join(pcap_list)))
         elif platform.system() == "Linux":
             os.system('mergecap -w ' + temp_mergecap + " " + (' '.join(pcap_list)))
+
+        progressbar.setValue(0)
+        progressbar.hide()
 
         for pcap in pcap_list:
             if os.path.exists(pcap):

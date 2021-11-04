@@ -143,7 +143,7 @@ class table_gui(QTableWidget):
                 infile = self.obj.mergeFilePath
 
             frame_string_list = self.backend.gen_frame_string(list)
-            temp_mergecap = self.backend.gen_pcap_from_frames(frame_string_list, infile)
+            temp_mergecap = self.backend.gen_pcap_from_frames(frame_string_list, infile, self.workspace.progressbar)
             Wireshark.openwireshark(temp_mergecap)
 
     def add_tag(self):
