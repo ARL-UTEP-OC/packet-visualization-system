@@ -1,14 +1,27 @@
 import json
+import traceback
 
-def parser():
-    jsonFile = open(r'C:\Users\timmy\PycharmProjects\packet-visualize\packetvisualization\backend_components\sampleJson.json')
-    jsonData = json.load(jsonFile)
+
+def parser(jsonString: list):
+
     properties = list()
-    for x in jsonData[0]['_source']['layers']:
-        for y in jsonData[0]['_source']['layers'][x]:
-            # keys = x.keys()
-            print(y)
-            properties.append(y)
-            # values = x.values()
-            # print(values)
-    return properties
+    pktIds = list()
+
+    gotFields = False
+    try:
+        for w in jsonString:
+            print(w['_id'])
+            pktIds.append(w['_id'])
+            if gotFields is False:
+                for x in w['_source']['layers']:
+                    for y in w['_source']['layers'][x]:
+                        print(y)
+                        properties.append(y)
+                        gotFields = True
+
+    except Exception:
+        print(traceback.format_exc())
+
+    items = [properties, pktIds]
+
+    return items

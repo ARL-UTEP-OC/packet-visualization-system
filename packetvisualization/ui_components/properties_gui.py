@@ -1,57 +1,71 @@
 import sys
+import traceback
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QTreeWidget
+from PyQt5.QtWidgets import QTreeWidget, QWidget, QPushButton
 
 from packetvisualization.backend_components import json_parser
 from packetvisualization.models.workspace import Workspace
 
 
-class properties_window(QtWidgets.QDialog):
-    QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
-    app = QtWidgets.QApplication(sys.argv)
-    filter_window = QtWidgets.QMainWindow()
+class properties_window(QWidget):
+    # QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+    # app = QtWidgets.QApplication(sys.argv)
+    # filter_window = QtWidgets.QMainWindow()
 
-    def __init__(self):
+    def __init__(self, jsonString):
 
         super().__init__()
         self.setWindowTitle("Select Properties")
         # form_layout = QFormLayout()
         # self.setLayout(form_layout)
-        self.layout = QtWidgets.QVBoxLayout()
+        self.layout = QtWidgets.QGridLayout()
+
         self.listWidget = QtWidgets.QListWidget()
         self.listWidget.setSelectionMode(
             QtWidgets.QAbstractItemView.ExtendedSelection
         )
 
-        self.listWidget.setGeometry(QtCore.QRect(10,10,211,291))
-        properties = json_parser.parser()
+        self.listWidget.setGeometry(QtCore.QRect(10, 10, 211, 291))
+        items = json_parser.parser(jsonString)
+        properties = items[0]
+        pktIds = items[1]
+
         for i in properties:
             item = QtWidgets.QListWidgetItem(i)
             self.listWidget.addItem(item)
 
         self.listWidget.itemClicked.connect(self.printItemText)
-        self.layout.addWidget(self.listWidget)
+        self.layout.addWidget(self.listWidget, 0, 2, 1, 2)
+
+        self.listWidget2 = QtWidgets.QListWidget()
+        # self.listWidget2.setSelectionMode(
+        #     QtWidgets.QAbstractItemView.ExtendedSelection
+        # )
+
+        self.listWidget2.setGeometry(QtCore.QRect(10, 10, 211, 291))
+
+        self.pktIdsAsList = []
+        for i in range(len(pktIds)):
+            string = str(pktIds[i])
+            self.pktIdsAsList.append(string)
+            print(string)
+            item = QtWidgets.QListWidgetItem(string)
+            self.listWidget2.addItem(item)
+
+        self.layout.addWidget(self.listWidget2, 0, 0, 1, 2)
+
+        self.button = QtWidgets.QPushButton("Analyze", clicked=lambda: self.analyze())
+        self.layout.addWidget(self.button, 1, 2, 1, 2)
+
+
+        self.cluster = QtWidgets.QLineEdit(self)
+        self.cluster.setObjectName("cluster")
+        self.layout.addWidget(self.cluster, 1, 1, 1, 1)
+
         self.setLayout(self.layout)
 
-        # self.cmd = QtWidgets.QLineEdit(self)
-        # self.cmd.setObjectName("cmd")
-
-        # self.portFilter = QtWidgets.QLineEdit(self)
-        # self.portFilter.setObjectName("tcp.port")
-
-        # self.newFileName = QtWidgets.QLineEdit(self)
-        # self.newFileName.setObjectName("newFileName")
-        #
-        # self.errorMsg = QtWidgets.QLabel()
-        #
-        # form_layout.addRow("Display Filter", self.cmd)
-        # # form_layout.addRow("TCP Port", self.portFilter)
-        # form_layout.addRow("File Name*", self.newFileName)
-        # form_layout.addRow(self.errorMsg)
-        # form_layout.addRow(QtWidgets.QPushButton("Submit", clicked=lambda: self.submit_filter_options()))
-
-        self.show()
+            # self.show()
 
         # self.path = path
         # self.projectTree = projectTree
@@ -59,13 +73,24 @@ class properties_window(QtWidgets.QDialog):
 
         #print(self.path)
 
-    def printItemText(self):
+    def analyze(self):
         items = self.listWidget.selectedItems()
-        x = []
+        selProperties = []
         for i in range(len(items)):
-            x.append(str(self.listWidget.selectedItems()[i].text()))
+            selProperties.append(str(self.listWidget.selectedItems()[i].text()))
 
-        print(x)
+        print(selProperties)
+        print(self.pktIdsAsList)
+        print(self.cluster.text())
+
+        ### Abraham, enter you method call here ###
+        ### yourMethod(selProperties,self.pktIdsAsList,self.cluster.text()) ###
+        ### selProperties is selected properties (its in method so don't need self) ###
+        ### pktIdAsList is the object ids from select packet(s) ###
+        ### cluster is the value user enters ###
+
+
+
 
     # def submit_filter_options(self):
     #     wsFilter = {}

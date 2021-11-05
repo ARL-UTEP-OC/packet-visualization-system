@@ -10,6 +10,8 @@ from packetvisualization.backend_components.table_backend import TableBackend
 from packetvisualization.models.context.database_context import DbContext
 from packetvisualization.models.dataset import Dataset
 from packetvisualization.models.pcap import Pcap
+from packetvisualization.ui_components import properties_gui
+
 
 def gen_dictionary():
     dictionary = {
@@ -353,8 +355,17 @@ class table_gui(QTableWidget):
 
         data = self.backend.query_id(obj, db, list)
 
-        for packet in data:
-            print(packet)
+        # for packet in data:
+        #     print(packet)
+
+        self.ui = properties_gui.properties_window(data)
+        self.ui.show()
+
+
+
+
+
+
 
     def populate_table(self, obj, progressbar, db):
         """Generates and populates a table of packets from the specified pcap or dataset
