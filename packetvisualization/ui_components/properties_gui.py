@@ -35,13 +35,9 @@ class properties_window(QWidget):
             item = QtWidgets.QListWidgetItem(i)
             self.listWidget.addItem(item)
 
-        self.listWidget.itemClicked.connect(self.printItemText)
         self.layout.addWidget(self.listWidget, 0, 2, 1, 2)
 
         self.listWidget2 = QtWidgets.QListWidget()
-        # self.listWidget2.setSelectionMode(
-        #     QtWidgets.QAbstractItemView.ExtendedSelection
-        # )
 
         self.listWidget2.setGeometry(QtCore.QRect(10, 10, 211, 291))
 
@@ -65,50 +61,25 @@ class properties_window(QWidget):
 
         self.setLayout(self.layout)
 
-            # self.show()
-
-        # self.path = path
-        # self.projectTree = projectTree
-        # self.workspace = workspace
-
-        #print(self.path)
-
     def analyze(self):
         items = self.listWidget.selectedItems()
         selProperties = []
         for i in range(len(items)):
             selProperties.append(str(self.listWidget.selectedItems()[i].text()))
 
-        print(selProperties)
-        print(self.pktIdsAsList)
-        print(self.cluster.text())
+        print(f"Selected Packets: {selProperties}")
+        print(f"Packet IDs: {self.pktIdsAsList}")
+        print(f"Cluster: {self.cluster.text()}")
 
-        ### Abraham, enter you method call here ###
-        ### yourMethod(selProperties,self.pktIdsAsList,self.cluster.text()) ###
-        ### selProperties is selected properties (its in method so don't need self) ###
-        ### pktIdAsList is the object ids from select packet(s) ###
-        ### cluster is the value user enters ###
+        if self.cluster.text() != "" and len(selProperties) != 0:
 
+            ### Abraham, enter you method call here ###
+            ### yourMethod(selProperties,self.pktIdsAsList,self.cluster.text()) ###
+            ### selProperties is selected properties (its in method so don't need self) ###
+            ### pktIdAsList is the object ids from select packet(s) ###
+            ### cluster is the value user enters ###
 
-
-
-    # def submit_filter_options(self):
-    #     wsFilter = {}
-    #     newFileName = self.findChild(QLineEdit, "newFileName")
-    #     if newFileName.text() != "":
-    #         for w in self.findChildren(QLineEdit):
-    #             if w.objectName() != "newFileName" and w.text() != "":
-    #                 wsFilter[w.objectName()] = w.text()
-    #
-    #         error = Wireshark.filter(self.path, wsFilter, newFileName.text(), self.projectTree, self.workspace)
-    #         print(error)
-    #         if not error:
-    #             self.close()
-    #         else:
-    #             # print(error)
-    #             self.errorMsg.setText(f"{error}")
-
-        #print(self.path)
+            self.close()
 
 
 
