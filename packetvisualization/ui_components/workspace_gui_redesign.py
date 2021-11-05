@@ -628,8 +628,6 @@ class WorkspaceWindow(QMainWindow):
     def exit(self) -> None:
         """Exit function that calls the close() function to stop the application
         """
-        if os.path.exists("tEmPpCaP.pcap"):
-            os.remove("tEmPpCaP.pcap")
         self.close()
 
     def cut_content(self):
@@ -696,12 +694,16 @@ class WorkspaceWindow(QMainWindow):
             self.workspace_object.__del__()
             if os.path.exists("tEmPpCaP.pcap"):
                 os.remove("tEmPpCaP.pcap")
+            if os.path.exists("tEmPmErGeCaP.pcap"):
+                os.remove("tEmPmErGeCaP.pcap")
             event.accept()
         elif reply == QMessageBox.No:
             self.eo.remove_db(self.workspace_object.name)
             self.workspace_object.__del__()
             if os.path.exists("tEmPpCaP.pcap"):
                 os.remove("tEmPpCaP.pcap")
+            if os.path.exists("tEmPmErGeCaP.pcap"):
+                os.remove("tEmPmErGeCaP.pcap")
             event.accept()
         else:
             event.ignore()
