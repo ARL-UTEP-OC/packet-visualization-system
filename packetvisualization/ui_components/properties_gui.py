@@ -15,6 +15,8 @@ class properties_window(QWidget):
 
     def __init__(self, jsonString):
 
+        self.cursorObj = jsonString
+
         super().__init__()
         self.setWindowTitle("Select Properties")
         # form_layout = QFormLayout()
