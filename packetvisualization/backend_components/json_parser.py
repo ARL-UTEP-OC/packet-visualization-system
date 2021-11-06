@@ -16,7 +16,7 @@ def parser(jsonString: list):
                 for x in w['_source']['layers']:
                     for y in w['_source']['layers'][x]:
                         print(y)
-                        properties.append(y)
+                        properties.append(f"_source.layers.{x}.{y}")
                         gotFields = True
 
     except Exception:
