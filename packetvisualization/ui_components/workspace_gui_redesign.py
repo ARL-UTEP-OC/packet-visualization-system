@@ -925,10 +925,6 @@ class WorkspaceWindow(QMainWindow):
                         ui = filter_gui.filter_window(d.mergeFilePath, self.project_tree, self.workspace_object)
 
     def display_classifier_options(self):
-        print('Called display_classifier_options')
-        # data_frame = pd.DataFrame()
-        # data_frame['instance_number'] = [3, 2, 1]
-        # data_frame['cluster'] = [1, 2, 3]
         results = pd.DataFrame()
         try:
             if self.project_tree.selectedItems():
