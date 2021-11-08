@@ -379,7 +379,7 @@ class table_gui(QTableWidget):
         # for packet in data:
         #     print(packet)
 
-        self.ui = properties_gui.properties_window(data)
+        self.ui = properties_gui.properties_window(data, self.obj, db)
         self.ui.show()
 
     def populate_table(self, obj, progressbar, db):

@@ -5,7 +5,12 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QTreeWidget, QWidget, QPushButton
 
 from packetvisualization.backend_components import json_parser
+from packetvisualization.backend_components.controller import Controller
+from packetvisualization.models.dataset import Dataset
 from packetvisualization.models.workspace import Workspace
+from packetvisualization.models.context.database_context import DbContext
+import plotly.express as px
+import plotly.graph_objects as go
 
 
 class properties_window(QWidget):
@@ -13,9 +18,12 @@ class properties_window(QWidget):
     # app = QtWidgets.QApplication(sys.argv)
     # filter_window = QtWidgets.QMainWindow()
 
-    def __init__(self, jsonString):
+    def __init__(self, jsonString, obj, db):
 
         self.cursorObj = jsonString
+        self.controller = Controller()
+        self.obj = obj
+        self.db = db
 
         super().__init__()
         self.setWindowTitle("Select Properties")
@@ -47,7 +55,6 @@ class properties_window(QWidget):
         for i in range(len(pktIds)):
             string = str(pktIds[i])
             self.pktIdsAsList.append(string)
-            print(string)
             item = QtWidgets.QListWidgetItem(string)
             self.listWidget2.addItem(item)
 
@@ -56,7 +63,6 @@ class properties_window(QWidget):
         self.button = QtWidgets.QPushButton("Analyze", clicked=lambda: self.analyze())
         self.layout.addWidget(self.button, 1, 2, 1, 2)
 
-
         self.cluster = QtWidgets.QLineEdit(self)
         self.cluster.setObjectName("cluster")
         self.layout.addWidget(self.cluster, 1, 1, 1, 1)
@@ -64,24 +70,24 @@ class properties_window(QWidget):
         self.setLayout(self.layout)
 
     def analyze(self):
+        if (type(self.obj) != Dataset):
+            return 'Not a dataset name'
         items = self.listWidget.selectedItems()
-        selProperties = []
+        selected_properties = []
+
         for i in range(len(items)):
-            selProperties.append(str(self.listWidget.selectedItems()[i].text()))
+            selected_properties.append(str(self.listWidget.selectedItems()[i].text()))
 
-        print(f"Selected Packets: {selProperties}")
-        print(f"Packet IDs: {self.pktIdsAsList}")
-        print(f"Cluster: {self.cluster.text()}")
+        if self.cluster.text() == "" and len(selected_properties) == 0:
+            raise Exception('Please select properties and enter a correct cluster number')
+        df, features = self.controller.create_analysis(self.pktIdsAsList,
+                                                       selected_properties,
+                                                       int(self.cluster.text()),
+                                                       self.obj,
+                                                       self.db)
 
-        if self.cluster.text() != "" and len(selProperties) != 0:
-
-            ### Abraham, enter you method call here ###
-            ### yourMethod(selProperties,self.pktIdsAsList,self.cluster.text()) ###
-            ### selProperties is selected properties (its in method so don't need self) ###
-            ### pktIdAsList is the object ids from select packet(s) ###
-            ### cluster is the value user enters ###
-
-            self.close()
-
-
-
+        fig = px.scatter(df, x="cluster", y="instance_number",
+                         color='cluster', color_continuous_scale=px.colors.sequential.Bluered_r,
+                         hover_data=df.columns.values[:len(features)])
+        fig.show()
+        self.close()
