@@ -379,6 +379,7 @@ class table_gui(QTableWidget):
         # for packet in data:
         #     print(packet)
 
+        # self.ui = properties_gui.properties_window(data, self.obj, self.workspace.db, self.workspace)
         self.ui = properties_gui.properties_window(data, self.obj, self.workspace.db)
         self.ui.show()
 
