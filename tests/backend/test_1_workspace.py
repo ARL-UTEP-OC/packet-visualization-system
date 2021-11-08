@@ -52,3 +52,9 @@ def test_workspace_with_space():
         data = f.read()
         assert exported_hash == hashlib.sha1(data).hexdigest()
     del w
+
+def test_cleanup():
+    os.remove("This is my Workspace.zip")
+    os.remove("testWorkspace1.zip")
+    assert not os.path.isfile("This is my Workspace.zip")
+    assert not os.path.isfile("testWorkspace1.zip")

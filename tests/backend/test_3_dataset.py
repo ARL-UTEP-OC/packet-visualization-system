@@ -113,3 +113,8 @@ def test_del():
         print(w)
     # make sure when the workspace is deleted, nothing prevents the temp folder from being deleted
     assert not os.path.isdir(os.path.join(cwd, ".testWorkspace3"))
+
+
+def test_cleanup():
+    os.remove("testWorkspace3.zip")
+    assert not os.path.isfile("testWorkspace3.zip")

@@ -93,3 +93,7 @@ def test_del():
     with pytest.raises(NameError):
         print(w)
     assert not os.path.isdir(os.path.join(cwd, ".testWorkspace"))
+
+def test_cleanup():
+    os.remove("testWorkspace2.zip")
+    assert not os.path.isfile("testWorkspace2.zip")
