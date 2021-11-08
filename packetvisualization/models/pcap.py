@@ -1,9 +1,7 @@
 import os
 import shutil
-import pyshark
 
 class Pcap:
-
     def __init__(self, name: str ,path: str, file: str, m_data = "") -> None:
         try:
             self.name = name
@@ -20,12 +18,9 @@ class Pcap:
 
             self.create_json_file() # create empty json
             self.toJson()
-
-
         except:
             print("Error adding this pcap")
             self.name = None
-
 
     def create_json_file(self):
         filename = self.name + ".json"

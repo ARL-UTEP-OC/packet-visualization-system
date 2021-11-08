@@ -1,19 +1,19 @@
 import os
-import platform
-import shutil
-import subprocess
 import traceback
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QColor, QIcon
-from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QMenu, QAction, QInputDialog, QFileDialog, QTreeWidgetItem
+from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QMenu, QAction, QInputDialog, QTreeWidgetItem
 
+from packetvisualization.backend_components import Wireshark
+from packetvisualization.backend_components.table_backend import TableBackend
 from packetvisualization.models.context.database_context import DbContext
 from packetvisualization.models.dataset import Dataset
 from packetvisualization.models.pcap import Pcap
+from packetvisualization.ui_components import properties_gui
 
 
-def field_dictionary():
+def gen_dictionary():
     dictionary = {
         "frame-number": 0,
         "frame-time_relative": 0,
@@ -26,24 +26,14 @@ def field_dictionary():
     }
     return dictionary
 
-
-def gen_frame_string(list_in):
-    frame_string = ""
-    for i in range(len(list_in)):
-        if i == 0:
-            frame_string += "frame.number==" + str(list_in[i])
-        else:
-            frame_string += " || frame.number==" + str(list_in[i])
-    return frame_string
-
-
 class table_gui(QTableWidget):
     def __init__(self, obj, progressbar, db: DbContext, workspace):
         super().__init__()
         self.icons = os.path.join(os.path.dirname(__file__), "images", "svg")
+        self.backend = TableBackend()
         self.workspace = workspace
         self.obj = obj
-        self.dict = field_dictionary()
+        self.dict = gen_dictionary()
         self.setColumnCount(8)
         self.setHorizontalHeaderLabels(
             ["No.", "Time", "Source IP", "Destination IP", "srcport", "dstport", "Protocol", "Length"])
@@ -56,57 +46,81 @@ class table_gui(QTableWidget):
         self.populate_table(obj=obj, progressbar=progressbar, db=db)
 
     def contextMenuEvent(self, event):
-        menu = QMenu(self)
-
-        self.mark_action = QAction("Mark/Unmark Packet", self)
-        self.mark_action.triggered.connect(self.mark_packet)
-
-        self.tag_action = QAction("Add Tag", self)
-        self.tag_action.triggered.connect(self.add_tag)
-
-        self.remove_tag_action = QAction("Remove Tag", self)
-        self.remove_tag_action.triggered.connect(self.remove_tag)
-
-        self.create_dataset_action = QAction("Create Dataset", self)
-        self.create_dataset_action.triggered.connect(self.create_dataset)
-
-        self.tagged_create_dataset_action = QAction("Create Dataset", self)
-        self.tagged_create_dataset_action.triggered.connect(lambda : self.create_dataset(tagged= True))
-
-        self.viewASCII_action = QAction("View as ASCII", self)
-        self.viewASCII_action.triggered.connect(self.view_as_ASCII)
-
-        self.viewRAW_action = QAction("View as RAW", self)
-        self.viewRAW_action.triggered.connect(self.view_as_RAW)
-
-        self.viewText_action = QAction("View as text", self)
-        self.viewText_action.triggered.connect(self.view_as_text)
-
-        self.view_in_wireshark_action = QAction("View in Wireshark", self)
-        self.view_in_wireshark_action.triggered.connect(self.view_in_wireshark)
-
-        self.view_tagged_in_wireshark_action = QAction("View in Wireshark", self)
-        self.view_tagged_in_wireshark_action.triggered.connect(self.view_tagged_in_wireshark)
-
-        menu.addAction(self.mark_action)
-        menu.addAction(self.tag_action)
-        menu.addAction(self.remove_tag_action)
-        menu.addAction(self.create_dataset_action)
-        menu.addAction(self.view_in_wireshark_action)
-
-        tagged_menu = menu.addMenu("Tagged")
-        tagged_menu.addAction(self.view_tagged_in_wireshark_action)
-        tagged_menu.addAction(self.tagged_create_dataset_action)
-
-        view_menu = menu.addMenu("View")
-        view_menu.addAction(self.viewASCII_action)
-        view_menu.addAction(self.viewRAW_action)
-        view_menu.addAction(self.viewText_action)
-
-        menu.exec(event.globalPos())
-
-    def view_in_wireshark(self):
         try:
+            menu = QMenu(self)
+
+            self.tag_action = QAction("Add Tag", self)
+            self.tag_action.triggered.connect(self.add_tag)
+
+            self.remove_tag_action = QAction("Remove Tag", self)
+            self.remove_tag_action.triggered.connect(self.remove_tag)
+
+            self.analyze_action = QAction("Analyze", self)
+            self.analyze_action.triggered.connect(self.analyze)
+
+            self.create_dataset_action = QAction("Selected Packets", self)
+            self.create_dataset_action.triggered.connect(self.create_dataset)
+
+            self.tagged_create_dataset_action = QAction("Tagged Packets", self)
+            self.tagged_create_dataset_action.triggered.connect(lambda: self.create_dataset(tagged=True))
+
+            self.all_dataset_action = QAction("All Packets", self)
+            self.all_dataset_action.triggered.connect(self.create_dataset_from_all)
+
+            # Text Transformation Actions
+            self.viewASCII_action = QAction("ASCII", self)
+            self.viewASCII_action.triggered.connect(self.view_as_ASCII)
+
+            self.viewRAW_action = QAction("RAW", self)
+            self.viewRAW_action.triggered.connect(self.view_as_RAW)
+
+            self.viewText_action = QAction("Text", self)
+            self.viewText_action.triggered.connect(self.view_as_text)
+
+            # Wireshark Actions
+            self.view_in_wireshark_action = QAction("Selected Packets", self)
+            self.view_in_wireshark_action.triggered.connect(self.view_in_wireshark)
+
+            self.view_tagged_in_wireshark_action = QAction("Tagged Packets", self)
+            self.view_tagged_in_wireshark_action.triggered.connect(lambda: self.view_in_wireshark(tagged=True))
+
+            self.view_all_in_wireshark_action = QAction("All Packets", self)
+            self.view_all_in_wireshark_action.triggered.connect(lambda: self.view_in_wireshark(all_packets=True))
+
+            menu.addAction(self.tag_action)
+            menu.addAction(self.remove_tag_action)
+            menu.addAction(self.analyze_action)
+
+            wireshark_menu = menu.addMenu("View in Wireshark from...")
+            wireshark_menu.addAction(self.view_in_wireshark_action)
+            wireshark_menu.addAction(self.view_tagged_in_wireshark_action)
+            wireshark_menu.addAction(self.view_all_in_wireshark_action)
+
+            dataset_menu = menu.addMenu("Create Dataset from...")
+            dataset_menu.addAction(self.create_dataset_action)
+            dataset_menu.addAction(self.tagged_create_dataset_action)
+            dataset_menu.addAction(self.all_dataset_action)
+
+            view_menu = menu.addMenu("Read as...")
+            view_menu.addAction(self.viewASCII_action)
+            view_menu.addAction(self.viewRAW_action)
+            view_menu.addAction(self.viewText_action)
+
+            menu.exec(event.globalPos())
+        except:
+            traceback.print_exc()
+
+    def view_in_wireshark(self, tagged: bool = None, all_packets: bool = None):
+        """Allows user to select packets from packet table for viewing in Wireshark
+        """
+        if all_packets:
+            if type(self.obj) is Pcap:
+                Wireshark.openwireshark(self.obj.path)
+            else:
+                Wireshark.openwireshark(self.obj.mergeFilePath)
+            return True
+
+        if not tagged:
             list = []
             if self.selectedItems():
                 selected = self.selectedItems()
@@ -117,181 +131,134 @@ class table_gui(QTableWidget):
                         list.append(frame_number)
                         row_list.append(item.row())
 
-            frame_string = gen_frame_string(list)
+        if tagged:
+            list = []
+            tag = QInputDialog.getText(self, "Tag Name Entry", "Enter Tag name:")[0]
+            for i in range(self.rowCount()):
+                if tag in self.item(i, 0).data(Qt.UserRole)[1]:
+                    list.append(self.item(i, 0).text())
 
-            output_file = os.path.join(os.getcwd(), "tEmPpCaP.pcap")
-
+        if len(list) > 0:
             if type(self.obj) == Pcap:
                 infile = self.obj.path
             else:
                 infile = self.obj.mergeFilePath
 
-            if (platform.system()=="Windows"):
-                os.system(
-                    'cd "C:\Program Files\Wireshark" & tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
-                subprocess.Popen("C:\Program Files\Wireshark\wireshark -r " + output_file)
-            elif (platform.system()=="Linux"):
-                os.system('tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
-                subprocess.Popen("wireshark -r " + output_file)
-        except:
-            traceback.print_exc()
-
-    def view_tagged_in_wireshark(self):
-        try:
-            list = []
-            tag = QInputDialog.getText(self, "Tag Name Entry", "Enter Tag name:")[0]
-            for i in range(self.rowCount()):
-                if self.item(i, 0).data(Qt.UserRole) == tag:
-                    list.append(self.item(i, 0).text())
-
-            if len(list) > 0:
-                frame_string = gen_frame_string(list)
-
-                output_file = os.path.join(os.getcwd(), "tEmPpCaP.pcap")
-
-                if type(self.obj) == Pcap:
-                    infile = self.obj.path
-                else:
-                    infile = self.obj.mergeFilePath
-
-                if (platform.system() == "Windows"):
-                    os.system(
-                        'cd "C:\Program Files\Wireshark" & tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
-                    subprocess.Popen("C:\Program Files\Wireshark\wireshark -r " + output_file)
-                elif (platform.system() == "Linux"):
-                    os.system('tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
-                    subprocess.Popen("wireshark -r " + output_file)
-        except:
-            traceback.print_exc()
+            frame_string_list = self.backend.gen_frame_string(list)
+            temp_mergecap = self.backend.gen_pcap_from_frames(frame_string_list, infile, self.workspace.progressbar)
+            Wireshark.openwireshark(temp_mergecap)
 
     def add_tag(self):
+        """Allows user to add "tags" to packet items on the table gui. A user can add multiple tags to
+            any packet item. Scroll over the tag icon to view a list of tags applied to that packet.
+            """
         if self.selectedItems():
             selected = self.selectedItems()
             row_list = []
             tag = QInputDialog.getText(self, "Tag Name Entry", "Enter Tag name:")[0]
             for item in selected:
                 if item.row() not in row_list and tag != "":
-                    self.item(item.row(), 0).setData(Qt.UserRole, tag)
+                    tag_list = self.item(item.row(), 0).data(Qt.UserRole)[1]
+                    tag_list.append(tag)
+                    packet_id = self.item(item.row(), 0).data(Qt.UserRole)[0]
+                    self.item(item.row(), 0).setData(Qt.UserRole, [packet_id, tag_list])
                     self.item(item.row(), 0).setIcon(QIcon(os.path.join(self.icons, "pricetag.svg")))
-                    self.item(item.row(), 0).setToolTip(tag)
-                    self.item(item.row(), 0).setStatusTip(tag)
+                    tooltip = ""
+                    for t in tag_list:
+                        tooltip += t + " "
+                    self.item(item.row(), 0).setToolTip(tooltip)
+                    self.item(item.row(), 0).setStatusTip(tooltip)
 
                     row_list.append(item.row())
-        return
 
     def remove_tag(self):
-        try:
+        """User can remove all tags associated with selected packets.
+        """
+        if self.selectedItems():
+            selected = self.selectedItems()
+            row_list = []
+            for item in selected:
+                if item.row() not in row_list:
+                    packet_id = self.item(item.row(), 0).data(Qt.UserRole)[0]
+                    self.item(item.row(), 0).setData(Qt.UserRole, [packet_id, []])
+                    self.item(item.row(), 0).setIcon(QIcon())
+                    self.item(item.row(), 0).setStatusTip(None)
+                    self.item(item.row(), 0).setToolTip(None)
+                    row_list.append(item.row())
+
+    def view_as_text(self):
+        """User can view this packets field data in standard text. Cannot be applied
+        to the "frame number" field.
+        """
+        if self.selectedItems():
+            selected = self.selectedItems()
+            for item in selected:
+                if item.column() != 0:
+                    if item.data(Qt.UserRole) is not None:
+                        item.setText(item.data(Qt.UserRole))
+                        self.resizeRowToContents(item.row())
+
+    def view_as_RAW(self):
+        """User can view this packets field data in raw hex. Cannot be applied
+        to the "frame number" field.
+        """
+        if self.selectedItems():
+            selected = self.selectedItems()
+            for item in selected:
+                if item.column() != 0:
+                    if item.data(Qt.UserRole) is None:
+                        text = item.text()
+                        item.setData(Qt.UserRole, text)
+                    else:
+                        text = item.data(Qt.UserRole)
+                    raw = self.backend.convert_to_raw(text)
+                    item.setText(raw)
+                    self.resizeRowToContents(item.row())
+
+    def view_as_ASCII(self):
+        """User can view this packets field data in ASCII. Cannot be applied
+        to the "frame number" field.
+        """
+        if self.selectedItems():
+            selected = self.selectedItems()
+            for item in selected:
+                if item.column() != 0:
+                    if item.data(Qt.UserRole) is None:
+                        text = item.text()
+                        item.setData(Qt.UserRole, text)
+                    else:
+                        text = item.data(Qt.UserRole)
+                    ascii_data = self.backend.convert_to_ascii(text)
+                    item.setText(ascii_data)
+                    self.resizeRowToContents(item.row())
+
+    def create_dataset(self, tagged: bool = None):
+        """Allows user to create a new dataset from selected or tagged packets.
+            """
+        list = []
+        if not tagged:
             if self.selectedItems():
                 selected = self.selectedItems()
                 row_list = []
                 for item in selected:
                     if item.row() not in row_list:
-                        self.item(item.row(), 0).setData(Qt.UserRole, None)
-                        self.item(item.row(), 0).setIcon(QIcon())
-                        self.item(item.row(), 0).setStatusTip(None)
-                        self.item(item.row(), 0).setToolTip(None)
+                        frame_number = self.item(item.row(), 0).text()
+                        list.append(frame_number)
                         row_list.append(item.row())
-        except:
-            traceback.print_exc()
+        if tagged:
+            tag = QInputDialog.getText(self, "Tag Name Entry", "Enter Tag name:")[0]
+            for i in range(self.rowCount()):
+                if tag in self.item(i, 0).data(Qt.UserRole)[1]:
+                    list.append(self.item(i, 0).text())
 
-    def view_as_text(self):
-        try:
-            if self.selectedItems():
-                selected = self.selectedItems()
-                for item in selected:
-                    if item.column() != 0:
-                        if item.data(Qt.UserRole) is not None:
-                            item.setText(item.data(Qt.UserRole))
-                            self.resizeRowToContents(item.row())
-        except:
-            traceback.print_exc()
-
-    def view_as_RAW(self):
-        try:
-            if self.selectedItems():
-                selected = self.selectedItems()
-                for item in selected:
-                    if item.column() != 0:
-                        if item.data(Qt.UserRole) is None:
-                            text = item.text()
-                            item.setData(Qt.UserRole, text)
-                        else:
-                            text = item.data(Qt.UserRole)
-                        raw = ':'.join(hex(ord(x))[2:] for x in text)
-                        item.setText(raw)
-                        self.resizeRowToContents(item.row())
-        except:
-            traceback.print_exc()
-
-    def view_as_ASCII(self):
-        try:
-            if self.selectedItems():
-                selected = self.selectedItems()
-                for item in selected:
-                    if item.column() != 0:
-                        if item.data(Qt.UserRole) is None:
-                            text = item.text()
-                            item.setData(Qt.UserRole, text)
-                        else:
-                            text = item.data(Qt.UserRole)
-                        ascii = ""
-                        for char in text:
-                            ascii += str(ord(char)) + " "
-                        item.setText(ascii)
-                        self.resizeRowToContents(item.row())
-        except:
-            traceback.print_exc()
-
-    def mark_packet(self):
-        try:
-            if self.selectedItems():
-                selected = self.selectedItems()
-                prev_row = -1
-                row_list = []
-                for item in selected:
-                    if item.row() != prev_row and item.row() not in row_list:
-                        if item.background() == QColor(255, 182, 193):
-                            for j in range(self.columnCount()):
-                                self.item(item.row(), j).setBackground(QColor(255, 255, 255))
-                        else:
-                            for j in range(self.columnCount()):
-                                self.item(item.row(), j).setBackground(QColor(255, 182, 193))
-                        prev_row = item.row()
-                        row_list.append(prev_row)
-        except:
-            traceback.print_exc()
-
-    def create_dataset(self, tagged: bool = None):
-        try:
-            list = []
-            if not tagged:
-                if self.selectedItems():
-                    selected = self.selectedItems()
-                    row_list = []
-                    for item in selected:
-                        if item.row() not in row_list:
-                            frame_number = self.item(item.row(), 0).text()
-                            list.append(frame_number)
-                            row_list.append(item.row())
-            if tagged:
-                tag = QInputDialog.getText(self, "Tag Name Entry", "Enter Tag name:")[0]
-                for i in range(self.rowCount()):
-                    if self.item(i, 0).data(Qt.UserRole) == tag:
-                        list.append(self.item(i, 0).text())
-
-            frame_string = gen_frame_string(list)
-            output_file = os.path.join(os.getcwd(), "tEmPpCaP.pcap")
-
+        if len(list) > 0:
             if type(self.obj) == Pcap:
                 infile = self.obj.path
             else:
                 infile = self.obj.mergeFilePath
 
-            if (platform.system() == "Windows"):
-                os.system(
-                    'cd "C:\Program Files\Wireshark" & tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
-            elif (platform.system() == "Linux"):
-                os.system('tshark -r ' + infile + ' -Y \"' + frame_string + '\" -w ' + output_file)
+            frame_string_list = self.backend.gen_frame_string(list)
+            temp_mergecap = self.backend.gen_pcap_from_frames(frame_string_list, infile)
 
             items = []
             for p in self.workspace.workspace_object.project:
@@ -316,7 +283,7 @@ class table_gui(QTableWidget):
 
                     # Add PCAP object && project tree item
                     base = os.path.splitext(self.obj.name)[0]
-                    new_pcap = Pcap(file=output_file, path=dataset_object.path, name="sub_"+base+".pcap")
+                    new_pcap = Pcap(file=temp_mergecap, path=dataset_object.path, name="sub_" + base + ".pcap")
                     dataset_object.add_pcap(new_pcap)
                     pcap_item = QTreeWidgetItem()
                     pcap_item.setText(0, new_pcap.name)
@@ -325,22 +292,85 @@ class table_gui(QTableWidget):
 
                     # Insert into Database
                     mytable = self.workspace.db[dataset_object.name]
-                    self.workspace.eo.insert_packets(new_pcap.json_file, mytable, dataset_object.name, new_pcap.name)
+                    self.workspace.eo.insert_packets(new_pcap.json_file, mytable, dataset_object.name,
+                                                     new_pcap.name)
 
-        except:
-            traceback.print_exc()
+    def create_dataset_from_all(self):
+        """Allows user to create a Dataset from all packets in a packet table
+        """
+        items = []
+        for p in self.workspace.workspace_object.project:
+            items.append(p.name)
+        item, ok = QInputDialog.getItem(self, "Select Project",
+                                        "List of Projects", items, 0, False)
+
+        if type(self.obj) == Pcap:
+            infile = self.obj.path
+        else:
+            infile = self.obj.mergeFilePath
+
+        if ok and item:
+            text = QInputDialog.getText(self, "Dataset Name Entry", "Enter Dataset name:")[0]
+            project_item = self.workspace.project_tree.findItems(item, Qt.MatchRecursive, 0)[0]
+            project_object = project_item.data(0, Qt.UserRole)
+
+            if text:
+                # Add Project and Dataset object && project tree item
+                dataset_object = Dataset(name=text, parentPath=project_object.path)
+                project_object.add_dataset(dataset_object)
+                child_item = QTreeWidgetItem()
+                child_item.setText(0, text)
+                child_item.setData(0, Qt.UserRole, dataset_object)
+                project_item.addChild(child_item)
+
+                # Add PCAP object && project tree item
+                base = os.path.splitext(self.obj.name)[0]
+                new_pcap = Pcap(file=infile, path=dataset_object.path, name=base + ".pcap")
+                dataset_object.add_pcap(new_pcap)
+                pcap_item = QTreeWidgetItem()
+                pcap_item.setText(0, new_pcap.name)
+                pcap_item.setData(0, Qt.UserRole, new_pcap)
+                child_item.addChild(pcap_item)
+
+                # Insert into Database
+                mytable = self.workspace.db[dataset_object.name]
+                self.workspace.eo.insert_packets(new_pcap.json_file, mytable, dataset_object.name,
+                                                 new_pcap.name)
+
+    def analyze(self):
+        """Initiates the analysis process from selected packets
+        """
+        list = []
+        if self.selectedItems():
+            selected = self.selectedItems()
+            row_list = []
+            for item in selected:
+                if item.row() not in row_list:
+                    packet_id = self.item(item.row(), 0).data(Qt.UserRole)[0]
+                    list.append(packet_id)
+                    row_list.append(item.row())
+
+        obj = self.obj
+        db = self.workspace.db
+
+        data = self.backend.query_id(obj, db, list)
+
+        # for packet in data:
+        #     print(packet)
+
+        self.ui = properties_gui.properties_window(data)
+        self.ui.show()
+
+
+
+
+
+
 
     def populate_table(self, obj, progressbar, db):
-        if type(obj) is Pcap:
-            dataset_name = os.path.basename(obj.directory)
-            collection = db[dataset_name]
-            query = {'parent_pcap': obj.name}
-            data = collection.find(query)
-        elif type(obj) is Dataset:
-            dataset_name = obj.name
-            collection = db[dataset_name]
-            query = {'parent_dataset': obj.name}
-            data = collection.find(query)
+        """Generates and populates a table of packets from the specified pcap or dataset
+        """
+        data = self.backend.query_pcap(obj, db)
 
         self.setRowCount(data.count())
         value = (100 / data.count())
@@ -350,6 +380,7 @@ class table_gui(QTableWidget):
         for packet in data:
             frame_number_item = QTableWidgetItem(str(i + 1))
             self.setItem(i, 0, frame_number_item)
+            frame_number_item.setData(Qt.UserRole, [packet['_id'], []])
             self.dict["frame-number"] += 1
 
             self.setItem(i, 1, QTableWidgetItem(packet['_source']['layers']['frame'].get('frame-time_relative')))
@@ -399,6 +430,9 @@ class table_gui(QTableWidget):
         progressbar.hide()
 
     def update_lables(self):
+        """Updates the table column header labels to reflect the color (grey/black) and the
+        count of the fields within each packet.
+        """
         self.horizontalHeaderItem(0).setText("No. (" + str(self.dict["frame-number"]) + ")")
         self.horizontalHeaderItem(1).setText(
             "Time (" + str(self.dict["frame-time_relative"]) + ")")

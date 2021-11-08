@@ -15,6 +15,9 @@ class Workspace:
         self.open_existing = open_existing
         self.path = self.work_dir()
 
+        self.dump_path = self.get_dump_path()
+        # self.create_dump_dir(self.dump_path)
+
     def add_project(self, new: Project) -> list:
         self.project.append(new)
         return self.project
@@ -63,6 +66,14 @@ class Workspace:
             return True
         except Exception:
             return False
+
+    def get_dump_path(self):
+        dir_name = self.name + "_dump"
+        dump_path = os.path.join(self.path, dir_name)
+        return dump_path
+
+    def create_dump_dir(self, path):
+        os.mkdir(path)
 
     def __del__(self) -> bool:
         try:
