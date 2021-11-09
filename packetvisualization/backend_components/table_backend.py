@@ -1,4 +1,4 @@
-import json
+
 import os
 import platform
 
@@ -134,23 +134,3 @@ class TableBackend:
 
         return temp_mergecap
 
-    # def reformat_json(self, packet_in):
-    #     new = {}
-    #     for k, v in packet_in.items():
-    #         if isinstance(v, dict):
-    #             v = self.reformat_json(v)
-    #         new[k.replace('-', '.')] = v
-    #     return new
-    #
-    # def gen_json_file(self, dict_list_in):
-    #     temp_json = os.path.join(os.getcwd(), "tEmPjSoN.json")
-    #     with open(temp_json, "w") as outfile:
-    #         json.dump(dict_list_in, outfile, indent=2)
-    #     outfile.close()
-    #     return temp_json
-    #
-    # def convert_json_to_pcap(self, json_in):
-    #     if (platform.system()=="Windows"):
-    #         os.system("C:\Program Files\Wireshark\tools\json2pcap python json2pcap.py -p " + json_in)
-    #     elif(platform.system()=="Linux"):
-    #         print()

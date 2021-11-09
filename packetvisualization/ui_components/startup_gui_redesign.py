@@ -8,13 +8,13 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 from packetvisualization.ui_components.workspace_gui_redesign import WorkspaceWindow
+from packetvisualization.ui_components.images import qrc_resources
 
 
 class StartupWindow(QWidget):
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     app = QApplication(sys.argv)
-    logo = os.path.join(os.path.dirname(__file__), "images", "logo.png")
-    app.setWindowIcon(QIcon(logo))
+    app.setWindowIcon(QIcon(":logo.png"))
     finished = pyqtSignal()
 
     def __init__(self):
@@ -25,7 +25,7 @@ class StartupWindow(QWidget):
 
     def init_window(self):
         self.setWindowTitle("Welcome to PacketVisualizer")
-        self.setWindowIcon(QIcon(self.logo))
+        self.setWindowIcon(QIcon(":logo.png"))
         self.setFixedSize(700, 175)
 
         layout = QHBoxLayout()
@@ -33,7 +33,7 @@ class StartupWindow(QWidget):
         info_layout = QHBoxLayout()
 
         label = QLabel(self)
-        pixmap = QPixmap(self.logo)
+        pixmap = QPixmap(":logo.png")
         pixmap = pixmap.scaled(150, 150)
         label.setPixmap(pixmap)
         label.setFixedSize(150, 150)
