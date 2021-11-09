@@ -47,13 +47,19 @@ class properties_window(QWidget):
         for i in properties:
             item = QtWidgets.QListWidgetItem(i)
             self.listWidget.addItem(item)
+        self.clusterLabel = QtWidgets.QLabel()
+        self.clusterLabel.setText("Select Properties for Analysis")
+        self.layout.addWidget(self.clusterLabel, 0, 2)
 
-        self.layout.addWidget(self.listWidget, 0, 2, 1, 2)
+        self.layout.addWidget(self.listWidget, 1, 2, 1, 2)
 
         self.listWidget2 = QtWidgets.QListWidget()
 
         self.listWidget2.setGeometry(QtCore.QRect(10, 10, 211, 291))
 
+        self.clusterLabel = QtWidgets.QLabel()
+        self.clusterLabel.setText("Packet IDs")
+        self.layout.addWidget(self.clusterLabel, 0, 0)
         self.pktIdsAsList = []
         for i in range(len(pktIds)):
             string = str(pktIds[i])
@@ -61,14 +67,21 @@ class properties_window(QWidget):
             item = QtWidgets.QListWidgetItem(string)
             self.listWidget2.addItem(item)
 
-        self.layout.addWidget(self.listWidget2, 0, 0, 1, 2)
+        self.layout.addWidget(self.listWidget2, 1, 0, 1, 2)
 
         self.button = QtWidgets.QPushButton("Analyze", clicked=lambda: self.analyze())
-        self.layout.addWidget(self.button, 1, 2, 1, 2)
+        self.layout.addWidget(self.button, 2, 2, 1, 2)
+
+        self.clusterLabel = QtWidgets.QLabel()
+        self.clusterLabel.setText("Cluster Value")
+        self.layout.addWidget(self.clusterLabel, 2, 0)
 
         self.cluster = QtWidgets.QLineEdit(self)
         self.cluster.setObjectName("cluster")
-        self.layout.addWidget(self.cluster, 1, 1, 1, 1)
+        self.layout.addWidget(self.cluster, 2, 1)
+
+        self.errorMsg = QtWidgets.QLabel()
+        self.layout.addWidget(self.errorMsg, 3, 0, 1, 4)
 
         self.setLayout(self.layout)
 
@@ -81,37 +94,44 @@ class properties_window(QWidget):
         for i in range(len(items)):
             selected_properties.append(str(self.listWidget.selectedItems()[i].text()))
 
-        if self.cluster.text() == "" and len(selected_properties) == 0:
-            raise Exception('Please select properties and enter a correct cluster number')
-        df, features = self.controller.create_analysis(self.pktIdsAsList,
-                                                       selected_properties,
-                                                       int(self.cluster.text()),
-                                                       self.obj,
-                                                       self.db)
+        if not len(selected_properties) != 0:
 
-        self.cursorObj.rewind()
+            print("Properties not selected")
+            self.errorMsg.setText("Properties not selected")
 
-        for p in self.cursorObj:
-            print(p['parent_dataset'])
-        try:
-            if self.cluster.text().isnumeric() and len(selProperties) != 0 \
-                    and int(self.cluster.text()) <= len(self.pktIdsAsList):
-        fig = px.scatter(df, x="cluster", y="instance_number",
-                         color='cluster', color_continuous_scale=px.colors.sequential.Bluered_r,
-                         hover_data=df.columns.values[:len(features)])
+        elif not self.cluster.text().isnumeric():
 
-        raw_html = '<html><head><meta charset="utf-8" />'
-        raw_html += '<script src="https://cdn.plot.ly/plotly-latest.min.js"></script></head>'
-        raw_html += '<body>'
-        raw_html += po.plot(fig, include_plotlyjs=False, output_type='div')
-        raw_html += '</body></html>'
+            self.errorMsg.setText("Cluster value must be numeric")
 
-        self.workspace.classifier_plot_view.setHtml(raw_html)
-        self.workspace.classifier_window.show()
-        self.close()
+        elif not int(self.cluster.text()) <= len(self.pktIdsAsList):
 
-                self.close()
-        except Exception:
-            print(traceback.format_exc())
+            print("Cluster value must not be higher than number of packets")
+            self.errorMsg.setText("Cluster value must not be higher than number of packets")
+
+        else:
+            # raise Exception('Please select properties and enter a correct cluster number')
+            df, features = self.controller.create_analysis(self.pktIdsAsList,
+                                                           selected_properties,
+                                                           int(self.cluster.text()),
+                                                           self.obj,
+                                                           self.db)
+
+
+
+            fig = px.scatter(df, x="cluster", y="instance_number",
+                                     color='cluster', color_continuous_scale=px.colors.sequential.Bluered_r,
+                                     hover_data=df.columns.values[:len(features)])
+
+            raw_html = '<html><head><meta charset="utf-8" />'
+            raw_html += '<script src="https://cdn.plot.ly/plotly-latest.min.js"></script></head>'
+            raw_html += '<body>'
+            raw_html += po.plot(fig, include_plotlyjs=False, output_type='div')
+            raw_html += '</body></html>'
+
+            self.workspace.classifier_plot_view.setHtml(raw_html)
+            self.workspace.classifier_window.show()
+            self.close()
+
+
 
 
