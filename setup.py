@@ -20,7 +20,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     packages=setuptools.find_packages(include=['packetvisualization', 'packetvisualization.*'], exclude=["tests"]),
-    install_requires=['pyshark', 'PyQt5', 'pandas', 'plotly', 'PyQtWebEngine', 'scapy', 'pymongo', 'python-decouple', 'certifi'],
+    install_requires=['pyshark', 'PyQt5', 'pandas', 'plotly', 'PyQtWebEngine', 'scapy', 'pymongo', 'python-decouple', 'certifi', 'liac-arff', 'sklearn'],
     include_package_data=True,
     python_requires=">=3.6",
 )
