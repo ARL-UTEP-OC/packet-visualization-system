@@ -7,7 +7,7 @@ import setuptools
 
 setuptools.setup(
     name="packetvisualization",
-    version="0.0.7",
+    version="0.0.8",
     author="team-1",
     author_email="hbarrazalo@miners.utep.edu",
     description="packet visualization",
