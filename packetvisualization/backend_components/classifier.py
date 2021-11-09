@@ -9,7 +9,9 @@ class Classifier:
     categorical_data = pd.DataFrame()
     centroids = []
 
-    def __init__(self, cluster_number, context_results=None) -> None:
+    def __init__(self, cluster_number, context_results) -> None:
+        if (context_results is None or cluster_number < 1):
+            raise ('Invalid param values')
         """
         Data preprocessing
         """

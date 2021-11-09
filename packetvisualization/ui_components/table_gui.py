@@ -55,9 +55,17 @@ class table_gui(QTableWidget):
             self.remove_tag_action = QAction("Remove Tag", self)
             self.remove_tag_action.triggered.connect(self.remove_tag)
 
-            self.analyze_action = QAction("Analyze", self)
+            # Analysis actions
+            self.analyze_action = QAction("Selected Packets", self)
             self.analyze_action.triggered.connect(self.analyze)
 
+            self.analyze_all_action = QAction("All Packets", self)
+            self.analyze_all_action.triggered.connect(lambda: self.analyze(all_packets=True))
+
+            self.analyze_tagged_action = QAction("Tagged Packets", self)
+            self.analyze_tagged_action.triggered.connect(lambda: self.analyze(tagged=True))
+
+            # Dataset Actions
             self.create_dataset_action = QAction("Selected Packets", self)
             self.create_dataset_action.triggered.connect(self.create_dataset)
 
@@ -89,7 +97,11 @@ class table_gui(QTableWidget):
 
             menu.addAction(self.tag_action)
             menu.addAction(self.remove_tag_action)
-            menu.addAction(self.analyze_action)
+
+            analysis_menu = menu.addMenu("Analyze...")
+            analysis_menu.addAction(self.analyze_action)
+            analysis_menu.addAction(self.analyze_tagged_action)
+            analysis_menu.addAction(self.analyze_all_action)
 
             wireshark_menu = menu.addMenu("View in Wireshark from...")
             wireshark_menu.addAction(self.view_in_wireshark_action)
@@ -337,35 +349,39 @@ class table_gui(QTableWidget):
                 self.workspace.eo.insert_packets(new_pcap.json_file, mytable, dataset_object.name,
                                                  new_pcap.name)
 
-    def analyze(self):
-        """Initiates the analysis process from selected packets
+    def analyze(self, tagged: bool = None, all_packets: bool = None):
+        """Initiates the analysis process from selected packets, all packets, or tagged packets
         """
         list = []
-        if self.selectedItems():
-            selected = self.selectedItems()
-            row_list = []
-            for item in selected:
-                if item.row() not in row_list:
-                    packet_id = self.item(item.row(), 0).data(Qt.UserRole)[0]
-                    list.append(packet_id)
-                    row_list.append(item.row())
+        data = ""
+        row_list = []
 
-        obj = self.obj
-        db = self.workspace.db
+        if all_packets:
+            data = self.backend.query_pcap(self.obj, self.workspace.db)
 
-        data = self.backend.query_id(obj, db, list)
+        elif tagged:
+            tag = QInputDialog.getText(self, "Tag Name Entry", "Enter Tag name:")[0]
+            for i in range(self.rowCount()):
+                if tag in self.item(i, 0).data(Qt.UserRole)[1]:
+                    list.append(self.item(i, 0).data(Qt.UserRole)[0])
+            data = self.backend.query_id(self.obj, self.workspace.db, list)
+
+        else:
+            if self.selectedItems():
+                selected = self.selectedItems()
+                for item in selected:
+                    if item.row() not in row_list:
+                        packet_id = self.item(item.row(), 0).data(Qt.UserRole)[0]
+                        list.append(packet_id)
+                        row_list.append(item.row())
+                data = self.backend.query_id(self.obj, self.workspace.db, list)
 
         # for packet in data:
         #     print(packet)
 
-        self.ui = properties_gui.properties_window(data)
+        # self.ui = properties_gui.properties_window(data, self.obj, self.workspace.db, self.workspace)
+        self.ui = properties_gui.properties_window(data, self.obj, self.workspace.db, self.workspace)
         self.ui.show()
-
-
-
-
-
-
 
     def populate_table(self, obj, progressbar, db):
         """Generates and populates a table of packets from the specified pcap or dataset

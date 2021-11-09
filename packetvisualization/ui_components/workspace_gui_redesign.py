@@ -482,8 +482,8 @@ class WorkspaceWindow(QMainWindow):
         directory = QFileDialog.getSaveFileName(caption="Choose Workspace location")[0]
 
         if directory != '':
-            self.workspace = WorkspaceWindow(workspace_path=directory)
-            self.workspace.show()
+            self.new_window = WorkspaceWindow(workspace_path=directory)
+            self.new_window.show()
 
     def open_existing_workspace(self) -> None:
         """Prompts user to select saved zip file and opens an existing workspace window
@@ -493,8 +493,8 @@ class WorkspaceWindow(QMainWindow):
 
         if file_path != "":
             if not self.test_mode:
-                self.workspace = WorkspaceWindow(workspace_path=file_path, existing_flag=True)
-                self.workspace.show()
+                self.new_window = WorkspaceWindow(workspace_path=file_path, existing_flag=True)
+                self.new_window.show()
 
     def trace_dataset(self):
         if self.project_tree.selectedItems() and type(
@@ -925,10 +925,6 @@ class WorkspaceWindow(QMainWindow):
                         ui = filter_gui.filter_window(d.mergeFilePath, self.project_tree, self.workspace_object)
 
     def display_classifier_options(self):
-        print('Called display_classifier_options')
-        # data_frame = pd.DataFrame()
-        # data_frame['instance_number'] = [3, 2, 1]
-        # data_frame['cluster'] = [1, 2, 3]
         results = pd.DataFrame()
         try:
             if self.project_tree.selectedItems():
