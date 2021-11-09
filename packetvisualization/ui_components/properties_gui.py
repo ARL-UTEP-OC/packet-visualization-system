@@ -10,7 +10,8 @@ from packetvisualization.models.dataset import Dataset
 from packetvisualization.models.workspace import Workspace
 from packetvisualization.models.context.database_context import DbContext
 import plotly.express as px
-import plotly.graph_objects as go
+import plotly.offline as po
+
 
 
 class properties_window(QWidget):
@@ -18,12 +19,13 @@ class properties_window(QWidget):
     # app = QtWidgets.QApplication(sys.argv)
     # filter_window = QtWidgets.QMainWindow()
 
-    def __init__(self, jsonString, obj, db):
+    def __init__(self, jsonString, obj, db, workspace):
 
         self.cursorObj = jsonString
         self.controller = Controller()
         self.obj = obj
         self.db = db
+        self.workspace = workspace
 
         super().__init__()
         self.setWindowTitle("Select Properties")
@@ -89,5 +91,13 @@ class properties_window(QWidget):
         fig = px.scatter(df, x="cluster", y="instance_number",
                          color='cluster', color_continuous_scale=px.colors.sequential.Bluered_r,
                          hover_data=df.columns.values[:len(features)])
-        fig.show()
+
+        raw_html = '<html><head><meta charset="utf-8" />'
+        raw_html += '<script src="https://cdn.plot.ly/plotly-latest.min.js"></script></head>'
+        raw_html += '<body>'
+        raw_html += po.plot(fig, include_plotlyjs=False, output_type='div')
+        raw_html += '</body></html>'
+
+        self.workspace.classifier_plot_view.setHtml(raw_html)
+        self.workspace.classifier_window.show()
         self.close()

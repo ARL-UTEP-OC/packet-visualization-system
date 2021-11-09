@@ -380,7 +380,7 @@ class table_gui(QTableWidget):
         #     print(packet)
 
         # self.ui = properties_gui.properties_window(data, self.obj, self.workspace.db, self.workspace)
-        self.ui = properties_gui.properties_window(data, self.obj, self.workspace.db)
+        self.ui = properties_gui.properties_window(data, self.obj, self.workspace.db, self.workspace)
         self.ui.show()
 
     def populate_table(self, obj, progressbar, db):
