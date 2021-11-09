@@ -42,7 +42,6 @@ class WorkspaceWindow(QMainWindow):
     """
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     app = QApplication(sys.argv)
-    # logo = os.path.join(os.path.dirname(__file__), "images", "logo.png")
     app.setWindowIcon(QIcon(":logo.png"))
 
     def __init__(self, workspace_path: str, existing_flag: bool = False) -> None:
@@ -56,8 +55,6 @@ class WorkspaceWindow(QMainWindow):
         super().__init__()
         self.eo = EntityOperations()
         self.db = None
-        # self.icons = os.path.join(os.path.dirname(__file__), "images", "svg")
-        # self.logo = os.path.join(os.path.dirname(__file__), "images", "logo.png")
         self.test_mode = False
         if existing_flag:
             self.workspace_object = Load().open_zip(workspace_path)
