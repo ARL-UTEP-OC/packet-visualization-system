@@ -3,6 +3,7 @@ import traceback
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QTreeWidget, QWidget, QPushButton
+from PyQt5.QtGui import QIntValidator, QValidator
 
 from packetvisualization.backend_components import json_parser
 from packetvisualization.models.workspace import Workspace
@@ -73,15 +74,22 @@ class properties_window(QWidget):
         print(f"Packet IDs: {self.pktIdsAsList}")
         print(f"Cluster: {self.cluster.text()}")
 
-        if self.cluster.text() != "" and len(selProperties) != 0:
+        self.cursorObj.rewind()
 
-            ### Abraham, enter you method call here ###
-            ### yourMethod(selProperties,self.pktIdsAsList,self.cluster.text()) ###
-            ### selProperties is selected properties (its in method so don't need self) ###
-            ### pktIdAsList is the object ids from select packet(s) ###
-            ### cluster is the value user enters ###
+        for p in self.cursorObj:
+            print(p['parent_dataset'])
+        try:
+            if self.cluster.text().isnumeric() and len(selProperties) != 0 \
+                    and int(self.cluster.text()) <= len(self.pktIdsAsList):
 
-            self.close()
+                ### Abraham, enter you method call here ###
+                ### yourMethod(selProperties,self.pktIdsAsList,self.cluster.text()) ###
+                ### selProperties is selected properties (its in method so don't need self) ###
+                ### pktIdAsList is the object ids from select packet(s) ###
+                ### cluster is the value user enters ###
 
+                self.close()
+        except Exception:
+            print(traceback.format_exc())
 
 

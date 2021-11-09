@@ -19,6 +19,7 @@ def parser(jsonString: list):
                         properties.append(f"_source.layers.{x}.{y}")
                         gotFields = True
 
+
     except Exception:
         print(traceback.format_exc())
 
