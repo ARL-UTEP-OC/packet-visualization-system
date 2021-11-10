@@ -61,7 +61,7 @@ class WorkspaceWindow(QMainWindow):
         self.test_mode = False
         if existing_flag:
             self.workspace_object = Load().open_zip(workspace_path)
-            restore_path = os.path.join(self.workspace_object.dump_path,self.workspace_object.name)
+            restore_path = os.path.join(self.workspace_object.dump_path, self.workspace_object.name)
             print(restore_path)
             self.eo.restore_db(self.workspace_object.name, restore_path)
             self.db = self.eo.set_db(self.workspace_object.name)
@@ -77,8 +77,17 @@ class WorkspaceWindow(QMainWindow):
         self.project_tree = QTreeWidget()
         self.project_tree.setHeaderLabels(["Item Name", "Size", "DoC"])
         self.project_tree.setColumnWidth(0, 200)
+        self.project_tree.itemPressed['QTreeWidgetItem*', 'int'].connect(self.tree_item_clicked)
         self.dock_project_tree = QDockWidget("Project Tree Window", self)
-        self.dock_project_tree.setWidget(self.project_tree)
+
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.project_tree)
+        # self.dock_project_tree.setWidget(self.project_tree)
+        self.project_tree_button = QPushButton()
+        self.layout.addWidget(self.project_tree_button)
+        self.widget = QWidget()
+        self.widget.setLayout(self.layout)
+        self.dock_project_tree.setWidget(self.widget)
         self.dock_project_tree.setFloating(False)
 
         self.traced_dataset = None
@@ -385,7 +394,7 @@ class WorkspaceWindow(QMainWindow):
         # Logic for creating a new project
         if not self.test_mode:
             text = QInputDialog.getText(self, "Project Name Entry", "Enter Project name:")[0]
-        if not self.project_tree.findItems(text, Qt.MatchRecursive, 0) or self.test_mode == True:
+        if not self.project_tree.findItems(text, Qt.MatchRecursive, 0):
             project = Project(name=text, parent_path=self.workspace_object.path)
             self.workspace_object.add_project(project)
             item = QTreeWidgetItem(self.project_tree)
@@ -835,9 +844,6 @@ class WorkspaceWindow(QMainWindow):
                     pcap_item.setData(0, Qt.UserRole, cap)
                     dataset_item.addChild(pcap_item)
 
-
-
-
         return True
 
     def show_classifier_qt(self, fig):
@@ -892,6 +898,7 @@ class WorkspaceWindow(QMainWindow):
         """
         # Step 1: Begin showing progress bar
         self.progressbar.show()
+        self.progressbar.setValue(5)
         # Step 2: Create a QThread object
         self.thread_1 = QThread()
         # Step 3: Create a worker object
@@ -942,6 +949,11 @@ class WorkspaceWindow(QMainWindow):
         self.create_classifier_plot(results)
         self.classifier_window.show()
         return
+
+    def tree_item_clicked(self, item, n):
+        item_obj = item.data(0, Qt.UserRole)
+        self.trace_dataset()
+        print(item_obj.name)
 
 
 if __name__ == "__main__":
