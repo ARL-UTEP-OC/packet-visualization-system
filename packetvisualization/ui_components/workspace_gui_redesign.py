@@ -42,8 +42,7 @@ class WorkspaceWindow(QMainWindow):
     """
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     app = QApplication(sys.argv)
-    logo = os.path.join(os.path.dirname(__file__), "images", "logo.png")
-    app.setWindowIcon(QIcon(logo))
+    app.setWindowIcon(QIcon(":logo.png"))
 
     def __init__(self, workspace_path: str, existing_flag: bool = False) -> None:
         """Initialization function for a new workspace window.
@@ -56,8 +55,6 @@ class WorkspaceWindow(QMainWindow):
         super().__init__()
         self.eo = EntityOperations()
         self.db = None
-        self.icons = os.path.join(os.path.dirname(__file__), "images", "svg")
-        self.logo = os.path.join(os.path.dirname(__file__), "images", "logo.png")
         self.test_mode = False
         if existing_flag:
             self.workspace_object = Load().open_zip(workspace_path)
@@ -139,7 +136,7 @@ class WorkspaceWindow(QMainWindow):
         """Creates all actions that will be used in the application
         """
         # File Menu Actions
-        self.newProjectAction = QAction(QIcon(os.path.join(self.icons, "add-circle.svg")), "New &Project", self)
+        self.newProjectAction = QAction(QIcon(":add-circle.svg"), "New &Project", self)
         self.newProjectAction.setShortcut("Ctrl+N")
         self.newProjectAction.setStatusTip("Create a new project")
         self.newProjectAction.setToolTip("Create a new project")
@@ -162,12 +159,12 @@ class WorkspaceWindow(QMainWindow):
         self.openExistingAction.setStatusTip("Open existing workspace")
         self.openExistingAction.setToolTip("Open existing workspace")
 
-        self.saveAction = QAction(QIcon(os.path.join(self.icons, "save.svg")), "&Save", self)
+        self.saveAction = QAction(QIcon(":save.svg"), "&Save", self)
         self.saveAction.setShortcut("Ctrl+S")
         self.saveAction.setStatusTip("Save workspace")
         self.saveAction.setToolTip("Save workspace")
 
-        self.traceAction = QAction(QIcon(os.path.join(self.icons, "pulse.svg")), "&Trace", self)
+        self.traceAction = QAction(QIcon(":pulse.svg"), "&Trace", self)
         self.traceAction.setShortcut("Ctrl+T")
         self.traceAction.setStatusTip("Trace dataset on Bandwidth vs Time graph")
         self.traceAction.setToolTip("race dataset on Bandwidth vs Time graph")
@@ -186,25 +183,25 @@ class WorkspaceWindow(QMainWindow):
         self.exitAction.setToolTip("Exit workspace")
 
         # Edit Menu Actions
-        self.cutAction = QAction(QIcon(os.path.join(self.icons, "cut.svg")), "Cu&t", self)
+        self.cutAction = QAction(QIcon(":cut.svg"), "Cu&t", self)
         self.cutAction.setShortcut(QKeySequence.Cut)
         self.cutAction.setEnabled(False)
 
-        self.copyAction = QAction(QIcon(os.path.join(self.icons, "copy.svg")), "&Copy", self)
+        self.copyAction = QAction(QIcon(":copy.svg"), "&Copy", self)
         self.copyAction.setShortcut(QKeySequence.Copy)
         self.copyAction.setEnabled(False)
 
-        self.pasteAction = QAction(QIcon(os.path.join(self.icons, "clipboard.svg")), "&Paste", self)
+        self.pasteAction = QAction(QIcon(":clipboard.svg"), "&Paste", self)
         self.pasteAction.setShortcut(QKeySequence.Paste)
         self.pasteAction.setEnabled(False)
 
-        self.deleteAction = QAction(QIcon(os.path.join(self.icons, "trash.svg")), "&Delete", self)
+        self.deleteAction = QAction(QIcon(":trash.svg"), "&Delete", self)
         self.deleteAction.setShortcut("Del")
         self.deleteAction.setStatusTip("Remove selected item")
         self.deleteAction.setToolTip("Remove item")
 
         # View Menu Actions
-        self.gen_table_action = QAction(QIcon(os.path.join(self.icons, "list.svg")), "&Packet Table", self)
+        self.gen_table_action = QAction(QIcon(":list.svg"), "&Packet Table", self)
         self.gen_table_action.setStatusTip("View Packets in a PCAP")
         self.gen_table_action.setToolTip("View Packets in a PCAP")
 
@@ -214,25 +211,22 @@ class WorkspaceWindow(QMainWindow):
         self.classifier_action.setToolTip("Classify selected pcap data")
 
         # Wireshark Menu Actions
-        self.openWiresharkAction = QAction(QIcon(os.path.join(self.icons, "wireshark-icon.png")), "Open &Wireshark",
-                                           self)
+        self.openWiresharkAction = QAction(QIcon(":wireshark-icon.png"), "Open &Wireshark", self)
         self.openWiresharkAction.setShortcut("Ctrl+W")
         self.openWiresharkAction.setStatusTip("Open dataset or pcap in Wireshark")
         self.openWiresharkAction.setToolTip("Open dataset or pcap in Wireshark")
 
         # Window Menu Actions
-        self.openProjectTreeAction = QAction(QIcon(os.path.join(self.icons, "git-branch.svg")),
-                                             "&Project Tree Window", self)
+        self.openProjectTreeAction = QAction(QIcon(":git-branch.svg"), "&Project Tree Window", self)
         self.openProjectTreeAction.setStatusTip("Open project tree window")
         self.openProjectTreeAction.setToolTip("Open project tree window")
 
-        self.openPlotAction = QAction(QIcon(os.path.join(self.icons, "time-outline.svg")),
-                                      "&Bandwidth vs. Time Window", self)
+        self.openPlotAction = QAction(QIcon(":time-outline.svg"), "&Bandwidth vs. Time Window", self)
         self.openPlotAction.setStatusTip("Open Bandwidth vs. Time window")
         self.openPlotAction.setToolTip("Open Bandwidth vs. Time window")
 
         # Help Menu Actions
-        self.helpContentAction = QAction(QIcon(os.path.join(self.icons, "help.svg")), "&Help Content", self)
+        self.helpContentAction = QAction(QIcon(":help.svg"), "&Help Content", self)
         self.aboutAction = QAction("&About", self)
         self.aboutAction.setEnabled(False)
 
@@ -284,7 +278,7 @@ class WorkspaceWindow(QMainWindow):
         new_menu.addAction(self.newProjectAction)
         new_menu.addAction(self.newDatasetAction)
         new_menu.addAction(self.newPCAPAction)
-        open_menu = file_menu.addMenu(QIcon(os.path.join(self.icons, "folder.svg")), "&Open...")
+        open_menu = file_menu.addMenu(QIcon(":folder.svg"), "&Open...")
         open_menu.addAction(self.openNewAction)
         open_menu.addAction(self.openExistingAction)
         file_menu.addAction(self.saveAction)
@@ -491,8 +485,8 @@ class WorkspaceWindow(QMainWindow):
         directory = QFileDialog.getSaveFileName(caption="Choose Workspace location")[0]
 
         if directory != '':
-            self.workspace = WorkspaceWindow(workspace_path=directory)
-            self.workspace.show()
+            self.new_window = WorkspaceWindow(workspace_path=directory)
+            self.new_window.show()
 
     def open_existing_workspace(self) -> None:
         """Prompts user to select saved zip file and opens an existing workspace window
@@ -502,8 +496,8 @@ class WorkspaceWindow(QMainWindow):
 
         if file_path != "":
             if not self.test_mode:
-                self.workspace = WorkspaceWindow(workspace_path=file_path, existing_flag=True)
-                self.workspace.show()
+                self.new_window = WorkspaceWindow(workspace_path=file_path, existing_flag=True)
+                self.new_window.show()
 
     def trace_dataset(self):
         if self.project_tree.selectedItems() and type(
@@ -932,10 +926,6 @@ class WorkspaceWindow(QMainWindow):
                         ui = filter_gui.filter_window(d.mergeFilePath, self.project_tree, self.workspace_object)
 
     def display_classifier_options(self):
-        print('Called display_classifier_options')
-        # data_frame = pd.DataFrame()
-        # data_frame['instance_number'] = [3, 2, 1]
-        # data_frame['cluster'] = [1, 2, 3]
         results = pd.DataFrame()
         try:
             if self.project_tree.selectedItems():

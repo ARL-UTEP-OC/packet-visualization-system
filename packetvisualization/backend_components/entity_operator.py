@@ -63,3 +63,9 @@ class EntityOperations:
             '_source.layers.udp.udp-srcport': 1,
             '_source.layers.udp.udp-dstport': 1, }))
         return context_results
+
+    def get_packet_data(self, dataset_name, object_id_list, properties_dictionary, db):
+        """Gets selected packets data, for kmeans analysis"""
+        collection = db[dataset_name]
+        context_results = list(collection.find({"_id": {"$in": object_id_list}}, properties_dictionary))
+        return context_results
