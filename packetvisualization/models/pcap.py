@@ -17,6 +17,8 @@ class Pcap:
             self.split_json_dir = ""
             self.large_pcap_flag = False
 
+            if not self.pcap_file == self.path:
+                shutil.copy(self.pcap_file, self.path)  # Copy user input into our directory
 
             if self.file_size > 20480000: #approx 20,000KB
                 self.large_pcap_flag = True
@@ -29,8 +31,6 @@ class Pcap:
                 self.create_json_file() # create empty json
                 self.toJson()
 
-            if not self.pcap_file == self.path and not self.large_pcap_flag:
-                shutil.copy(self.pcap_file, self.path)  # Copy user input into our directory
         except:
             print("Error adding this pcap")
             self.name = None
