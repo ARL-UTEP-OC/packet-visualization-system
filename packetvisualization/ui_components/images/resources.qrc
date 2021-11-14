@@ -11,6 +11,7 @@
     <file alias="git-branch.svg">svg/git-branch.svg</file>
     <file alias="help.svg">svg/help.svg</file>
     <file alias="list.svg">svg/list.svg</file>
+    <file alias="pricetag.svg">svg/pricetag.svg</file>
     <file alias="pulse.svg">svg/pulse.svg</file>
     <file alias="save.svg">svg/save.svg</file>
     <file alias="time-outline.svg">svg/time-outline.svg</file>

@@ -63,13 +63,11 @@ class Dataset:
                 pcapPaths += pcap.path + " "
 
             os.system('cd "C:\\Program Files\\Wireshark\\" & mergecap -w %s %s' % (self.mergeFilePath, pcapPaths))
-            print("")
         elif platform.system() == 'Linux':
             for pcap in self.pcaps:
                 pcapPaths += pcap.path + " "
 
             os.system('mergecap -w %s %s' % (self.mergeFilePath, pcapPaths))
-            print("Linux")
 
     def remove(self) -> bool:
         return self.__del__()

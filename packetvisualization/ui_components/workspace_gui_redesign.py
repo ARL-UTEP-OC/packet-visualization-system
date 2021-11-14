@@ -32,6 +32,7 @@ from packetvisualization.models.workspace import Workspace
 from packetvisualization.backend_components import Wireshark
 from packetvisualization.ui_components import filter_gui
 from packetvisualization.ui_components.plot_worker import PlotWorker
+from packetvisualization.ui_components.properties_window import PropertiesWindow
 from packetvisualization.ui_components.table_gui import table_gui
 
 
@@ -76,15 +77,7 @@ class WorkspaceWindow(QMainWindow):
         self.project_tree.setColumnWidth(0, 200)
         self.project_tree.itemPressed['QTreeWidgetItem*', 'int'].connect(self.tree_item_clicked)
         self.dock_project_tree = QDockWidget("Project Tree Window", self)
-
-        self.layout = QVBoxLayout()
-        self.layout.addWidget(self.project_tree)
-        # self.dock_project_tree.setWidget(self.project_tree)
-        self.project_tree_button = QPushButton()
-        self.layout.addWidget(self.project_tree_button)
-        self.widget = QWidget()
-        self.widget.setLayout(self.layout)
-        self.dock_project_tree.setWidget(self.widget)
+        self.dock_project_tree.setWidget(self.project_tree)
         self.dock_project_tree.setFloating(False)
 
         self.traced_dataset = None
@@ -210,6 +203,10 @@ class WorkspaceWindow(QMainWindow):
         self.classifier_action.setStatusTip("Classify selected pcap data")
         self.classifier_action.setToolTip("Classify selected pcap data")
 
+        self.propertiesAction = QAction("Properties", self)
+        self.propertiesAction.setStatusTip("View Properties")
+        self.propertiesAction.setToolTip("View Properties")
+
         # Wireshark Menu Actions
         self.openWiresharkAction = QAction(QIcon(":wireshark-icon.png"), "Open &Wireshark", self)
         self.openWiresharkAction.setShortcut("Ctrl+W")
@@ -254,6 +251,7 @@ class WorkspaceWindow(QMainWindow):
         # Connect View actions
         self.gen_table_action.triggered.connect(self.gen_table)
         self.classifier_action.triggered.connect(self.display_classifier_options)
+        self.propertiesAction.triggered.connect(self.show_properties)
 
         # Connect Wireshark actions
         self.openWiresharkAction.triggered.connect(self.open_wireshark)
@@ -282,8 +280,8 @@ class WorkspaceWindow(QMainWindow):
         open_menu.addAction(self.openNewAction)
         open_menu.addAction(self.openExistingAction)
         file_menu.addAction(self.saveAction)
-        file_menu.addSeparator()
-        file_menu.addAction(self.traceAction)
+        # file_menu.addSeparator()
+        # file_menu.addAction(self.traceAction)
         file_menu.addSeparator()
         export_menu = file_menu.addMenu("&Export")
         export_menu.addAction(self.exportCsvAction)
@@ -351,7 +349,7 @@ class WorkspaceWindow(QMainWindow):
             # Right-click a dataset
             if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
                 menu.addAction(self.newPCAPAction)
-                menu.addAction(self.traceAction)
+                # menu.addAction(self.traceAction)
                 menu.addAction(self.openWiresharkAction)
                 menu.addAction(self.filterWiresharkAction)
                 menu.addAction(self.classifier_action)
@@ -381,6 +379,11 @@ class WorkspaceWindow(QMainWindow):
         separator2.setSeparator(True)
         menu.addAction(separator2)
         menu.addAction(self.newProjectAction)
+
+        separator3 = QAction(self)
+        separator3.setSeparator(True)
+        menu.addAction(separator3)
+        menu.addAction(self.propertiesAction)
 
         menu.exec(event.globalPos())
 
@@ -656,25 +659,16 @@ class WorkspaceWindow(QMainWindow):
     def open_wireshark(self, dataset_item=None, pcap_item=None, merge_flag=False):
         # Logic to open wireshark
         try:
-            if self.project_tree.selectedItems() and type(
-                    self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset or (
-                    self.test_mode == True and merge_flag == True):
-                if not self.test_mode:
+            if self.project_tree.selectedItems():
+                if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
                     dataset_item = self.project_tree.selectedItems()[0]
-                d = dataset_item.data(0, Qt.UserRole)
-                Wireshark.openwireshark(d.mergeFilePath)
-                return True
+                    d = dataset_item.data(0, Qt.UserRole)
+                    Wireshark.openwireshark(d.mergeFilePath)
 
-            if self.project_tree.selectedItems() and type(
-                    self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Pcap or self.test_mode == True:
-                if not self.test_mode:
+                if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Pcap:
                     pcap_item = self.project_tree.selectedItems()[0]
-                cap = pcap_item.data(0, Qt.UserRole)
-                if self.test_mode:
-                    return True
-                Wireshark.openwireshark(cap.pcap_file)
-            else:
-                return False
+                    cap = pcap_item.data(0, Qt.UserRole)
+                    Wireshark.openwireshark(cap.pcap_file)
         except Exception:
             traceback.print_exc()
             return False
@@ -942,8 +936,14 @@ class WorkspaceWindow(QMainWindow):
 
     def tree_item_clicked(self, item, n):
         item_obj = item.data(0, Qt.UserRole)
-        self.trace_dataset()
-        print(item_obj.name)
+        if self.traced_dataset != item_obj:
+            self.trace_dataset()
+
+    def show_properties(self):
+        if self.project_tree.selectedItems():
+            item = self.project_tree.selectedItems()[0].data(0, Qt.UserRole)
+            self.p_win = PropertiesWindow(item)
+            self.p_win.get_properties()
 
 
 if __name__ == "__main__":

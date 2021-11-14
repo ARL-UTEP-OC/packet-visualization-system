@@ -1,5 +1,8 @@
 import os
 import shutil
+import subprocess
+import platform
+
 
 class Pcap:
     def __init__(self, name: str ,path: str, file: str, m_data = "") -> None:
@@ -30,7 +33,10 @@ class Pcap:
         fp.close()
 
     def toJson(self):
-        os.system('cd "C:\Program Files\Wireshark" & tshark -r ' + self.pcap_file + ' -T json > ' + self.json_file)
+        if platform.system() == "Linux":
+            os.system('tshark -r ' + self.pcap_file + ' -T json > ' + self.json_file)
+        elif platform.system() == "Windows":
+            os.system('cd "C:\Program Files\Wireshark" & tshark -r ' + self.pcap_file + ' -T json > ' + self.json_file)
 
     def clearJson(self):
         print("Test")
