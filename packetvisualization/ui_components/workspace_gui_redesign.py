@@ -681,7 +681,7 @@ class WorkspaceWindow(QMainWindow):
                 cap = pcap_item.data(0, Qt.UserRole)
                 if self.test_mode:
                     return True
-                Wireshark.openwireshark(cap.pcap_file)
+                Wireshark.openwireshark(cap.path)
             else:
                 return False
         except Exception:
