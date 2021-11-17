@@ -8,12 +8,24 @@ class PlotWorker(QObject):
     finished = pyqtSignal()
     progress = pyqtSignal(int)
     data = pyqtSignal(list)
+    t_data = pyqtSignal(list)
 
-    def __init__(self, data):
+    def __init__(self, dataset, db):
         super().__init__()
-        self.db_data = data
+        self.dataset = dataset
+        self.db = db
+        self.db_data = None
 
     def run(self):
+        if self.dataset:
+            collection = self.db[self.dataset.name]
+            query = {'parent_dataset': self.dataset.name}
+            self.db_data = list(collection.find(query))
+        else:
+            self.db_data = None
+        trace_data = [self.db_data]
+        # self.t_data.emit(trace_data)
+
         if self.db_data:
             date, time_epoch = [], []
 

@@ -15,7 +15,7 @@ from scapy.all import *
 from datetime import datetime
 
 from PyQt5.QtCore import Qt, QRect, QObject, pyqtSignal, QThread
-from PyQt5.QtGui import QFont, QIcon, QKeySequence
+from PyQt5.QtGui import QFont, QIcon, QKeySequence, QMovie
 from PyQt5.QtWidgets import QMainWindow, QTreeWidget, QPushButton, QVBoxLayout, QProgressBar, QMenu, QWidget, QLabel, \
     QAction, QMessageBox, QDockWidget, QTextEdit, QInputDialog, QTreeWidgetItem, QFileDialog, QApplication, QToolBar, \
     QTableWidgetItem
@@ -80,8 +80,16 @@ class WorkspaceWindow(QMainWindow):
         self.dock_project_tree.setWidget(self.project_tree)
         self.dock_project_tree.setFloating(False)
 
+        # Loading Widget
+        self.loading = QLabel()
+        self.loading.setAlignment(Qt.AlignCenter)
+        self.spinner = QMovie(":spinner.gif")
+        self.loading.setMovie(self.spinner)
+        self.spinner.start()
+
         self.traced_dataset = None
         self.traced_data = None
+
         # Docked widget for Bandwidth vs. Time Graph
         self.plot_x = []
         self.plot_y = []
@@ -420,7 +428,7 @@ class WorkspaceWindow(QMainWindow):
                         project = self.project_tree.selectedItems()[0]
 
                     p = project.data(0, Qt.UserRole)
-                    dataset = Dataset(name=text, parentPath=p.path)
+                    dataset = Dataset(name=text, parent_path=p.path)
 
                     p.add_dataset(dataset)
                     child_item = QTreeWidgetItem()
@@ -856,12 +864,6 @@ class WorkspaceWindow(QMainWindow):
     def update_traced_data(self):
         """Updates the traced data when a packet is added or deleted
         """
-        if self.traced_dataset:
-            collection = self.db[self.traced_dataset.name]
-            query = {'parent_dataset': self.traced_dataset.name}
-            self.traced_data = list(collection.find(query))
-        else:
-            self.traced_data = None
         self.update_plot()
 
     def report_progress(self, n: int) -> None:
@@ -881,16 +883,20 @@ class WorkspaceWindow(QMainWindow):
         self.plot_x = n[0]
         self.plot_y = n[1]
 
+    def report_traced_data(self, n: list) -> None:
+        self.traced_data = n[0]
+
     def update_plot(self):
         """ Creates a new thread to update bandwidth vs. time graph
         """
         # Step 1: Begin showing progress bar
         self.progressbar.show()
         self.progressbar.setValue(5)
+        self.dock_plot.setWidget(self.loading)
         # Step 2: Create a QThread object
         self.thread_1 = QThread()
         # Step 3: Create a worker object
-        self.worker_1 = PlotWorker(self.traced_data)
+        self.worker_1 = PlotWorker(self.traced_dataset, self.db)
         # Step 4: Move worker to the thread
         self.worker_1.moveToThread(self.thread_1)
         # Step 5: Connect signals and slots
@@ -900,6 +906,7 @@ class WorkspaceWindow(QMainWindow):
         self.thread_1.finished.connect(self.thread_1.deleteLater)
         self.worker_1.progress.connect(self.report_progress)
         self.worker_1.data.connect(self.report_plot_data)
+        self.worker_1.t_data.connect(self.report_traced_data)
         # Step 6: Start the thread
         self.thread_1.start()
 
@@ -907,6 +914,7 @@ class WorkspaceWindow(QMainWindow):
         self.thread_1.finished.connect(lambda: self.progressbar.setValue(0))
         self.thread_1.finished.connect(lambda: self.progressbar.hide())
         self.thread_1.finished.connect(lambda: self.fig_view.setHtml(create_plot(self.plot_x, self.plot_y)))
+        self.thread_1.finished.connect(lambda: self.dock_plot.setWidget(self.fig_view))
 
     def filter_wireshark(self):
 

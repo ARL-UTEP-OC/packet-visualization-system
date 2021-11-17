@@ -4,12 +4,13 @@ import os, shutil
 import platform
 
 class Dataset:
-    def __init__(self, name: str, parentPath: str) -> None:
+    def __init__(self, name: str, parent_path: str, m_data: str = '') -> None:
         self.name = name
         self.pcaps = [] # will use children key instead
+        self.m_data = m_data
         self.mergeFilePath = None
         self.jsonFilePath = None
-        self.path = os.path.join(parentPath, self.name)
+        self.path = os.path.join(parent_path, self.name)
         self.totalPackets = 0
         self.protocols = None
         self.create_folder()
