@@ -56,12 +56,18 @@ class Dataset:
                 f.write(',')
         f.write(']}')
 
-    def merge_pcaps(self):
+    def merge_pcaps(self):  # Need to update Linux still
         pcapPaths = ""
 
         if platform.system() == 'Windows':
             for pcap in self.pcaps:
-                pcapPaths += pcap.path + " "
+                if pcap.large_pcap_flag:
+                    for dirpath, _, filenames in os.walk(pcap.split_dir):
+                        for f in filenames:
+                            file = os.path.abspath(os.path.join(dirpath,f))
+                            pcapPaths += file + " "
+                else:
+                    pcapPaths += pcap.path + " "
 
             os.system('cd "C:\\Program Files\\Wireshark\\" & mergecap -w %s %s' % (self.mergeFilePath, pcapPaths))
         elif platform.system() == 'Linux':
