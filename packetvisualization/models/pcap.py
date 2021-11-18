@@ -73,19 +73,21 @@ class Pcap:
             return False
 
     def create_pcap_split_dir(self):
-        path = self.directory + "\\" + self.name + "-splitdir"
+        name = self.name + "-splitdir"
+        path = os.path.join(self.directory, name)
         self.split_dir = path
         os.mkdir(path)
         return
 
     def create_split_json_dir(self):
-        path = self.directory + "\\" + self.name + "-splitjson"
+        name = self.name + "-splitjson"
+        path = os.path.join(self.directory, name)
         self.split_json_dir = path
         os.mkdir(path)
         return
 
     def split_large_pcap(self, pcap_file, split_files_dir):  # create dir with original pcap name
-        path = split_files_dir + "\packetslice.pcap"
+        path = os.path.join(split_files_dir, "packetslice.pcap")
         os.system('cd "C:\Program Files\Wireshark" & editcap -c 50000 ' + pcap_file + " " + path)
         return
 

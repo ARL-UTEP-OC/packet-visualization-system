@@ -20,7 +20,7 @@ class PlotWorker(QObject):
         if self.dataset:
             collection = self.db[self.dataset.name]
             query = {'parent_dataset': self.dataset.name}
-            self.db_data = list(collection.find(query))
+            self.db_data = list(collection.find({}))
         else:
             self.db_data = None
         trace_data = [self.db_data]
