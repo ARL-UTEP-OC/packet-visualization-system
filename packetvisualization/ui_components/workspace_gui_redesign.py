@@ -434,12 +434,14 @@ class WorkspaceWindow(QMainWindow):
                         mytable = self.db[dataset.name]
                         if not new_pcap.large_pcap_flag:  # if small pcap, read json
                             self.eo.insert_packets(new_pcap.json_file, mytable, dataset.name, new_pcap.name)
-                        else:
+                            new_pcap.cleanup()
+                        else:  # large pcap
                             for dirpath, _, filenames in os.walk(new_pcap.split_json_dir):
                                 parent_pcap = os.path.basename(os.path.normpath(dirpath)).replace('-splitjson', "")
                                 for f in filenames:
                                     file = os.path.abspath(os.path.join(dirpath, f))
                                     self.eo.insert_packets(file,mytable,dataset.name, parent_pcap)
+                            new_pcap.cleanup()
                     else:
                         child_item.parent().removeChild(child_item)
                         p.del_dataset(dataset)
@@ -478,12 +480,14 @@ class WorkspaceWindow(QMainWindow):
                     mytable = self.db[d.name]
                     if not new_pcap.large_pcap_flag:
                         self.eo.insert_packets(new_pcap.json_file, mytable, d.name, new_pcap.name)
+                        new_pcap.cleanup()
                     else:
                         for dirpath, _, filenames in os.walk(new_pcap.split_json_dir):
                             parent_pcap = os.path.basename(os.path.normpath(dirpath)).replace('-splitjson', "")
                             for f in filenames:
                                 file = os.path.abspath(os.path.join(dirpath, f))
                                 self.eo.insert_packets(file, mytable, d.name, parent_pcap)
+                        new_pcap.cleanup()
 
                 if self.traced_dataset:
                     self.update_traced_data()

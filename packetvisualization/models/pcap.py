@@ -48,8 +48,14 @@ class Pcap:
     def toJson(self):
         os.system('cd "C:\Program Files\Wireshark" & tshark -r ' + self.pcap_file + ' -T json > ' + self.json_file)
 
-    def clearJson(self):
-        print("Test")
+    def cleanup(self):
+        if self.large_pcap_flag:
+            shutil.rmtree(self.split_json_dir)
+            print("Cleanup Large PCAP")
+        else:
+            os.remove(self.json_file)
+            #Remove the file
+            return
         # Remove json file after DB insert
 
     def save(self, f) -> None: # TODO: Rework
