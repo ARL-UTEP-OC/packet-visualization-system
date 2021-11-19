@@ -3,6 +3,8 @@ from datetime import datetime
 import pandas as pd
 from PyQt5.QtCore import QObject, pyqtSignal
 
+from packetvisualization.backend_components.table_backend import TableBackend
+
 
 class PlotWorker(QObject):
     finished = pyqtSignal()
@@ -18,9 +20,12 @@ class PlotWorker(QObject):
 
     def run(self):
         if self.dataset:
-            collection = self.db[self.dataset.name]
-            query = {'parent_dataset': self.dataset.name}
-            self.db_data = list(collection.find({}))
+            #collection = self.db[self.dataset.name]
+            #query = {'parent_dataset': self.dataset.name}
+            #self.db_data = list(collection.find({}))
+
+            backend = TableBackend()
+            self.db_data = backend.query_pcap(self.dataset, self.db)
         else:
             self.db_data = None
         trace_data = [self.db_data]
@@ -33,6 +38,7 @@ class PlotWorker(QObject):
                 time_epoch = float(packet_data['_source']['layers']['frame'].get('frame-time_epoch'))
                 if time_epoch is not None:
                     date.append(datetime.fromtimestamp(time_epoch))
+            date.sort()
 
             d = {"datetime": date}
             df = pd.DataFrame(data=d)

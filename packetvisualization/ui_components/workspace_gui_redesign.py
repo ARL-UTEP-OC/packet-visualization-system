@@ -71,6 +71,8 @@ class WorkspaceWindow(QMainWindow):
         self.setWindowTitle("PacketVisualizer - " + self.workspace_object.name)
         self.resize(1000, 600)
 
+        self.thread_1_is_free = True
+
         # Docked widget for Project Tree
         self.project_tree = QTreeWidget()
         self.project_tree.setHeaderLabels(["Item Name", "Size", "DoC"])
@@ -453,7 +455,7 @@ class WorkspaceWindow(QMainWindow):
                                 parent_pcap = os.path.basename(os.path.normpath(dirpath)).replace('-splitjson', "")
                                 for f in filenames:
                                     file = os.path.abspath(os.path.join(dirpath, f))
-                                    self.eo.insert_packets(file,mytable,dataset.name, parent_pcap)
+                                    self.eo.insert_packets(file, mytable, dataset.name, parent_pcap)
                     else:
                         child_item.parent().removeChild(child_item)
                         p.del_dataset(dataset)
@@ -904,32 +906,38 @@ class WorkspaceWindow(QMainWindow):
     def update_plot(self):
         """ Creates a new thread to update bandwidth vs. time graph
         """
-        # Step 1: Begin showing progress bar
-        self.progressbar.show()
-        self.progressbar.setValue(5)
-        self.dock_plot.setWidget(self.loading)
-        # Step 2: Create a QThread object
-        self.thread_1 = QThread()
-        # Step 3: Create a worker object
-        self.worker_1 = PlotWorker(self.traced_dataset, self.db)
-        # Step 4: Move worker to the thread
-        self.worker_1.moveToThread(self.thread_1)
-        # Step 5: Connect signals and slots
-        self.thread_1.started.connect(self.worker_1.run)
-        self.worker_1.finished.connect(self.thread_1.quit)
-        self.worker_1.finished.connect(self.worker_1.deleteLater)
-        self.thread_1.finished.connect(self.thread_1.deleteLater)
-        self.worker_1.progress.connect(self.report_progress)
-        self.worker_1.data.connect(self.report_plot_data)
-        self.worker_1.t_data.connect(self.report_traced_data)
-        # Step 6: Start the thread
-        self.thread_1.start()
+        if self.thread_1_is_free:
+            # Step 1: Begin showing progress bar
+            # self.progressbar.show()
+            # self.progressbar.setValue(5)
+            self.thread_1_is_free = False
+            self.dock_plot.setWidget(self.loading)
+            # Step 2: Create a QThread object
+            self.thread_1 = QThread()
+            # Step 3: Create a worker object
+            self.worker_1 = PlotWorker(self.traced_dataset, self.db)
+            # Step 4: Move worker to the thread
+            self.worker_1.moveToThread(self.thread_1)
+            # Step 5: Connect signals and slots
+            self.thread_1.started.connect(self.worker_1.run)
+            self.worker_1.finished.connect(self.thread_1.quit)
+            self.worker_1.finished.connect(self.worker_1.deleteLater)
+            self.thread_1.finished.connect(self.thread_1.deleteLater)
+            self.worker_1.progress.connect(self.report_progress)
+            self.worker_1.data.connect(self.report_plot_data)
+            self.worker_1.t_data.connect(self.report_traced_data)
+            # Step 6: Start the thread
+            self.thread_1.start()
 
-        # Final resets
-        self.thread_1.finished.connect(lambda: self.progressbar.setValue(0))
-        self.thread_1.finished.connect(lambda: self.progressbar.hide())
-        self.thread_1.finished.connect(lambda: self.fig_view.setHtml(create_plot(self.plot_x, self.plot_y)))
-        self.thread_1.finished.connect(lambda: self.dock_plot.setWidget(self.fig_view))
+            # Final resets
+            # self.thread_1.finished.connect(lambda: self.progressbar.setValue(0))
+            # self.thread_1.finished.connect(lambda: self.progressbar.hide())
+            self.thread_1.finished.connect(lambda: self.fig_view.setHtml(create_plot(self.plot_x, self.plot_y)))
+            self.thread_1.finished.connect(lambda: self.dock_plot.setWidget(self.fig_view))
+            self.thread_1.finished.connect(lambda: self.free_thread_1())
+
+    def free_thread_1(self):
+        self.thread_1_is_free = True
 
     def filter_wireshark(self):
 
