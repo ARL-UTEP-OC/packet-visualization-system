@@ -20,8 +20,6 @@ def test_create_project():
     assert p2.name == "testProject2"
     assert p1.c_time == 1632527017.653542
     assert p2.c_time == 1632527130.789377
-    assert p1.size == 4096
-    assert p2.size == 4096
     assert p1.dataset == []
     assert p2.dataset == []
     assert p1.path == os.path.join(cwd, ".testWorkspace2", "testProject1")
@@ -35,6 +33,12 @@ def test_add_project():
     assert [p1] == w.add_project(p1)
     assert [p1, p2] == w.add_project(p2)
     assert w.project == [p1, p2]
+
+
+def test_get_size():
+    global w, p1, p2
+    assert p1.get_size() == "0 B"
+    assert p2.get_size() == "0 B"
 
 
 def test_find_project():

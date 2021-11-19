@@ -6,19 +6,16 @@ class Project:
     def __init__(self, name:str, parent_path:str, c_time=datetime.now().timestamp()) -> None:
         self.name = name
         self.c_time = c_time     # creation time
-        self.size = 0            # size in bytes
         self.dataset = []
         self.path = os.path.join(parent_path, self.name)
         self.create_folder()
 
     def add_dataset(self, new:Dataset) -> list:
         self.dataset.append(new)
-        self.size = os.path.getsize(self.path)
         return self.dataset
 
     def del_dataset(self, old:Dataset) -> list:
         self.dataset.remove(old)
-        self.size = os.path.getsize(self.path)
         old.remove()
         return self.dataset
 
@@ -31,8 +28,30 @@ class Project:
     def create_folder(self) -> str:
         if not os.path.isdir(self.path):
             os.mkdir(self.path)
-        self.size = os.path.getsize(self.path)
         return self.path
+
+    def get_size(self):
+        units = 0
+        total_size = 0
+        for path, dirs, filenames in os.walk(self.path):
+            for f in filenames:
+                fp = os.path.join(path, f)
+                total_size += os.path.getsize(fp)
+
+        while total_size > 1024:
+            total_size /= 1024
+            units += 1
+        return self.switch(total_size, units)
+
+    def switch(self, size, units):
+        switcher = {
+            0: str(size) + " B",
+            1: str(round(size, 2)) + " KB",
+            2: str(round(size, 2)) + " MB",
+            3: str(round(size, 2)) + " GB",
+            4: str(round(size, 2)) + " TB"
+        }
+        return switcher.get(units, "Invalid size")
 
     def save(self, f) -> None:
         f.write('{"name": "%s", "c_time": %s, "dataset": [' % (self.name, self.c_time))
