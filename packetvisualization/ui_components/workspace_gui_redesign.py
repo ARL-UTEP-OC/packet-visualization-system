@@ -199,6 +199,10 @@ class WorkspaceWindow(QMainWindow):
         self.gen_table_action.setStatusTip("View Packets in a PCAP")
         self.gen_table_action.setToolTip("View Packets in a PCAP")
 
+        self.gen_analysis_action = QAction("&View Analysis Graph", self)
+        self.gen_analysis_action.setStatusTip("View Analysis Graph")
+        self.gen_analysis_action.setToolTip("View Analysis Graph")
+
         # self.gen_table_action = QAction(QIcon(os.path.join(self.icons, "list.svg")), "&Packet Table", self)
         self.classifier_action = QAction("&Classify Packets", self)
         self.classifier_action.setStatusTip("Classify selected pcap data")
@@ -248,6 +252,7 @@ class WorkspaceWindow(QMainWindow):
         # Connect View actions
         self.gen_table_action.triggered.connect(self.gen_table)
         self.classifier_action.triggered.connect(self.display_classifier_options)
+        self.gen_analysis_action.triggered.connect(self.view_analysis)
 
         # Connect Wireshark actions
         self.openWiresharkAction.triggered.connect(self.open_wireshark)
@@ -362,6 +367,9 @@ class WorkspaceWindow(QMainWindow):
                 export_menu = menu.addMenu("Export")
                 export_menu.addAction(self.exportCsvAction)
                 export_menu.addAction(self.exportJsonAction)
+            # Right-click an analysis item
+            if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is tuple:
+                menu.addAction(self.gen_analysis_action)
 
         separator1 = QAction(self)
         separator1.setSeparator(True)
@@ -486,6 +494,16 @@ class WorkspaceWindow(QMainWindow):
                     self.update_traced_data()
         except Exception:
             print("Error loading this pcap")
+            traceback.print_exc()
+
+    def view_analysis(self):
+        try:
+            selected = self.project_tree.selectedItems()
+            if selected and type(selected[0].data(0, Qt.UserRole)) is tuple:
+                print("is tuple")
+                df, features = selected[0].data(0, Qt.UserRole)
+                # Generate analysis graph
+        except:
             traceback.print_exc()
 
     def open_new_workspace(self) -> None:
@@ -634,6 +652,10 @@ class WorkspaceWindow(QMainWindow):
                                 self.eo.delete_packets(self.db[d.name], "parent_pcap", cap.name)
                 if self.traced_dataset:
                     self.update_traced_data()
+            # Deleting analysis item
+            elif type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is tuple:
+                analysis_item = self.project_tree.selectedItems()[0]
+                analysis_item.parent().removeChild(analysis_item)
         else:
             return False
 
