@@ -29,6 +29,7 @@ from packetvisualization.models.dataset import Dataset
 from packetvisualization.models.pcap import Pcap
 from packetvisualization.models.project import Project
 from packetvisualization.models.workspace import Workspace
+from packetvisualization.models.pcap_worker import PcapWorker
 from packetvisualization.backend_components import Wireshark
 from packetvisualization.ui_components import filter_gui
 from packetvisualization.ui_components.plot_worker import PlotWorker
@@ -450,12 +451,12 @@ class WorkspaceWindow(QMainWindow):
                         mytable = self.db[dataset.name]
                         if not new_pcap.large_pcap_flag:  # if small pcap, read json
                             self.eo.insert_packets(new_pcap.json_file, mytable, dataset.name, new_pcap.name)
-                        else:
-                            for dirpath, _, filenames in os.walk(new_pcap.split_json_dir):
-                                parent_pcap = os.path.basename(os.path.normpath(dirpath)).replace('-splitjson', "")
-                                for f in filenames:
-                                    file = os.path.abspath(os.path.join(dirpath, f))
-                                    self.eo.insert_packets(file, mytable, dataset.name, parent_pcap)
+                            new_pcap.cleanup()
+                        else:  # large pcap
+                            try:
+                                self.process_split_caps(new_pcap, file, mytable, dataset.name)  # Complete process on another thread
+                            except:
+                                traceback.print_exc()
                     else:
                         child_item.parent().removeChild(child_item)
                         p.del_dataset(dataset)
@@ -478,7 +479,7 @@ class WorkspaceWindow(QMainWindow):
                     dataset_item = self.project_tree.selectedItems()[0]
 
                 d = dataset_item.data(0, Qt.UserRole)
-                new_pcap = Pcap(file=file, path=d.path, name=pcap_name)
+                new_pcap = Pcap(file=file, path=d.path, name=pcap_name)  #new method to create the thread in thread return new pcap object in first index of the list
 
                 for cap in d.pcaps:
                     if new_pcap.name == cap.name:
@@ -494,12 +495,12 @@ class WorkspaceWindow(QMainWindow):
                     mytable = self.db[d.name]
                     if not new_pcap.large_pcap_flag:
                         self.eo.insert_packets(new_pcap.json_file, mytable, d.name, new_pcap.name)
+                        new_pcap.cleanup()
                     else:
-                        for dirpath, _, filenames in os.walk(new_pcap.split_json_dir):
-                            parent_pcap = os.path.basename(os.path.normpath(dirpath)).replace('-splitjson', "")
-                            for f in filenames:
-                                file = os.path.abspath(os.path.join(dirpath, f))
-                                self.eo.insert_packets(file, mytable, d.name, parent_pcap)
+                        try:
+                            self.process_split_caps(new_pcap, file, mytable, d.name) # Complete process on another thread
+                        except:
+                            traceback.print_exc()
 
                 if self.traced_dataset:
                     self.update_traced_data()
@@ -840,7 +841,6 @@ class WorkspaceWindow(QMainWindow):
             return None, None, full_path
 
     def generate_existing_workspace(self):
-        # here -----------------------------------Load Dump---------------------------------------------------
         for p in self.workspace_object.project:
             project_item = QTreeWidgetItem(self.project_tree)
             project_item.setText(0, p.name)
@@ -938,6 +938,24 @@ class WorkspaceWindow(QMainWindow):
 
     def free_thread_1(self):
         self.thread_1_is_free = True
+
+    def process_split_caps(self, pcap, file, table, dataset_name):
+        self.progressbar.show()
+        self.thread_2 = QThread()
+        self.worker_2= PcapWorker(pcap, file, table, dataset_name)
+        self.worker_2.moveToThread(self.thread_2)
+
+        self.thread_2.started.connect(self.worker_2.run)
+        self.worker_2.finished.connect(self.thread_2.quit)
+        self.worker_2.finished.connect(self.worker_2.deleteLater)
+        self.thread_2.finished.connect(self.thread_2.deleteLater)
+        self.worker_2.progress.connect(self.report_progress)
+        #
+        self.thread_2.start()
+        #
+        self.thread_2.finished.connect(lambda: self.progressbar.setValue(0))
+        self.thread_2.finished.connect(lambda: self.progressbar.hide())
+
 
     def filter_wireshark(self):
 
