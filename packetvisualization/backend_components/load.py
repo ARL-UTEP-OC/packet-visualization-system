@@ -75,11 +75,11 @@ class Load:
 
     def load_dataset(self, project: Project, datasets: list) -> list:
         for d in datasets:
-            data = Dataset(d['name'], project.path)
+            data = Dataset(d['name'], project.path, d['m_data'])
             self.load_pcap(data, d['pcaps'])
             project.add_dataset(data)
 
     def load_pcap(self, dataset: Dataset, pcaps: list) -> list:
         for a in pcaps:
-            pcap = Pcap(a['name'], dataset.path, os.path.join(dataset.path, a['name']), a['m_data'])
+            pcap = Pcap(a['name'], dataset.path, os.path.join(dataset.path, a['name']))
             dataset.add_pcap(pcap)

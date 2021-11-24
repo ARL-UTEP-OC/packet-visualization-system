@@ -53,8 +53,8 @@ class PropertiesWindow(QWidget):
         layout.addRow("No. Packets: ", packets)
         layout.addRow("Start Time: ", s_time)
         layout.addRow("End Time: ", e_time)
-        layout.addRow("Protocols", protocols)
-        layout.addRow("PCAP Names:", pcaps)
+        layout.addRow("Protocols: ", protocols)
+        layout.addRow("PCAP Names: ", pcaps)
         layout.addRow("Metadata: ", metadata)
 
         self.setLayout(layout)

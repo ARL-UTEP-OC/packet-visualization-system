@@ -23,13 +23,15 @@ class PlotWorker(QObject):
             #collection = self.db[self.dataset.name]
             #query = {'parent_dataset': self.dataset.name}
             #self.db_data = list(collection.find({}))
-
-            backend = TableBackend()
-            self.db_data = backend.query_pcap(self.dataset, self.db)
+            if self.dataset.has_changed:
+                backend = TableBackend()
+                self.db_data = list(backend.query_pcap(self.dataset, self.db))
+                self.dataset.packet_data = list(self.db_data)
+                self.dataset.has_changed = False
+            else:
+                self.db_data = self.dataset.packet_data
         else:
             self.db_data = None
-        trace_data = [self.db_data]
-        # self.t_data.emit(trace_data)
 
         if self.db_data:
             date, time_epoch = [], []

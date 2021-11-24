@@ -532,8 +532,7 @@ class WorkspaceWindow(QMainWindow):
                 self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
             dataset_item = self.project_tree.selectedItems()[0]
             d = dataset_item.data(0, Qt.UserRole)
-            self.traced_dataset = d
-            self.update_traced_data()
+            self.update_traced_data(d)
 
     def export_csv(self):
         # Logic to export dataset or pcap to CSV
@@ -878,10 +877,10 @@ class WorkspaceWindow(QMainWindow):
         # fig.show()
         self.show_classifier_qt(fig)
 
-    def update_traced_data(self):
+    def update_traced_data(self, d: Dataset):
         """Updates the traced data when a packet is added or deleted
         """
-        self.update_plot()
+        self.update_plot(d)
 
     def report_progress(self, n: int) -> None:
         """Updates the progress bar from worker signal
@@ -903,7 +902,7 @@ class WorkspaceWindow(QMainWindow):
     def report_traced_data(self, n: list) -> None:
         self.traced_data = n[0]
 
-    def update_plot(self):
+    def update_plot(self, d: Dataset):
         """ Creates a new thread to update bandwidth vs. time graph
         """
         if self.thread_1_is_free:
@@ -911,6 +910,7 @@ class WorkspaceWindow(QMainWindow):
             # self.progressbar.show()
             # self.progressbar.setValue(5)
             self.thread_1_is_free = False
+            self.traced_dataset = d
             self.dock_plot.setWidget(self.loading)
             # Step 2: Create a QThread object
             self.thread_1 = QThread()

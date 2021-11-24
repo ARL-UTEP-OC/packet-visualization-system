@@ -15,12 +15,14 @@ class Dataset:
         self.protocols = None
         self.create_folder()
         self.create_merge_file()
+        self.packet_data = None
+        self.has_changed = False
         # self.create_json_file()
 
     def add_pcap(self, new: Pcap) -> list:
         self.pcaps.append(new)
         self.merge_pcaps()
-
+        self.has_changed = True
         return self.pcaps
 
     def del_pcap(self, old: Pcap): # Replace with DB Query
@@ -29,6 +31,7 @@ class Dataset:
             self.merge_pcaps()
         os.remove(old.path) # delete file in dir
         old.remove()
+        self.has_changed = True
         return self.pcaps
 
     def add_pcap_dir(self, location: str) -> list:  # when we receive directory w/PCAPs as user input
@@ -49,7 +52,7 @@ class Dataset:
         fp.close()
 
     def save(self, f) -> None: # Save file
-        f.write('{"name": "%s", "totalPackets": %s, "pcaps": [' % (self.name, self.totalPackets))
+        f.write('{"name": "%s", "m_data": "%s", "pcaps": [' % (self.name, self.m_data))
         for a in self.pcaps:
             a.save(f)
             if a != self.pcaps[-1]:

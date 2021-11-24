@@ -5,7 +5,7 @@ import platform
 
 
 class Pcap:
-    def __init__(self, name: str ,path: str, file: str, m_data = "") -> None:
+    def __init__(self, name: str, path: str, file: str) -> None:
         try:
             self.name = name
             self.directory = path
@@ -13,7 +13,6 @@ class Pcap:
             self.pcap_file = file  # pcap recieved from user
             self.total_packets = 0
             self.protocols = {}
-            self.m_data = m_data   # metadata will go to packet
             self.json_file = None
             self.file_size = os.path.getsize(self.pcap_file)
             self.split_dir = ""
@@ -23,15 +22,15 @@ class Pcap:
             if not self.pcap_file == self.path:
                 shutil.copy(self.pcap_file, self.path)  # Copy user input into our directory
 
-            if self.file_size > 20480000: #approx 20,000KB
+            if self.file_size > 20480000:  # approx 20,000KB
                 self.large_pcap_flag = True
                 self.create_pcap_split_dir()  # Create directory for split files to be placed
                 self.split_large_pcap(self.pcap_file, self.split_dir)  # split pcap
                 self.create_split_json_dir()  # create directory for jsons associated to split files to be placed
-                self.split_files_to_json(self.split_dir,self.split_json_dir)  # create json for each split
+                self.split_files_to_json(self.split_dir, self.split_json_dir)  # create json for each split
                 return
             else:
-                self.create_json_file() # create empty json
+                self.create_json_file()  # create empty json
                 self.toJson()
 
         except:
@@ -45,7 +44,7 @@ class Pcap:
     def create_json_file(self):
         filename = self.name + ".json"
         path = os.path.join(self.directory, filename)
-        self.json_file= path
+        self.json_file = path
         self.create_file(path)
 
     def toJson(self):
@@ -58,11 +57,11 @@ class Pcap:
         print("Test")
         # Remove json file after DB insert
 
-    def save(self, f) -> None: # TODO: Rework
-        f.write('{"name": "%s", "m_data": "%s"' % (self.name, self.m_data))
+    def save(self, f) -> None:
+        f.write('{"name": "%s"' % self.name)
         f.write('}')
 
-    def remove(self) -> bool: # Moved to entity operator
+    def remove(self) -> bool:  # Moved to entity operator
         return self.__del__()
 
     def __del__(self) -> bool:
@@ -91,7 +90,7 @@ class Pcap:
         os.system('cd "C:\Program Files\Wireshark" & editcap -c 50000 ' + pcap_file + " " + path)
         return
 
-    def split_files_to_json(self,split_files_dir, json_files_dir):
+    def split_files_to_json(self, split_files_dir, json_files_dir):
         for dirpath, _, filenames in os.walk(split_files_dir):
             for f in filenames:
                 json_name = f.replace('.pcap', '.json')
