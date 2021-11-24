@@ -21,12 +21,13 @@ class Pcap:
                 shutil.copy(self.pcap_file, self.path)  # Copy user input into our directory
 
             if self.file_size > 20480000: #approx 20,000KB
+                print("Large PCAP")
                 self.large_pcap_flag = True
                 self.create_pcap_split_dir()  # Create directory for split files to be placed
                 self.split_large_pcap(self.pcap_file, self.split_dir)  # split pcap
                 self.create_split_json_dir()  # create directory for jsons associated to split files to be placed
-                self.split_files_to_json(self.split_dir,self.split_json_dir)  # create json for each split
-                return
+
+                # self.split_files_to_json(self.split_dir,self.split_json_dir)  # create json for each split
             else:
                 self.create_json_file() # create empty json
                 self.toJson()
@@ -51,14 +52,10 @@ class Pcap:
     def cleanup(self):
         if self.large_pcap_flag:
             shutil.rmtree(self.split_json_dir)
-            print("Cleanup Large PCAP")
         else:
             os.remove(self.json_file)
-            #Remove the file
-            return
-        # Remove json file after DB insert
 
-    def save(self, f) -> None: # TODO: Rework
+    def save(self, f) -> None:
         f.write('{"name": "%s", "m_data": "%s"' % (self.name, self.m_data))
         f.write('}')
 
