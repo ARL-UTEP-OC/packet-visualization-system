@@ -58,6 +58,7 @@ class WorkspaceWindow(QMainWindow):
         self.eo = EntityOperations()
         self.db = None
         self.test_mode = False
+        self.new_window = []
         if existing_flag:
             self.workspace_object = Load().open_zip(workspace_path)
             restore_path = os.path.join(self.workspace_object.dump_path, self.workspace_object.name)
@@ -543,8 +544,9 @@ class WorkspaceWindow(QMainWindow):
         directory = QFileDialog.getSaveFileName(caption="Choose Workspace location")[0]
 
         if directory != '':
-            self.new_window = WorkspaceWindow(workspace_path=directory)
-            self.new_window.show()
+            w = WorkspaceWindow(workspace_path=directory)
+            self.new_window.append(w)
+            w.show()
 
     def open_existing_workspace(self) -> None:
         """Prompts user to select saved zip file and opens an existing workspace window
@@ -553,9 +555,9 @@ class WorkspaceWindow(QMainWindow):
         file_path = QFileDialog.getOpenFileName(caption="Open existing Workspace", filter=file_filter)[0]
 
         if file_path != "":
-            if not self.test_mode:
-                self.new_window = WorkspaceWindow(workspace_path=file_path, existing_flag=True)
-                self.new_window.show()
+            w = WorkspaceWindow(workspace_path=file_path, existing_flag=True)
+            self.new_window.append(w)
+            w.show()
 
     def trace_dataset(self):
         if self.project_tree.selectedItems() and type(
