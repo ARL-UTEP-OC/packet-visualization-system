@@ -136,8 +136,8 @@ class TableBackend:
             pcap_list = []
 
             for frame_string in frame_string_list_in:  # Create pcaps for merging
+                output_file = os.path.join(os.getcwd(), "tEmPpCaP" + str(i) + ".pcap")
                 if platform.system() == "Windows":
-                    output_file = os.path.join(os.getcwd(), "tEmPpCaP" + str(i) + ".pcap")
                     os.system(
                         'cd "C:\Program Files\Wireshark" & tshark -r ' + infile_in + ' -Y \"' + frame_string + '\" -w ' + output_file)
                 elif platform.system() == "Linux":

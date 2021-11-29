@@ -502,7 +502,7 @@ class table_gui(QTableWidget):
 
             if text and not self.workspace.project_tree.findItems(text, Qt.MatchRecursive, 0):
                 # Add Project and Dataset object && project tree item
-                dataset_object = Dataset(name=text, parentPath=project_object.path)
+                dataset_object = Dataset(name=text, parent_path=project_object.path)
                 project_object.add_dataset(dataset_object)
                 child_item = QTreeWidgetItem()
                 child_item.setText(0, text)
