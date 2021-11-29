@@ -209,6 +209,10 @@ class WorkspaceWindow(QMainWindow):
         self.gen_table_action.setStatusTip("View Packets in a PCAP")
         self.gen_table_action.setToolTip("View Packets in a PCAP")
 
+        self.gen_analysis_action = QAction("&View Analysis Graph", self)
+        self.gen_analysis_action.setStatusTip("View Analysis Graph")
+        self.gen_analysis_action.setToolTip("View Analysis Graph")
+
         # self.gen_table_action = QAction(QIcon(os.path.join(self.icons, "list.svg")), "&Packet Table", self)
         self.classifier_action = QAction("&Classify Packets", self)
         self.classifier_action.setStatusTip("Classify selected pcap data")
@@ -377,6 +381,9 @@ class WorkspaceWindow(QMainWindow):
                 export_menu = menu.addMenu("Export")
                 export_menu.addAction(self.exportCsvAction)
                 export_menu.addAction(self.exportJsonAction)
+            # Right-click an analysis item
+            if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is tuple:
+                menu.addAction(self.gen_analysis_action)
 
         separator1 = QAction(self)
         separator1.setSeparator(True)
@@ -506,6 +513,28 @@ class WorkspaceWindow(QMainWindow):
                     self.update_traced_data(d)
         except Exception:
             print("Error loading this pcap")
+            traceback.print_exc()
+
+    def view_analysis(self):
+        try:
+            selected = self.project_tree.selectedItems()
+            if selected and type(selected[0].data(0, Qt.UserRole)) is tuple:
+                print("is tuple")
+                df, features = selected[0].data(0, Qt.UserRole)
+                # Generate analysis graph
+                fig = px.scatter(df, x="cluster", y="instance_number",
+                                 color='cluster', color_continuous_scale=px.colors.sequential.Bluered_r,
+                                 hover_data=df.columns.values[:len(features)])
+
+                raw_html = '<html><head><meta charset="utf-8" />'
+                raw_html += '<script src="https://cdn.plot.ly/plotly-latest.min.js"></script></head>'
+                raw_html += '<body>'
+                raw_html += po.plot(fig, include_plotlyjs=False, output_type='div')
+                raw_html += '</body></html>'
+
+                self.classifier_plot_view.setHtml(raw_html)
+                self.classifier_window.show()
+        except:
             traceback.print_exc()
 
     def open_new_workspace(self) -> None:

@@ -3,7 +3,7 @@ import traceback
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QColor, QIcon
-from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QMenu, QAction, QInputDialog, QTreeWidgetItem
+from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QMenu, QAction, QInputDialog, QTreeWidgetItem, QFileDialog
 
 from packetvisualization.backend_components import Wireshark
 from packetvisualization.backend_components.table_backend import TableBackend
@@ -94,13 +94,43 @@ class table_gui(QTableWidget):
             self.view_all_in_wireshark_action = QAction("All Packets", self)
             self.view_all_in_wireshark_action.triggered.connect(lambda: self.view_in_wireshark(all_packets=True))
 
+            # Export Actions
+            self.to_csv_selected_action = QAction("Selected Packets", self)
+            self.to_csv_selected_action.triggered.connect(self.export_to_csv)
+
+            self.to_csv_tagged_action = QAction("Tagged Packets", self)
+            self.to_csv_tagged_action.triggered.connect(lambda: self.export_to_csv(tagged=True))
+
+            self.to_csv_all_action = QAction("All Packets", self)
+            self.to_csv_all_action.triggered.connect(lambda: self.export_to_csv(all_packets=True))
+
+            self.to_json_selected_action = QAction("Selected Packets", self)
+            self.to_json_selected_action.triggered.connect(self.export_to_json)
+
+            self.to_json_tagged_action = QAction("Tagged Packets", self)
+            self.to_json_tagged_action.triggered.connect(lambda: self.export_to_json(tagged=True))
+
+            self.to_json_all_action = QAction("All Packets", self)
+            self.to_json_all_action.triggered.connect(lambda: self.export_to_json(all_packets=True))
+
             menu.addAction(self.tag_action)
             menu.addAction(self.remove_tag_action)
 
-            analysis_menu = menu.addMenu("Analyze...")
-            analysis_menu.addAction(self.analyze_action)
-            analysis_menu.addAction(self.analyze_tagged_action)
-            analysis_menu.addAction(self.analyze_all_action)
+            if type(self.obj) is Dataset:
+                analysis_menu = menu.addMenu("Analyze")
+                analysis_menu.addAction(self.analyze_action)
+                analysis_menu.addAction(self.analyze_tagged_action)
+                analysis_menu.addAction(self.analyze_all_action)
+
+            export_menu = menu.addMenu("Export")
+            csv_menu = export_menu.addMenu("To CSV from...")
+            csv_menu.addAction(self.to_csv_selected_action)
+            csv_menu.addAction(self.to_csv_tagged_action)
+            csv_menu.addAction(self.to_csv_all_action)
+            json_menu = export_menu.addMenu("To JSON from...")
+            json_menu.addAction(self.to_json_selected_action)
+            json_menu.addAction(self.to_json_tagged_action)
+            json_menu.addAction(self.to_json_all_action)
 
             wireshark_menu = menu.addMenu("View in Wireshark from...")
             wireshark_menu.addAction(self.view_in_wireshark_action)
@@ -158,6 +188,87 @@ class table_gui(QTableWidget):
             frame_string_list = self.backend.gen_frame_string(list)
             temp_mergecap = self.backend.gen_pcap_from_frames(frame_string_list, infile, self.workspace.progressbar)
             Wireshark.openwireshark(temp_mergecap)
+
+    def export_to_json(self, tagged: bool = None, all_packets: bool = None):
+        output_file = QFileDialog.getSaveFileName(caption="Choose Output location", filter=".json (*.json)")[0]
+
+        if all_packets:
+            if type(self.obj) is Pcap:
+                self.backend.to_json(output_file, self.obj.path)
+            elif type(self.obj) is Dataset:
+                self.backend.to_json(output_file, self.obj.mergeFilePath)
+            return True
+
+        if not tagged:
+            list = []
+            if self.selectedItems():
+                selected = self.selectedItems()
+                row_list = []
+                for item in selected:
+                    if item.row() not in row_list:
+                        frame_number = self.item(item.row(), 0).text()
+                        list.append(frame_number)
+                        row_list.append(item.row())
+
+        if tagged:
+            list = []
+            tag = QInputDialog.getText(self, "Tag Name Entry", "Enter Tag name:")[0]
+            for i in range(self.rowCount()):
+                if tag in self.item(i, 0).data(Qt.UserRole)[1]:
+                    list.append(self.item(i, 0).text())
+
+        if len(list) > 0:
+            if type(self.obj) == Pcap:
+                infile = self.obj.path
+            else:
+                infile = self.obj.mergeFilePath
+
+            frame_string_list = self.backend.gen_frame_string(list)
+            temp_mergecap = self.backend.gen_pcap_from_frames(frame_string_list, infile, self.workspace.progressbar)
+
+            if output_file != "":
+                self.backend.to_json(output_file, temp_mergecap)
+
+    def export_to_csv(self, tagged: bool = None, all_packets: bool = None):
+        output_file = QFileDialog.getSaveFileName(caption="Choose Output location", filter=".csv (*.csv)")[
+            0]
+
+        if all_packets:
+            if type(self.obj) is Pcap:
+                self.backend.to_csv(output_file, self.obj.path)
+            elif type(self.obj) is Dataset:
+                self.backend.to_csv(output_file, self.obj.mergeFilePath)
+            return True
+
+        if not tagged:
+            list = []
+            if self.selectedItems():
+                selected = self.selectedItems()
+                row_list = []
+                for item in selected:
+                    if item.row() not in row_list:
+                        frame_number = self.item(item.row(), 0).text()
+                        list.append(frame_number)
+                        row_list.append(item.row())
+
+        if tagged:
+            list = []
+            tag = QInputDialog.getText(self, "Tag Name Entry", "Enter Tag name:")[0]
+            for i in range(self.rowCount()):
+                if tag in self.item(i, 0).data(Qt.UserRole)[1]:
+                    list.append(self.item(i, 0).text())
+
+        if len(list) > 0:
+            if type(self.obj) == Pcap:
+                infile = self.obj.path
+            else:
+                infile = self.obj.mergeFilePath
+
+            frame_string_list = self.backend.gen_frame_string(list)
+            temp_mergecap = self.backend.gen_pcap_from_frames(frame_string_list, infile, self.workspace.progressbar)
+
+            if output_file != "":
+                self.backend.to_csv(output_file, temp_mergecap)
 
     def add_tag(self):
         """Allows user to add "tags" to packet items on the table gui. A user can add multiple tags to

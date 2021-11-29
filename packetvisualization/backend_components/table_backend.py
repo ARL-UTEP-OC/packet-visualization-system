@@ -28,6 +28,32 @@ class TableBackend:
 
         return frame_string_list
 
+    def to_csv(self, output_file_in, input_file_in, test_mode: bool = False):
+        if platform.system() == "Windows":
+            os.system(
+                'cd "C:\Program Files\Wireshark" & tshark -r ' + input_file_in + ' -T fields -e frame.number -e '
+                                                                              'ip.src -e ip.dst '
+                                                                              '-e frame.len -e frame.time -e '
+                                                                              'frame.time_relative -e _ws.col.Info '
+                                                                              '-E header=y -E '
+                                                                              'separator=, -E quote=d -E '
+                                                                              'occurrence=f > ' + output_file_in)
+        elif platform.system() == "Linux":
+            os.system('tshark -r ' + input_file_in + ' -T fields -e frame.number -e '
+                                                  'ip.src -e ip.dst '
+                                                  '-e frame.len -e frame.time -e '
+                                                  'frame.time_relative -e _ws.col.Info '
+                                                  '-E header=y -E '
+                                                  'separator=, -E quote=d -E '
+                                                  'occurrence=f > ' + output_file_in)
+
+    def to_json(self, output_file_in, input_file_in, test_mode: bool = False):
+        if platform.system() == "Windows":
+            os.system(
+                'cd "C:\Program Files\Wireshark" & tshark -r ' + input_file_in + ' -T json > ' + output_file_in)
+        if platform.system() == "Linux":
+            os.system('tshark -r ' + input_file_in + ' -T json > ' + output_file_in)
+
     def query_id(self, obj_in, db_in, list_in, test_mode: bool = False):
         """Queries the database via collection id's and return a cursor object that contains
         all collection items with the id's from list_in
