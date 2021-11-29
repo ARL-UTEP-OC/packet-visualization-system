@@ -1,4 +1,5 @@
 import os
+import shutil
 import traceback
 
 from PyQt5.QtCore import Qt, QObject, pyqtSignal, QThread
@@ -116,6 +117,15 @@ class table_gui(QTableWidget):
             self.to_json_all_action = QAction("All Packets", self)
             self.to_json_all_action.triggered.connect(lambda: self.export_to_json(all_packets=True))
 
+            self.to_pcap_selected_action = QAction("Selected Packets", self)
+            self.to_pcap_selected_action.triggered.connect(self.export_to_pcap)
+
+            self.to_pcap_tagged_action = QAction("Tagged Packets", self)
+            self.to_pcap_tagged_action.triggered.connect(lambda: self.export_to_pcap(tagged=True))
+
+            self.to_pcap_all_action = QAction("All Packets", self)
+            self.to_pcap_all_action.triggered.connect(lambda: self.export_to_pcap(all_packets=True))
+
             menu.addAction(self.tag_action)
             menu.addAction(self.remove_tag_action)
 
@@ -134,6 +144,10 @@ class table_gui(QTableWidget):
             json_menu.addAction(self.to_json_selected_action)
             json_menu.addAction(self.to_json_tagged_action)
             json_menu.addAction(self.to_json_all_action)
+            pcap_menu = export_menu.addMenu("To PCAP from...")
+            pcap_menu.addAction(self.to_pcap_selected_action)
+            pcap_menu.addAction(self.to_pcap_tagged_action)
+            pcap_menu.addAction(self.to_pcap_all_action)
 
             wireshark_menu = menu.addMenu("View in Wireshark from...")
             wireshark_menu.addAction(self.view_in_wireshark_action)
@@ -178,6 +192,31 @@ class table_gui(QTableWidget):
                 self.thread.start()
             except:
                 traceback.print_exc()
+
+    def export_to_pcap(self, tagged: bool = None, all_packets: bool = None):
+        if self.selectedItems():
+            output_file = QFileDialog.getSaveFileName(caption="Choose Output location", filter="Wireshark capture "
+                                                                                               "file (*.pcap)")[0]
+
+            if tagged:
+                tag = QInputDialog.getText(self, "Tag Name Entry", "Enter Tag name:")[0]
+                self.worker = table_worker(table=self, selected=self.selectedItems(), tagged=tagged, tag=tag,
+                                           all_packets=all_packets, output_file=output_file)
+            else:
+                self.worker = table_worker(table=self, selected=self.selectedItems(), tagged=tagged,
+                                           all_packets=all_packets, output_file=output_file)
+
+            self.thread = QThread()
+
+            self.worker.moveToThread(self.thread)
+
+            self.thread.started.connect(self.worker.create_pcap)
+            self.worker.finished.connect(self.thread.quit)
+            self.worker.finished.connect(self.worker.deleteLater)
+            self.worker.progress.connect(self.update_progressbar)
+            self.thread.finished.connect(self.thread.deleteLater)
+
+            self.thread.start()
 
     def export_to_json(self, tagged: bool = None, all_packets: bool = None):
         if self.selectedItems():
@@ -225,7 +264,7 @@ class table_gui(QTableWidget):
             self.worker.finished.connect(self.worker.deleteLater)
             self.worker.progress.connect(self.update_progressbar)
             self.thread.finished.connect(self.thread.deleteLater)
-            print("Starting")
+
             self.thread.start()
 
     def add_tag(self):
@@ -499,6 +538,50 @@ class table_worker(QObject):
         self.all_packets = all_packets
         self.tag = tag
         self.output_file = output_file
+
+    def create_pcap(self):
+        all_packets = self.all_packets
+        tagged = self.tagged
+        tag = self.tag
+        output_file = self.output_file
+        selected = self.selected
+        name = os.path.basename(output_file)
+
+        if all_packets:
+            if type(self.table.obj) is Pcap:
+                shutil.copy(self.table.obj.path, output_file)
+            elif type(self.table.obj) is Dataset:
+                shutil.copy(self.table.obj.mergeFilePath, output_file)
+            return True
+
+        if not tagged:
+            list = []
+            row_list = []
+            for item in selected:
+                if item.row() not in row_list:
+                    frame_number = self.table.item(item.row(), 0).text()
+                    list.append(frame_number)
+                    row_list.append(item.row())
+
+        if tagged:
+            list = []
+            for i in range(self.table.rowCount()):
+                if tag in self.table.item(i, 0).data(Qt.UserRole)[1]:
+                    list.append(self.table.item(i, 0).text())
+
+        if len(list) > 0:
+            if type(self.table.obj) == Pcap:
+                infile = self.table.obj.path
+            else:
+                infile = self.table.obj.mergeFilePath
+
+            frame_string_list = self.table.backend.gen_frame_string(list)
+            temp_mergecap = self.table.backend.gen_pcap_from_frames(frame_string_list, infile, self.table.workspace.progressbar, self.progress)
+
+            if output_file != "":
+                shutil.copy(temp_mergecap, output_file)
+
+        self.finished.emit()
 
     def create_pcap_for_json(self):
         all_packets = self.all_packets
