@@ -11,12 +11,11 @@ from packetvisualization.models.workspace import Workspace
 
 
 def openwireshark(path):
+    if platform.system() == "Linux":
 
-    if(platform.system()=="Linux"):
+        subprocess.Popen(['wireshark', '-r', path])
 
-        subprocess.Popen('wireshark -r '+path)
-
-    elif(platform.system()=="Windows"):
+    elif platform.system() == "Windows":
 
         subprocess.Popen("C:\Program Files\Wireshark\wireshark -r " + path)
 
@@ -31,7 +30,7 @@ def openwireshark(path):
 
 def filter(path: str, wsFilter, newFileName, projectTree: QTreeWidget, workspace: Workspace):
     splitPath = path.split(os.sep)
-    #splitPath = path.split("\\")
+    # splitPath = path.split("\\")
     datasetName = splitPath[len(splitPath) - 2]
     projectName = splitPath[len(splitPath) - 3]
 
@@ -49,7 +48,6 @@ def filter(path: str, wsFilter, newFileName, projectTree: QTreeWidget, workspace
 
     cmd = r"C:\Program Files\Wireshark\tshark -r " + path + r' -w ' + newFilePath + '.pcap -Y '
     for key, value in wsFilter.items():
-
         cmd += f"\"{value}\""
 
         # if key == list(wsFilter.keys())[0]:
@@ -80,17 +78,15 @@ def filter(path: str, wsFilter, newFileName, projectTree: QTreeWidget, workspace
                 break
         if filterFolderExist == False:
             filterFolder = QtWidgets.QTreeWidgetItem()
-            filterFolder.setText(0,"Wireshark Filtered Pcaps")
+            filterFolder.setText(0, "Wireshark Filtered Pcaps")
             dataset_item.addChild(filterFolder)
             pcap_item = QtWidgets.QTreeWidgetItem()
             pcap_item.setText(0, newFileName + ".pcap")
             pcap_item.setData(0, Qt.UserRole, new_pcap)
             filterFolder.addChild(pcap_item)
 
-        #dataset_item.addChild(pcap_item)
+        # dataset_item.addChild(pcap_item)
 
         dataset.add_pcap(new=new_pcap)
 
     return error
-
-
