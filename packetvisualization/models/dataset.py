@@ -1,25 +1,33 @@
-from packetvisualization.models.pcap import Pcap
 # from packetvisualization.backend_components.entity_operator import EntityOperator
-import os, shutil
+import os
 import platform
+import shutil
+
+from packetvisualization.models.pcap import Pcap
+
 
 class Dataset:
-    def __init__(self, name: str, parentPath: str) -> None:
+    def __init__(self, name: str, parent_path: str, m_data: str = '') -> None:
         self.name = name
         self.pcaps = [] # will use children key instead
+        self.m_data = m_data
         self.mergeFilePath = None
         self.jsonFilePath = None
-        self.path = os.path.join(parentPath, self.name)
+        self.path = os.path.join(parent_path, self.name)
         self.totalPackets = 0
         self.protocols = None
         self.create_folder()
         self.create_merge_file()
+        self.packet_data = None
+        self.has_changed = False
+        self.s_time = ''
+        self.e_time = ''
         # self.create_json_file()
 
     def add_pcap(self, new: Pcap) -> list:
         self.pcaps.append(new)
         self.merge_pcaps()
-
+        self.has_changed = True
         return self.pcaps
 
     def del_pcap(self, old: Pcap): # Replace with DB Query
@@ -28,7 +36,22 @@ class Dataset:
             self.merge_pcaps()
         os.remove(old.path) # delete file in dir
         old.remove()
+        self.has_changed = True
         return self.pcaps
+
+    def print_pcaps(self):
+        result = ''
+        for p in self.pcaps:
+            result += p.name
+            result += '\n'
+        return result[:-1]
+
+    def print_protocols(self):
+        result = ''
+        for p in self.protocols:
+            result += '%s: %s' % (p[0], p[1])
+            result += '\n'
+        return result[:-1]
 
     def add_pcap_dir(self, location: str) -> list:  # when we receive directory w/PCAPs as user input
         for file in os.listdir(location):
@@ -48,7 +71,7 @@ class Dataset:
         fp.close()
 
     def save(self, f) -> None: # Save file
-        f.write('{"name": "%s", "totalPackets": %s, "pcaps": [' % (self.name, self.totalPackets))
+        f.write('{"name": "%s", "m_data": "%s", "pcaps": [' % (self.name, self.m_data))
         for a in self.pcaps:
             a.save(f)
             if a != self.pcaps[-1]:

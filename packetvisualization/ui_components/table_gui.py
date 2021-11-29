@@ -29,7 +29,6 @@ def gen_dictionary():
 class table_gui(QTableWidget):
     def __init__(self, obj, progressbar, db: DbContext, workspace):
         super().__init__()
-        self.icons = os.path.join(os.path.dirname(__file__), "images", "svg")
         self.backend = TableBackend()
         self.workspace = workspace
         self.obj = obj
@@ -285,7 +284,7 @@ class table_gui(QTableWidget):
                     tag_list.append(tag)
                     packet_id = self.item(item.row(), 0).data(Qt.UserRole)[0]
                     self.item(item.row(), 0).setData(Qt.UserRole, [packet_id, tag_list])
-                    self.item(item.row(), 0).setIcon(QIcon(os.path.join(self.icons, "pricetag.svg")))
+                    self.item(item.row(), 0).setIcon(QIcon(":pricetag.svg"))
                     tooltip = ""
                     for t in tag_list:
                         tooltip += t + " "
@@ -397,7 +396,7 @@ class table_gui(QTableWidget):
 
                 if text:
                     # Add Project and Dataset object && project tree item
-                    dataset_object = Dataset(name=text, parentPath=project_object.path)
+                    dataset_object = Dataset(name=text, parent_path=project_object.path)
                     project_object.add_dataset(dataset_object)
                     child_item = QTreeWidgetItem()
                     child_item.setText(0, text)
@@ -439,7 +438,7 @@ class table_gui(QTableWidget):
 
             if text:
                 # Add Project and Dataset object && project tree item
-                dataset_object = Dataset(name=text, parentPath=project_object.path)
+                dataset_object = Dataset(name=text, parent_path=project_object.path)
                 project_object.add_dataset(dataset_object)
                 child_item = QTreeWidgetItem()
                 child_item.setText(0, text)

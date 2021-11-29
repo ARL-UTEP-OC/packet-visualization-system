@@ -2,6 +2,8 @@
 <qresource>
     <file alias="logo.png">logo.png</file>
     <file alias="wireshark-icon.png">svg/wireshark-icon.png</file>
+    <file alias="spinner.gif">spinner.gif</file>
+    <file alies="spy.gif">spy.gif</file>
 
     <file alias="add-circle.svg">svg/add-circle.svg</file>
     <file alias="clipboard.svg">svg/clipboard.svg</file>
@@ -11,6 +13,7 @@
     <file alias="git-branch.svg">svg/git-branch.svg</file>
     <file alias="help.svg">svg/help.svg</file>
     <file alias="list.svg">svg/list.svg</file>
+    <file alias="pricetag.svg">svg/pricetag.svg</file>
     <file alias="pulse.svg">svg/pulse.svg</file>
     <file alias="save.svg">svg/save.svg</file>
     <file alias="time-outline.svg">svg/time-outline.svg</file>
