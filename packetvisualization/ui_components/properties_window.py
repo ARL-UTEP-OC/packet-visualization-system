@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QVBoxLayout, QLineEdit, QFormLayout, QTextEdit
+from PyQt5.QtWidgets import QWidget, QLabel, QFormLayout, QTextEdit, QListWidget
 
 from packetvisualization.models.dataset import Dataset
 from packetvisualization.models.project import Project
@@ -20,9 +20,10 @@ class PropertiesWindow(QWidget):
     def get_properties(self):
         if type(self.item) == Project:
             self.get_project_properties()
+            self.show()
         elif type(self.item) == Dataset:
             self.get_dataset_properties()
-        self.show()
+            self.show()
 
     def get_project_properties(self):
         name = QLabel(self.item.name)
@@ -38,11 +39,21 @@ class PropertiesWindow(QWidget):
 
     def get_dataset_properties(self):
         name = QLabel(self.item.name)
-        packets = QLabel("0")
-        s_time = QLabel("0")
-        e_time = QLabel("0")
-        protocols = QLabel("TCP: 0;\nUDP: 0;")
-        pcaps = QLabel("0")
+        packets = QLabel(str(self.item.totalPackets))
+        s_time = QLabel(self.item.s_time.strftime("%m/%d/%Y, %H:%M:%S"))
+        e_time = QLabel(self.item.e_time.strftime("%m/%d/%Y, %H:%M:%S"))
+
+        pcaps = QListWidget()
+        for i in self.item.pcaps:
+            temp = i.name
+            QListWidget.addItem(pcaps, temp)
+        pcaps.setFixedHeight(75)
+
+        protocols = QListWidget()
+        for p in self.item.protocols:
+            temp = "%s: %s" % (p[0], p[1])
+            QListWidget.addItem(protocols, temp)
+        protocols.setFixedHeight(100)
 
         metadata = QTextEdit(self, plainText=self.item.m_data, lineWrapMode=QTextEdit.FixedColumnWidth,
                              lineWrapColumnOrWidth=50, placeholderText="Custom metadata")
@@ -53,8 +64,8 @@ class PropertiesWindow(QWidget):
         layout.addRow("No. Packets: ", packets)
         layout.addRow("Start Time: ", s_time)
         layout.addRow("End Time: ", e_time)
-        layout.addRow("Protocols: ", protocols)
         layout.addRow("PCAP Names: ", pcaps)
+        layout.addRow("Protocols: ", protocols)
         layout.addRow("Metadata: ", metadata)
 
         self.setLayout(layout)

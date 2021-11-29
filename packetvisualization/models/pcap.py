@@ -90,7 +90,7 @@ class Pcap:
 
     def split_large_pcap(self, pcap_file, split_files_dir):  # create dir with original pcap name
         path = os.path.join(split_files_dir, "packetslice.pcap")
-        os.system('cd "C:\Program Files\Wireshark" & editcap -c 50000 ' + pcap_file + " " + path)
+        os.system('cd "C:\Program Files\Wireshark" & editcap -c 10000 ' + pcap_file + " " + path)
         return
 
     def split_files_to_json(self, split_files_dir, json_files_dir):

@@ -503,7 +503,7 @@ class WorkspaceWindow(QMainWindow):
                             traceback.print_exc()
 
                 if self.traced_dataset:
-                    self.update_traced_data()
+                    self.update_traced_data(d)
         except Exception:
             print("Error loading this pcap")
             traceback.print_exc()
@@ -628,22 +628,18 @@ class WorkspaceWindow(QMainWindow):
                 QTreeWidget.invisibleRootItem(self.project_tree).removeChild(project_item)
             # Deleting a dataset
             elif type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
-                if not self.test_mode:
-                    dataset_item = self.project_tree.selectedItems()[0]
+                dataset_item = self.project_tree.selectedItems()[0]
                 d = dataset_item.data(0, Qt.UserRole)
                 for p in self.workspace_object.project:
                     for d in p.dataset:
                         if d.name == dataset_item.text(0):
-                            if self.traced_dataset and d.name == self.traced_dataset.name:
-                                self.traced_dataset = None
-                                self.eo.delete_collection(self.db[d.name])
-                                self.update_traced_data()
+                            self.eo.delete_collection(self.db[d.name])
                             p.del_dataset(old=d)
                             dataset_item.parent().removeChild(dataset_item)
+                            self.update_traced_data(None)
             # Deleting a pcap
             elif type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Pcap:
-                if not self.test_mode:
-                    pcap_item = self.project_tree.selectedItems()[0]
+                pcap_item = self.project_tree.selectedItems()[0]
                 for p in self.workspace_object.project:
                     for d in p.dataset:
                         for cap in d.pcaps:
@@ -651,8 +647,7 @@ class WorkspaceWindow(QMainWindow):
                                 d.del_pcap(cap)
                                 pcap_item.parent().removeChild(pcap_item)
                                 self.eo.delete_packets(self.db[d.name], "parent_pcap", cap.name)
-                if self.traced_dataset:
-                    self.update_traced_data()
+                                self.update_traced_data(d)
         else:
             return False
 
