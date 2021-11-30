@@ -474,10 +474,6 @@ class table_gui(QTableWidget):
                         row_list.append(item.row())
                 data = self.backend.query_id(self.obj, self.workspace.db, list)
 
-        # for packet in data:
-        #     print(packet)
-
-        # self.ui = properties_gui.properties_window(data, self.obj, self.workspace.db, self.workspace)
         self.ui = properties_gui.properties_window(data, self.obj, self.workspace.db, self.workspace)
         self.ui.show()
 
