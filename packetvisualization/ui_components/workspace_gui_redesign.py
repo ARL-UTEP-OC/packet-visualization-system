@@ -521,7 +521,6 @@ class WorkspaceWindow(QMainWindow):
         try:
             selected = self.project_tree.selectedItems()
             if selected and type(selected[0].data(0, Qt.UserRole)) is tuple:
-                print("is tuple")
                 df, features = selected[0].data(0, Qt.UserRole)
                 # Generate analysis graph
                 fig = px.scatter(df, x="cluster", y="instance_number",
