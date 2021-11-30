@@ -11,10 +11,11 @@ pyrcc5 -o qrc_resources.py resources.qrc
 ```
 
 Finally, to use your document import the python package into the file you are working on, below
-is an example of how to use the folder.svg icon. 
+is an example of how to use the folder.svg icon.
+
 ```python
 from PyQt5.QtGui import QIcon
-from packetvisualization.ui_components.images import qrc_resources
+from packetvisualization.ui_components.resources import qrc_resources
 
 QIcon(":folder.svg")
 ```

@@ -1,6 +1,7 @@
 import os
 import platform as pf
 import shutil
+import subprocess
 import sys
 import traceback
 import webbrowser
@@ -10,12 +11,12 @@ import plotly.offline as po
 import plotly.express as px
 import plotly.graph_objs as go
 import pandas as pd
-from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineSettings
 from scapy.all import *
 from datetime import datetime
 
-from PyQt5.QtCore import Qt, QRect, QObject, pyqtSignal, QThread
-from PyQt5.QtGui import QFont, QIcon, QKeySequence, QMovie
+from PyQt5.QtCore import Qt, QRect, QObject, pyqtSignal, QThread, QUrl, QFile, QIODevice
+from PyQt5.QtGui import QFont, QIcon, QKeySequence, QMovie, QDesktopServices
 from PyQt5.QtWidgets import QMainWindow, QTreeWidget, QPushButton, QVBoxLayout, QProgressBar, QMenu, QWidget, QLabel, \
     QAction, QMessageBox, QDockWidget, QTextEdit, QInputDialog, QTreeWidgetItem, QFileDialog, QApplication, QToolBar, \
     QTableWidgetItem
@@ -394,7 +395,11 @@ class WorkspaceWindow(QMainWindow):
         separator3 = QAction(self)
         separator3.setSeparator(True)
         menu.addAction(separator3)
-        menu.addAction(self.propertiesAction)
+
+        if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Project:
+            menu.addAction(self.propertiesAction)
+        if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
+            menu.addAction(self.propertiesAction)
 
         menu.exec(event.globalPos())
 
@@ -528,7 +533,9 @@ class WorkspaceWindow(QMainWindow):
                 self.new_window = WorkspaceWindow(workspace_path=file_path, existing_flag=True)
                 self.new_window.show()
 
-    def trace_dataset(self):
+    def trace_dataset(self) -> None:
+        """Used to trace a selected dataset and update information in the bandwidth plot if data changes.
+        """
         if self.project_tree.selectedItems() and type(
                 self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
             dataset_item = self.project_tree.selectedItems()[0]
@@ -693,9 +700,13 @@ class WorkspaceWindow(QMainWindow):
             traceback.print_exc()
             return False
 
-    def help_content(self):
-        # Logic for help content
-        webbrowser.open(os.path.join(os.path.dirname(__file__), "documents", "Packet_Visualization.pdf"))
+    def help_content(self) -> None:
+        """Load user documentation
+        """
+        file = QFile(":Packet_Visualization.pdf")
+        helpFile = os.path.join(os.path.dirname(__file__), "resources", "helpFile.pdf")
+        file.copy(helpFile)
+        QDesktopServices().openUrl(QUrl.fromLocalFile(helpFile))
 
     def about(self):
         # Logic for about

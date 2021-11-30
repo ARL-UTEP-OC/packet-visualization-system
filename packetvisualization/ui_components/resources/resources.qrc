@@ -3,7 +3,8 @@
     <file alias="logo.png">logo.png</file>
     <file alias="wireshark-icon.png">svg/wireshark-icon.png</file>
     <file alias="spinner.gif">spinner.gif</file>
-    <file alies="spy.gif">spy.gif</file>
+
+    <file alias="Packet_Visualization.pdf">Packet_Visualization.pdf</file>
 
     <file alias="add-circle.svg">svg/add-circle.svg</file>
     <file alias="clipboard.svg">svg/clipboard.svg</file>
