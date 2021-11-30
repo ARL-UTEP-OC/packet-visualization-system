@@ -1021,6 +1021,12 @@ class WorkspaceWindow(QMainWindow):
             self.p_win = PropertiesWindow(item)
             self.p_win.get_properties()
 
+    def export_pandas_df(self, df : pd.DataFrame, path_filename_with_extension: str,is_csv = True):
+        if is_csv:
+            df.to_csv(path_filename_with_extension, index=False)
+        else:
+            df.to_json(path_filename_with_extension)
+
 
 if __name__ == "__main__":
     args = len(sys.argv)
