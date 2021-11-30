@@ -214,6 +214,14 @@ class WorkspaceWindow(QMainWindow):
         self.gen_analysis_action.setStatusTip("View Analysis Graph")
         self.gen_analysis_action.setToolTip("View Analysis Graph")
 
+        self.export_analysis_csv = QAction("&Export Analysis to CSV", self)
+        self.export_analysis_csv.setStatusTip("Export Analysis to CSV")
+        self.export_analysis_csv.setToolTip("Export Analysis to CSV")
+
+        self.export_analysis_json = QAction("&Export Analysis to JSON", self)
+        self.export_analysis_json = QAction("Export Analysis to JSON")
+        self.export_analysis_json = QAction("Export Analysis to JSON")
+
         # self.gen_table_action = QAction(QIcon(os.path.join(self.icons, "list.svg")), "&Packet Table", self)
         self.classifier_action = QAction("&Classify Packets", self)
         self.classifier_action.setStatusTip("Classify selected pcap data")
@@ -269,6 +277,8 @@ class WorkspaceWindow(QMainWindow):
         self.classifier_action.triggered.connect(self.display_classifier_options)
         self.propertiesAction.triggered.connect(self.show_properties)
         self.gen_analysis_action.triggered.connect(self.view_analysis)
+        self.export_analysis_csv.triggered.connect(lambda: self.export_analysis_item(True))
+        self.export_analysis_json.triggered.connect(lambda: self.export_analysis_item(False))
 
         # Connect Wireshark actions
         self.openWiresharkAction.triggered.connect(self.open_wireshark)
@@ -386,6 +396,8 @@ class WorkspaceWindow(QMainWindow):
             # Right-click an analysis item
             if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is tuple:
                 menu.addAction(self.gen_analysis_action)
+                menu.addAction(self.export_analysis_csv)
+                menu.addAction(self.export_analysis_json)
 
         separator1 = QAction(self)
         separator1.setSeparator(True)
@@ -824,9 +836,6 @@ class WorkspaceWindow(QMainWindow):
             analysis_item.setText(0, text)
             return True
 
-    def remove_analysis(self):
-        return
-
     def gen_table(self):
         try:
             if self.project_tree.selectedItems() and type(
@@ -1024,12 +1033,17 @@ class WorkspaceWindow(QMainWindow):
             self.p_win = PropertiesWindow(item)
             self.p_win.get_properties()
 
-    def export_pandas_df(self, df : pd.DataFrame, path_filename_with_extension: str,is_csv = True):
-        if is_csv:
-            df.to_csv(path_filename_with_extension, index=False)
-        else:
-            df.to_json(path_filename_with_extension)
-
+    def export_analysis_item(self, csv:bool):
+        if self.project_tree.selectedItems():
+            df, features = self.project_tree.selectedItems()[0].data(0, Qt.UserRole)
+            if csv:
+                output_file = QFileDialog.getSaveFileName(caption="Choose Output location", filter=".csv (*.csv)")[
+                    0]
+                df.to_csv(output_file, index=False)
+            else:
+                output_file = \
+                    QFileDialog.getSaveFileName(caption="Choose Output location", filter=".json (*.json)")[0]
+                df.to_json(output_file)
 
 if __name__ == "__main__":
     args = len(sys.argv)
