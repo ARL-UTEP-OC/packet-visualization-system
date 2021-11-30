@@ -15,6 +15,8 @@ from packetvisualization.ui_components import properties_gui
 
 
 def gen_dictionary():
+    """Creates a dictionary that stores the count of how many times a field appears in a packet
+    """
     dictionary = {
         "frame-number": 0,
         "frame-time_relative": 0,
@@ -46,9 +48,11 @@ class table_gui(QTableWidget):
         fnt.setBold(True)
         self.horizontalHeader().setFont(fnt)
 
-        self.populate_table(obj=obj, progressbar=progressbar, db=db)
+        self.populate_table()
 
     def contextMenuEvent(self, event):
+        """Creates the right-click menu for accessing table functionality
+        """
         try:
             menu = QMenu(self)
 
@@ -169,7 +173,7 @@ class table_gui(QTableWidget):
             traceback.print_exc()
 
     def view_in_wireshark(self, tagged: bool = None, all_packets: bool = None):
-        """Allows user to select packets from packet table for viewing in Wireshark
+        """Starts a thread that allows user to select packets from packet table for viewing in Wireshark
         """
         if self.selectedItems() and self.thread_is_free:
             self.thread_is_free = False
@@ -195,7 +199,7 @@ class table_gui(QTableWidget):
             self.thread.finished.connect(self.free_thread)
 
     def export_to_pcap(self, tagged: bool = None, all_packets: bool = None):
-        """Allows user export selected packets to a PCAP file
+        """Starts a thread that allows user to export packets to a PCAP file
         """
         if self.selectedItems() and self.thread_is_free:
             self.thread_is_free = False
@@ -226,9 +230,13 @@ class table_gui(QTableWidget):
             self.thread.finished.connect(self.free_thread)
 
     def free_thread(self):
+        """Signals to other threads that the table thread is free to use
+        """
         self.thread_is_free = True
 
     def export_to_json(self, tagged: bool = None, all_packets: bool = None):
+        """Starts a thread that allows user to export packets to JSON format
+        """
         if self.selectedItems() and self.thread_is_free:
             self.thread_is_free = False
 
@@ -257,6 +265,8 @@ class table_gui(QTableWidget):
             self.thread.finished.connect(self.free_thread)
 
     def export_to_csv(self, tagged: bool = None, all_packets: bool = None):
+        """Starts a thread that allows user to export packets to CSV format
+        """
         if self.selectedItems() and self.thread_is_free:
             self.thread_is_free = False
 
@@ -370,14 +380,18 @@ class table_gui(QTableWidget):
                     self.resizeRowToContents(item.row())
 
     def update_progressbar(self, n: int):
+        """Receives signal to update the progress bar from threaded tasks
+        """
         self.progressbar.setValue(n)
 
     def update_merge_cap(self, mergecap):
+        """Receives signal to update the temp mergecap for the use of adding a dataset
+        """
         self.mergecap = mergecap[0]
 
     def create_dataset(self, tagged: bool = None):
-        """Allows user to create a new dataset from selected or tagged packets.
-            """
+        """Starts a thread that allows user to create a new dataset from selected or tagged packets.
+        """
         if self.selectedItems() and self.thread_is_free:
             self.thread_is_free = False
             try:
@@ -477,8 +491,8 @@ class table_gui(QTableWidget):
         self.ui = properties_gui.properties_window(data, self.obj, self.workspace.db, self.workspace)
         self.ui.show()
 
-    def populate_table(self, obj, progressbar, db):
-        """Generates and populates a table of packets from the specified pcap or dataset
+    def populate_table(self):
+        """Starts a thread that generates and populates a table of packets from the specified pcap or dataset
         """
         if self.thread_is_free:
             self.thread_is_free = False
@@ -489,6 +503,7 @@ class table_gui(QTableWidget):
             self.thread.started.connect(self.worker.create_table)
             self.worker.finished.connect(self.thread.quit)
             self.worker.finished.connect(self.worker.deleteLater)
+            self.worker.progress.connect(self.update_progressbar)
             self.thread.finished.connect(self.thread.deleteLater)
 
             self.thread.start()
@@ -510,6 +525,9 @@ class table_gui(QTableWidget):
         self.horizontalHeaderItem(7).setText("Length (" + str(self.dict["frame-len"]) + ")")
 
     def add_dataset_to_project_tree(self):
+        """Adds temp mergecap to the designated dataset in the designated project in the
+        project tree of the workspace
+        """
         temp_mergecap = self.mergecap
         items = []
         for p in self.workspace.workspace_object.project:
@@ -562,6 +580,8 @@ class table_worker(QObject):
         self.output_file = output_file
 
     def create_pcap(self):
+        """Creates a pcap from selected packets in the table
+        """
         all_packets = self.all_packets
         tagged = self.tagged
         tag = self.tag
@@ -607,6 +627,8 @@ class table_worker(QObject):
         self.finished.emit()
 
     def create_pcap_for_json(self):
+        """Creates a pcap from selected packets and then exports it to a JSON file
+        """
         all_packets = self.all_packets
         tagged = self.tagged
         tag = self.tag
@@ -651,6 +673,8 @@ class table_worker(QObject):
         self.finished.emit()
 
     def create_pcap_for_csv(self):
+        """Creates a pcap from selected packets and then exports it to a CSV file
+        """
         all_packets = self.all_packets
         tagged = self.tagged
         tag = self.tag
@@ -695,6 +719,8 @@ class table_worker(QObject):
         self.finished.emit()
 
     def create_pcap_for_wireshark(self):
+        """Creates a pcap from selected packets and then opens the pcap in Wireshark
+        """
         table = self.table
         selected = self.selected
         tagged = self.tagged
@@ -741,6 +767,8 @@ class table_worker(QObject):
             traceback.print_exc()
 
     def create_pcap_for_dataset(self):
+        """Creates a pcap from selected packets and then allows for adding that pcap to a dataset
+        """
         table = self.table
         selected = self.selected
         tagged = self.tagged
@@ -777,6 +805,8 @@ class table_worker(QObject):
             traceback.print_exc()
 
     def create_table(self):
+        """Populates the table from a database query of the individual packets contained in a pcap
+        """
         obj = self.table.obj
         progressbar = self.table.progressbar
         db = self.table.workspace.db
@@ -832,10 +862,10 @@ class table_worker(QObject):
 
             i += 1
             progressbar_value = progressbar_value + value
-            progressbar.setValue(progressbar_value)
+            self.progress.emit(progressbar_value)
 
         self.table.update_lables()
         self.table.resizeColumnsToContents()
-        progressbar.setValue(0)
+        self.progress.emit(0)
         progressbar.hide()
         self.finished.emit()
