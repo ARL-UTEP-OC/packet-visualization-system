@@ -77,7 +77,7 @@ class WorkspaceWindow(QMainWindow):
 
         # Docked widget for Project Tree
         self.project_tree = QTreeWidget()
-        self.project_tree.setHeaderLabels(["Item Name", "Size", "DoC"])
+        self.project_tree.setHeaderLabels(["Item Name"])
         self.project_tree.setColumnWidth(0, 200)
         self.project_tree.itemPressed['QTreeWidgetItem*', 'int'].connect(self.tree_item_clicked)
         self.dock_project_tree = QDockWidget("Project Tree Window", self)
@@ -268,6 +268,7 @@ class WorkspaceWindow(QMainWindow):
         self.gen_table_action.triggered.connect(self.gen_table)
         self.classifier_action.triggered.connect(self.display_classifier_options)
         self.propertiesAction.triggered.connect(self.show_properties)
+        self.gen_analysis_action.triggered.connect(self.view_analysis)
 
         # Connect Wireshark actions
         self.openWiresharkAction.triggered.connect(self.open_wireshark)
