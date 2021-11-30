@@ -55,12 +55,12 @@ class properties_window(QWidget):
 
         self.listWidget2.setGeometry(QtCore.QRect(10, 10, 211, 291))
 
-        self.pktIdsAsList = []
-        for i in range(len(pktIds)):
-            string = str(pktIds[i])
-            self.pktIdsAsList.append(string)
-            item = QtWidgets.QListWidgetItem(string)
-            self.listWidget2.addItem(item)
+        # self.pktIdsAsList = []
+        # for i in range(len(pktIds)):
+        #     string = str(pktIds[i])
+        #     self.pktIdsAsList.append(string)
+        #     item = QtWidgets.QListWidgetItem(string)
+        #     self.listWidget2.addItem(item)
 
         self.layout.addWidget(self.listWidget2, 0, 0, 1, 2)
 
