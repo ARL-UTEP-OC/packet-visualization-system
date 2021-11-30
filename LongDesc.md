@@ -9,3 +9,8 @@ Follow these steps:
     ui = Ui_startup_window()
     ui.run_program()
     ```
+## Requirements
+
+1. Have a local mongo db server installed and running. The program uses this to create a local db instance.
+2. Install wireshark
+
