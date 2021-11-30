@@ -1,8 +1,11 @@
 import os
 import shutil
+import subprocess
+import platform
+
 
 class Pcap:
-    def __init__(self, name: str ,path: str, file: str, m_data = "") -> None:
+    def __init__(self, name: str, path: str, file: str) -> None:
         try:
             self.name = name
             self.directory = path
@@ -10,7 +13,6 @@ class Pcap:
             self.pcap_file = file  # pcap recieved from user
             self.total_packets = 0
             self.protocols = {}
-            self.m_data = m_data   # metadata will go to packet
             self.json_file = None
             self.file_size = os.path.getsize(self.pcap_file)
             self.split_dir = ""
@@ -29,7 +31,7 @@ class Pcap:
 
                 # self.split_files_to_json(self.split_dir,self.split_json_dir)  # create json for each split
             else:
-                self.create_json_file() # create empty json
+                self.create_json_file()  # create empty json
                 self.toJson()
 
         except:
@@ -43,11 +45,14 @@ class Pcap:
     def create_json_file(self):
         filename = self.name + ".json"
         path = os.path.join(self.directory, filename)
-        self.json_file= path
+        self.json_file = path
         self.create_file(path)
 
     def toJson(self):
-        os.system('cd "C:\Program Files\Wireshark" & tshark -r ' + self.pcap_file + ' -T json > ' + self.json_file)
+        if platform.system() == "Linux":
+            os.system('tshark -r ' + self.pcap_file + ' -T json > ' + self.json_file)
+        elif platform.system() == "Windows":
+            os.system('cd "C:\Program Files\Wireshark" & tshark -r ' + self.pcap_file + ' -T json > ' + self.json_file)
 
     def cleanup(self):
         if self.large_pcap_flag:
@@ -56,10 +61,10 @@ class Pcap:
             os.remove(self.json_file)
 
     def save(self, f) -> None:
-        f.write('{"name": "%s", "m_data": "%s"' % (self.name, self.m_data))
+        f.write('{"name": "%s"' % self.name)
         f.write('}')
 
-    def remove(self) -> bool: # Moved to entity operator
+    def remove(self) -> bool:  # Moved to entity operator
         return self.__del__()
 
     def __del__(self) -> bool:
@@ -70,23 +75,25 @@ class Pcap:
             return False
 
     def create_pcap_split_dir(self):
-        path = self.directory + "\\" + self.name + "-splitdir"
+        name = self.name + "-splitdir"
+        path = os.path.join(self.directory, name)
         self.split_dir = path
         os.mkdir(path)
         return
 
     def create_split_json_dir(self):
-        path = self.directory + "\\" + self.name + "-splitjson"
+        name = self.name + "-splitjson"
+        path = os.path.join(self.directory, name)
         self.split_json_dir = path
         os.mkdir(path)
         return
 
     def split_large_pcap(self, pcap_file, split_files_dir):  # create dir with original pcap name
-        path = split_files_dir + "\packetslice.pcap"
-        os.system('cd "C:\Program Files\Wireshark" & editcap -c 50000 ' + pcap_file + " " + path)
+        path = os.path.join(split_files_dir, "packetslice.pcap")
+        os.system('cd "C:\Program Files\Wireshark" & editcap -c 10000 ' + pcap_file + " " + path)
         return
 
-    def split_files_to_json(self,split_files_dir, json_files_dir):
+    def split_files_to_json(self, split_files_dir, json_files_dir):
         for dirpath, _, filenames in os.walk(split_files_dir):
             for f in filenames:
                 json_name = f.replace('.pcap', '.json')

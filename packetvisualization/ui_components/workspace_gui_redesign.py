@@ -15,7 +15,7 @@ from scapy.all import *
 from datetime import datetime
 
 from PyQt5.QtCore import Qt, QRect, QObject, pyqtSignal, QThread
-from PyQt5.QtGui import QFont, QIcon, QKeySequence
+from PyQt5.QtGui import QFont, QIcon, QKeySequence, QMovie
 from PyQt5.QtWidgets import QMainWindow, QTreeWidget, QPushButton, QVBoxLayout, QProgressBar, QMenu, QWidget, QLabel, \
     QAction, QMessageBox, QDockWidget, QTextEdit, QInputDialog, QTreeWidgetItem, QFileDialog, QApplication, QToolBar, \
     QTableWidgetItem
@@ -33,6 +33,7 @@ from packetvisualization.models.pcap_worker import PcapWorker
 from packetvisualization.backend_components import Wireshark
 from packetvisualization.ui_components import filter_gui
 from packetvisualization.ui_components.plot_worker import PlotWorker
+from packetvisualization.ui_components.properties_window import PropertiesWindow
 from packetvisualization.ui_components.table_gui import table_gui
 
 
@@ -43,8 +44,7 @@ class WorkspaceWindow(QMainWindow):
     """
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     app = QApplication(sys.argv)
-    logo = os.path.join(os.path.dirname(__file__), "images", "logo.png")
-    app.setWindowIcon(QIcon(logo))
+    app.setWindowIcon(QIcon(":logo.png"))
 
     def __init__(self, workspace_path: str, existing_flag: bool = False) -> None:
         """Initialization function for a new workspace window.
@@ -57,12 +57,11 @@ class WorkspaceWindow(QMainWindow):
         super().__init__()
         self.eo = EntityOperations()
         self.db = None
-        self.icons = os.path.join(os.path.dirname(__file__), "images", "svg")
-        self.logo = os.path.join(os.path.dirname(__file__), "images", "logo.png")
         self.test_mode = False
+        self.new_window = []
         if existing_flag:
             self.workspace_object = Load().open_zip(workspace_path)
-            restore_path = os.path.join(self.workspace_object.dump_path,self.workspace_object.name)
+            restore_path = os.path.join(self.workspace_object.dump_path, self.workspace_object.name)
             print(restore_path)
             self.eo.restore_db(self.workspace_object.name, restore_path)
             self.db = self.eo.set_db(self.workspace_object.name)
@@ -74,16 +73,27 @@ class WorkspaceWindow(QMainWindow):
         self.setWindowTitle("PacketVisualizer - " + self.workspace_object.name)
         self.resize(1000, 600)
 
+        self.thread_1_is_free = True
+
         # Docked widget for Project Tree
         self.project_tree = QTreeWidget()
         self.project_tree.setHeaderLabels(["Item Name", "Size", "DoC"])
         self.project_tree.setColumnWidth(0, 200)
+        self.project_tree.itemPressed['QTreeWidgetItem*', 'int'].connect(self.tree_item_clicked)
         self.dock_project_tree = QDockWidget("Project Tree Window", self)
         self.dock_project_tree.setWidget(self.project_tree)
         self.dock_project_tree.setFloating(False)
 
+        # Loading Widget
+        self.loading = QLabel()
+        self.loading.setAlignment(Qt.AlignCenter)
+        self.spinner = QMovie(":spinner.gif")
+        self.loading.setMovie(self.spinner)
+        self.spinner.start()
+
         self.traced_dataset = None
         self.traced_data = None
+
         # Docked widget for Bandwidth vs. Time Graph
         self.plot_x = []
         self.plot_y = []
@@ -131,7 +141,7 @@ class WorkspaceWindow(QMainWindow):
         """Creates all actions that will be used in the application
         """
         # File Menu Actions
-        self.newProjectAction = QAction(QIcon(os.path.join(self.icons, "add-circle.svg")), "New &Project", self)
+        self.newProjectAction = QAction(QIcon(":add-circle.svg"), "New &Project", self)
         self.newProjectAction.setShortcut("Ctrl+N")
         self.newProjectAction.setStatusTip("Create a new project")
         self.newProjectAction.setToolTip("Create a new project")
@@ -154,12 +164,12 @@ class WorkspaceWindow(QMainWindow):
         self.openExistingAction.setStatusTip("Open existing workspace")
         self.openExistingAction.setToolTip("Open existing workspace")
 
-        self.saveAction = QAction(QIcon(os.path.join(self.icons, "save.svg")), "&Save", self)
+        self.saveAction = QAction(QIcon(":save.svg"), "&Save", self)
         self.saveAction.setShortcut("Ctrl+S")
         self.saveAction.setStatusTip("Save workspace")
         self.saveAction.setToolTip("Save workspace")
 
-        self.traceAction = QAction(QIcon(os.path.join(self.icons, "pulse.svg")), "&Trace", self)
+        self.traceAction = QAction(QIcon(":pulse.svg"), "&Trace", self)
         self.traceAction.setShortcut("Ctrl+T")
         self.traceAction.setStatusTip("Trace dataset on Bandwidth vs Time graph")
         self.traceAction.setToolTip("race dataset on Bandwidth vs Time graph")
@@ -178,53 +188,58 @@ class WorkspaceWindow(QMainWindow):
         self.exitAction.setToolTip("Exit workspace")
 
         # Edit Menu Actions
-        self.cutAction = QAction(QIcon(os.path.join(self.icons, "cut.svg")), "Cu&t", self)
+        self.cutAction = QAction(QIcon(":cut.svg"), "Cu&t", self)
         self.cutAction.setShortcut(QKeySequence.Cut)
         self.cutAction.setEnabled(False)
 
-        self.copyAction = QAction(QIcon(os.path.join(self.icons, "copy.svg")), "&Copy", self)
+        self.copyAction = QAction(QIcon(":copy.svg"), "&Copy", self)
         self.copyAction.setShortcut(QKeySequence.Copy)
         self.copyAction.setEnabled(False)
 
-        self.pasteAction = QAction(QIcon(os.path.join(self.icons, "clipboard.svg")), "&Paste", self)
+        self.pasteAction = QAction(QIcon(":clipboard.svg"), "&Paste", self)
         self.pasteAction.setShortcut(QKeySequence.Paste)
         self.pasteAction.setEnabled(False)
 
-        self.deleteAction = QAction(QIcon(os.path.join(self.icons, "trash.svg")), "&Delete", self)
+        self.deleteAction = QAction(QIcon(":trash.svg"), "&Delete", self)
         self.deleteAction.setShortcut("Del")
         self.deleteAction.setStatusTip("Remove selected item")
         self.deleteAction.setToolTip("Remove item")
 
         # View Menu Actions
-        self.gen_table_action = QAction(QIcon(os.path.join(self.icons, "list.svg")), "&Packet Table", self)
+        self.gen_table_action = QAction(QIcon(":list.svg"), "&Packet Table", self)
         self.gen_table_action.setStatusTip("View Packets in a PCAP")
         self.gen_table_action.setToolTip("View Packets in a PCAP")
+
+        self.gen_analysis_action = QAction("&View Analysis Graph", self)
+        self.gen_analysis_action.setStatusTip("View Analysis Graph")
+        self.gen_analysis_action.setToolTip("View Analysis Graph")
 
         # self.gen_table_action = QAction(QIcon(os.path.join(self.icons, "list.svg")), "&Packet Table", self)
         self.classifier_action = QAction("&Classify Packets", self)
         self.classifier_action.setStatusTip("Classify selected pcap data")
         self.classifier_action.setToolTip("Classify selected pcap data")
 
+        self.propertiesAction = QAction("Properties", self)
+        self.propertiesAction.setStatusTip("View Properties")
+        self.propertiesAction.setToolTip("View Properties")
+
         # Wireshark Menu Actions
-        self.openWiresharkAction = QAction(QIcon(os.path.join(self.icons, "wireshark-icon.png")), "Open &Wireshark",
-                                           self)
+        self.openWiresharkAction = QAction(QIcon(":wireshark-icon.png"), "Open &Wireshark", self)
         self.openWiresharkAction.setShortcut("Ctrl+W")
         self.openWiresharkAction.setStatusTip("Open dataset or pcap in Wireshark")
         self.openWiresharkAction.setToolTip("Open dataset or pcap in Wireshark")
 
         # Window Menu Actions
-        self.openProjectTreeAction = QAction(QIcon(os.path.join(self.icons, "git-branch.svg")),
-                                             "&Project Tree Window", self)
+        self.openProjectTreeAction = QAction(QIcon(":git-branch.svg"), "&Project Tree Window", self)
         self.openProjectTreeAction.setStatusTip("Open project tree window")
         self.openProjectTreeAction.setToolTip("Open project tree window")
 
-        self.openPlotAction = QAction(QIcon(os.path.join(self.icons, "time-outline.svg")),
-                                      "&Bandwidth vs. Time Window", self)
+        self.openPlotAction = QAction(QIcon(":time-outline.svg"), "&Bandwidth vs. Time Window", self)
         self.openPlotAction.setStatusTip("Open Bandwidth vs. Time window")
         self.openPlotAction.setToolTip("Open Bandwidth vs. Time window")
 
         # Help Menu Actions
-        self.helpContentAction = QAction(QIcon(os.path.join(self.icons, "help.svg")), "&Help Content", self)
+        self.helpContentAction = QAction(QIcon(":help.svg"), "&Help Content", self)
         self.aboutAction = QAction("&About", self)
         self.aboutAction.setEnabled(False)
 
@@ -252,6 +267,7 @@ class WorkspaceWindow(QMainWindow):
         # Connect View actions
         self.gen_table_action.triggered.connect(self.gen_table)
         self.classifier_action.triggered.connect(self.display_classifier_options)
+        self.propertiesAction.triggered.connect(self.show_properties)
 
         # Connect Wireshark actions
         self.openWiresharkAction.triggered.connect(self.open_wireshark)
@@ -276,12 +292,12 @@ class WorkspaceWindow(QMainWindow):
         new_menu.addAction(self.newProjectAction)
         new_menu.addAction(self.newDatasetAction)
         new_menu.addAction(self.newPCAPAction)
-        open_menu = file_menu.addMenu(QIcon(os.path.join(self.icons, "folder.svg")), "&Open...")
+        open_menu = file_menu.addMenu(QIcon(":folder.svg"), "&Open...")
         open_menu.addAction(self.openNewAction)
         open_menu.addAction(self.openExistingAction)
         file_menu.addAction(self.saveAction)
-        file_menu.addSeparator()
-        file_menu.addAction(self.traceAction)
+        # file_menu.addSeparator()
+        # file_menu.addAction(self.traceAction)
         file_menu.addSeparator()
         export_menu = file_menu.addMenu("&Export")
         export_menu.addAction(self.exportCsvAction)
@@ -349,7 +365,7 @@ class WorkspaceWindow(QMainWindow):
             # Right-click a dataset
             if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
                 menu.addAction(self.newPCAPAction)
-                menu.addAction(self.traceAction)
+                # menu.addAction(self.traceAction)
                 menu.addAction(self.openWiresharkAction)
                 menu.addAction(self.filterWiresharkAction)
                 menu.addAction(self.classifier_action)
@@ -366,6 +382,9 @@ class WorkspaceWindow(QMainWindow):
                 export_menu = menu.addMenu("Export")
                 export_menu.addAction(self.exportCsvAction)
                 export_menu.addAction(self.exportJsonAction)
+            # Right-click an analysis item
+            if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is tuple:
+                menu.addAction(self.gen_analysis_action)
 
         separator1 = QAction(self)
         separator1.setSeparator(True)
@@ -380,13 +399,18 @@ class WorkspaceWindow(QMainWindow):
         menu.addAction(separator2)
         menu.addAction(self.newProjectAction)
 
+        separator3 = QAction(self)
+        separator3.setSeparator(True)
+        menu.addAction(separator3)
+        menu.addAction(self.propertiesAction)
+
         menu.exec(event.globalPos())
 
     def new_project(self, text=None):
         # Logic for creating a new project
         if not self.test_mode:
             text = QInputDialog.getText(self, "Project Name Entry", "Enter Project name:")[0]
-        if not self.project_tree.findItems(text, Qt.MatchRecursive, 0) or self.test_mode == True:
+        if not self.project_tree.findItems(text, Qt.MatchRecursive, 0):
             project = Project(name=text, parent_path=self.workspace_object.path)
             self.workspace_object.add_project(project)
             item = QTreeWidgetItem(self.project_tree)
@@ -415,7 +439,7 @@ class WorkspaceWindow(QMainWindow):
                         project = self.project_tree.selectedItems()[0]
 
                     p = project.data(0, Qt.UserRole)
-                    dataset = Dataset(name=text, parentPath=p.path)
+                    dataset = Dataset(name=text, parent_path=p.path)
 
                     p.add_dataset(dataset)
                     child_item = QTreeWidgetItem()
@@ -487,9 +511,31 @@ class WorkspaceWindow(QMainWindow):
                             traceback.print_exc()
 
                 if self.traced_dataset:
-                    self.update_traced_data()
+                    self.update_traced_data(d)
         except Exception:
             print("Error loading this pcap")
+            traceback.print_exc()
+
+    def view_analysis(self):
+        try:
+            selected = self.project_tree.selectedItems()
+            if selected and type(selected[0].data(0, Qt.UserRole)) is tuple:
+                print("is tuple")
+                df, features = selected[0].data(0, Qt.UserRole)
+                # Generate analysis graph
+                fig = px.scatter(df, x="cluster", y="instance_number",
+                                 color='cluster', color_continuous_scale=px.colors.sequential.Bluered_r,
+                                 hover_data=df.columns.values[:len(features)])
+
+                raw_html = '<html><head><meta charset="utf-8" />'
+                raw_html += '<script src="https://cdn.plot.ly/plotly-latest.min.js"></script></head>'
+                raw_html += '<body>'
+                raw_html += po.plot(fig, include_plotlyjs=False, output_type='div')
+                raw_html += '</body></html>'
+
+                self.classifier_plot_view.setHtml(raw_html)
+                self.classifier_window.show()
+        except:
             traceback.print_exc()
 
     def open_new_workspace(self) -> None:
@@ -498,8 +544,9 @@ class WorkspaceWindow(QMainWindow):
         directory = QFileDialog.getSaveFileName(caption="Choose Workspace location")[0]
 
         if directory != '':
-            self.workspace = WorkspaceWindow(workspace_path=directory)
-            self.workspace.show()
+            w = WorkspaceWindow(workspace_path=directory)
+            self.new_window.append(w)
+            w.show()
 
     def open_existing_workspace(self) -> None:
         """Prompts user to select saved zip file and opens an existing workspace window
@@ -508,17 +555,16 @@ class WorkspaceWindow(QMainWindow):
         file_path = QFileDialog.getOpenFileName(caption="Open existing Workspace", filter=file_filter)[0]
 
         if file_path != "":
-            if not self.test_mode:
-                self.workspace = WorkspaceWindow(workspace_path=file_path, existing_flag=True)
-                self.workspace.show()
+            w = WorkspaceWindow(workspace_path=file_path, existing_flag=True)
+            self.new_window.append(w)
+            w.show()
 
     def trace_dataset(self):
         if self.project_tree.selectedItems() and type(
                 self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
             dataset_item = self.project_tree.selectedItems()[0]
             d = dataset_item.data(0, Qt.UserRole)
-            self.traced_dataset = d
-            self.update_traced_data()
+            self.update_traced_data(d)
 
     def export_csv(self):
         # Logic to export dataset or pcap to CSV
@@ -613,22 +659,18 @@ class WorkspaceWindow(QMainWindow):
                 QTreeWidget.invisibleRootItem(self.project_tree).removeChild(project_item)
             # Deleting a dataset
             elif type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
-                if not self.test_mode:
-                    dataset_item = self.project_tree.selectedItems()[0]
+                dataset_item = self.project_tree.selectedItems()[0]
                 d = dataset_item.data(0, Qt.UserRole)
                 for p in self.workspace_object.project:
                     for d in p.dataset:
                         if d.name == dataset_item.text(0):
-                            if self.traced_dataset and d.name == self.traced_dataset.name:
-                                self.traced_dataset = None
-                                self.eo.delete_collection(self.db[d.name])
-                                self.update_traced_data()
+                            self.eo.delete_collection(self.db[d.name])
                             p.del_dataset(old=d)
                             dataset_item.parent().removeChild(dataset_item)
+                            self.update_traced_data(None)
             # Deleting a pcap
             elif type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Pcap:
-                if not self.test_mode:
-                    pcap_item = self.project_tree.selectedItems()[0]
+                pcap_item = self.project_tree.selectedItems()[0]
                 for p in self.workspace_object.project:
                     for d in p.dataset:
                         for cap in d.pcaps:
@@ -636,16 +678,13 @@ class WorkspaceWindow(QMainWindow):
                                 d.del_pcap(cap)
                                 pcap_item.parent().removeChild(pcap_item)
                                 self.eo.delete_packets(self.db[d.name], "parent_pcap", cap.name)
-                if self.traced_dataset:
-                    self.update_traced_data()
+                                self.update_traced_data(d)
         else:
             return False
 
     def exit(self) -> None:
         """Exit function that calls the close() function to stop the application
         """
-        if os.path.exists("tEmPpCaP.pcap"):
-            os.remove("tEmPpCaP.pcap")
         self.close()
 
     def cut_content(self):
@@ -671,25 +710,16 @@ class WorkspaceWindow(QMainWindow):
     def open_wireshark(self, dataset_item=None, pcap_item=None, merge_flag=False):
         # Logic to open wireshark
         try:
-            if self.project_tree.selectedItems() and type(
-                    self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset or (
-                    self.test_mode == True and merge_flag == True):
-                if not self.test_mode:
+            if self.project_tree.selectedItems():
+                if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
                     dataset_item = self.project_tree.selectedItems()[0]
-                d = dataset_item.data(0, Qt.UserRole)
-                Wireshark.openwireshark(d.mergeFilePath)
-                return True
+                    d = dataset_item.data(0, Qt.UserRole)
+                    Wireshark.openwireshark(d.mergeFilePath)
 
-            if self.project_tree.selectedItems() and type(
-                    self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Pcap or self.test_mode == True:
-                if not self.test_mode:
+                if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Pcap:
                     pcap_item = self.project_tree.selectedItems()[0]
-                cap = pcap_item.data(0, Qt.UserRole)
-                if self.test_mode:
-                    return True
-                Wireshark.openwireshark(cap.pcap_file)
-            else:
-                return False
+                    cap = pcap_item.data(0, Qt.UserRole)
+                    Wireshark.openwireshark(cap.pcap_file)
         except Exception:
             traceback.print_exc()
             return False
@@ -712,12 +742,16 @@ class WorkspaceWindow(QMainWindow):
             self.workspace_object.__del__()
             if os.path.exists("tEmPpCaP.pcap"):
                 os.remove("tEmPpCaP.pcap")
+            if os.path.exists("tEmPmErGeCaP.pcap"):
+                os.remove("tEmPmErGeCaP.pcap")
             event.accept()
         elif reply == QMessageBox.No:
             self.eo.remove_db(self.workspace_object.name)
             self.workspace_object.__del__()
             if os.path.exists("tEmPpCaP.pcap"):
                 os.remove("tEmPpCaP.pcap")
+            if os.path.exists("tEmPmErGeCaP.pcap"):
+                os.remove("tEmPmErGeCaP.pcap")
             event.accept()
         else:
             event.ignore()
@@ -848,9 +882,6 @@ class WorkspaceWindow(QMainWindow):
                     pcap_item.setData(0, Qt.UserRole, cap)
                     dataset_item.addChild(pcap_item)
 
-
-
-
         return True
 
     def show_classifier_qt(self, fig):
@@ -872,16 +903,10 @@ class WorkspaceWindow(QMainWindow):
         # fig.show()
         self.show_classifier_qt(fig)
 
-    def update_traced_data(self):
+    def update_traced_data(self, d: Dataset):
         """Updates the traced data when a packet is added or deleted
         """
-        if self.traced_dataset:
-            collection = self.db[self.traced_dataset.name]
-            query = {'parent_dataset': self.traced_dataset.name}
-            self.traced_data = list(collection.find(query))
-        else:
-            self.traced_data = None
-        self.update_plot()
+        self.update_plot(d)
 
     def report_progress(self, n: int) -> None:
         """Updates the progress bar from worker signal
@@ -900,31 +925,45 @@ class WorkspaceWindow(QMainWindow):
         self.plot_x = n[0]
         self.plot_y = n[1]
 
-    def update_plot(self):
+    def report_traced_data(self, n: list) -> None:
+        self.traced_data = n[0]
+
+    def update_plot(self, d: Dataset):
         """ Creates a new thread to update bandwidth vs. time graph
         """
-        # Step 1: Begin showing progress bar
-        self.progressbar.show()
-        # Step 2: Create a QThread object
-        self.thread_1 = QThread()
-        # Step 3: Create a worker object
-        self.worker_1 = PlotWorker(self.traced_data)
-        # Step 4: Move worker to the thread
-        self.worker_1.moveToThread(self.thread_1)
-        # Step 5: Connect signals and slots
-        self.thread_1.started.connect(self.worker_1.run)
-        self.worker_1.finished.connect(self.thread_1.quit)
-        self.worker_1.finished.connect(self.worker_1.deleteLater)
-        self.thread_1.finished.connect(self.thread_1.deleteLater)
-        self.worker_1.progress.connect(self.report_progress)
-        self.worker_1.data.connect(self.report_plot_data)
-        # Step 6: Start the thread
-        self.thread_1.start()
+        if self.thread_1_is_free:
+            # Step 1: Begin showing progress bar
+            # self.progressbar.show()
+            # self.progressbar.setValue(5)
+            self.thread_1_is_free = False
+            self.traced_dataset = d
+            self.dock_plot.setWidget(self.loading)
+            # Step 2: Create a QThread object
+            self.thread_1 = QThread()
+            # Step 3: Create a worker object
+            self.worker_1 = PlotWorker(self.traced_dataset, self.db)
+            # Step 4: Move worker to the thread
+            self.worker_1.moveToThread(self.thread_1)
+            # Step 5: Connect signals and slots
+            self.thread_1.started.connect(self.worker_1.run)
+            self.worker_1.finished.connect(self.thread_1.quit)
+            self.worker_1.finished.connect(self.worker_1.deleteLater)
+            self.thread_1.finished.connect(self.thread_1.deleteLater)
+            self.worker_1.progress.connect(self.report_progress)
+            self.worker_1.data.connect(self.report_plot_data)
+            self.worker_1.t_data.connect(self.report_traced_data)
+            # Step 6: Start the thread
+            self.thread_1.start()
 
-        # Final resets
-        self.thread_1.finished.connect(lambda: self.progressbar.setValue(0))
-        self.thread_1.finished.connect(lambda: self.progressbar.hide())
-        self.thread_1.finished.connect(lambda: self.fig_view.setHtml(create_plot(self.plot_x, self.plot_y)))
+            # Final resets
+            # self.thread_1.finished.connect(lambda: self.progressbar.setValue(0))
+            # self.thread_1.finished.connect(lambda: self.progressbar.hide())
+            self.thread_1.finished.connect(lambda: self.fig_view.setHtml(create_plot(self.plot_x, self.plot_y)))
+            self.thread_1.finished.connect(lambda: self.dock_plot.setWidget(self.fig_view))
+            self.thread_1.finished.connect(lambda: self.free_thread_1())
+
+    def free_thread_1(self):
+        self.thread_1_is_free = True
 
     def process_split_caps(self, pcap, file, table, dataset_name):
         self.progressbar.show()
@@ -956,10 +995,6 @@ class WorkspaceWindow(QMainWindow):
                         ui = filter_gui.filter_window(d.mergeFilePath, self.project_tree, self.workspace_object)
 
     def display_classifier_options(self):
-        print('Called display_classifier_options')
-        # data_frame = pd.DataFrame()
-        # data_frame['instance_number'] = [3, 2, 1]
-        # data_frame['cluster'] = [1, 2, 3]
         results = pd.DataFrame()
         try:
             if self.project_tree.selectedItems():
@@ -973,6 +1008,17 @@ class WorkspaceWindow(QMainWindow):
         self.create_classifier_plot(results)
         self.classifier_window.show()
         return
+
+    def tree_item_clicked(self, item, n):
+        item_obj = item.data(0, Qt.UserRole)
+        if self.traced_dataset != item_obj:
+            self.trace_dataset()
+
+    def show_properties(self):
+        if self.project_tree.selectedItems():
+            item = self.project_tree.selectedItems()[0].data(0, Qt.UserRole)
+            self.p_win = PropertiesWindow(item)
+            self.p_win.get_properties()
 
 
 if __name__ == "__main__":
