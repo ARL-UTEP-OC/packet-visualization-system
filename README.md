@@ -38,3 +38,18 @@ To run tests locally execute the following command on the project home folder:
 ***
 ## Setup.py
 **NOTE: If we require the ones who use this packages to install dependencies please for our project to work add them to the install_requires property in the Setup.py file** 
+***
+## Performance Measurements
+**Adding a Pcap/Dataset (Pcap size)**
+- 9,000 KB ~10 seconds
+- 20,000 KB ~90 seconds
+- 360,000 KB ~11.5 minutes
+
+**Generating Packet Table (Pcap size)**
+- 20,000 KB ~15 seconds
+- 360,000 KB ~70 seconds
+
+**Export/View in Wireshark/Create Dataset from Table (ackets elected)**
+- 5000 packets ~15 seconds
+- 14,000 packets ~50 seconds
+- 30,000 packets ~9.5 minutes
