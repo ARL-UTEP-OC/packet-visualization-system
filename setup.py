@@ -1,9 +1,9 @@
 import setuptools
 
 # read the contents of your README file
-# from pathlib import Path
-# this_directory = Path(__file__).parent
-# long_description = (this_directory / "LongDesc.md").read_text()
+from pathlib import Path
+this_directory = Path(__file__).parent
+long_description = (this_directory / "LongDesc.md").read_text()
 
 setuptools.setup(
     name="packetvisualization",
@@ -11,8 +11,8 @@ setuptools.setup(
     author="team-1",
     author_email="hbarrazalo@miners.utep.edu",
     description="packet visualization",
-    # long_description=long_description,
-    # long_description_content_type='text/markdown',
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     url="https://gitlab.com/utep/packet-visualize",
     classifiers=[
         "Programming Language :: Python :: 3",
