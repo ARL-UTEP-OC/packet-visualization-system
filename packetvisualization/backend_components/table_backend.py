@@ -1,6 +1,7 @@
 
 import os
 import platform
+import traceback
 
 from packetvisualization.models.dataset import Dataset
 from packetvisualization.models.pcap import Pcap
@@ -27,6 +28,32 @@ class TableBackend:
         frame_string_list.append(frame_string)
 
         return frame_string_list
+
+    def to_csv(self, output_file_in, input_file_in, test_mode: bool = False):
+        if platform.system() == "Windows":
+            os.system(
+                'cd "C:\Program Files\Wireshark" & tshark -r ' + input_file_in + ' -T fields -e frame.number -e '
+                                                                              'ip.src -e ip.dst '
+                                                                              '-e frame.len -e frame.time -e '
+                                                                              'frame.time_relative -e _ws.col.Info '
+                                                                              '-E header=y -E '
+                                                                              'separator=, -E quote=d -E '
+                                                                              'occurrence=f > ' + output_file_in)
+        elif platform.system() == "Linux":
+            os.system('tshark -r ' + input_file_in + ' -T fields -e frame.number -e '
+                                                  'ip.src -e ip.dst '
+                                                  '-e frame.len -e frame.time -e '
+                                                  'frame.time_relative -e _ws.col.Info '
+                                                  '-E header=y -E '
+                                                  'separator=, -E quote=d -E '
+                                                  'occurrence=f > ' + output_file_in)
+
+    def to_json(self, output_file_in, input_file_in, test_mode: bool = False):
+        if platform.system() == "Windows":
+            os.system(
+                'cd "C:\Program Files\Wireshark" & tshark -r ' + input_file_in + ' -T json > ' + output_file_in)
+        if platform.system() == "Linux":
+            os.system('tshark -r ' + input_file_in + ' -T json > ' + output_file_in)
 
     def query_id(self, obj_in, db_in, list_in, test_mode: bool = False):
         """Queries the database via collection id's and return a cursor object that contains
@@ -95,42 +122,46 @@ class TableBackend:
             ascii += str(ord(char)) + " "
         return ascii
 
-    def gen_pcap_from_frames(self, frame_string_list_in, infile_in, progressbar):
+    def gen_pcap_from_frames(self, frame_string_list_in, infile_in, progressbar, progress_sig):
         """Generates multiple pcaps using tshark's display filter and the frame string list generated from
         gen_frame_string. These pcaps are then merged together into tEmPmErGcap.pcap using tshark's mergecap. Finally
         the pcaps generated will be deleted from the system and teh temp_mergecap is returned.
         """
-        value = (100/(len(frame_string_list_in) + 1))
-        progressbar_value = 0
-        progressbar.show()
-        temp_mergecap = os.path.join(os.getcwd(), "tEmPmErGeCaP.pcap")
-        i = 0
-        pcap_list = []
-        for frame_string in frame_string_list_in:  # Create pcaps for merging
-            if platform.system() == "Windows":
+        try:
+            value = (100 / (len(frame_string_list_in) + 1))
+            progressbar_value = 0
+            progressbar.show()
+            temp_mergecap = os.path.join(os.getcwd(), "tEmPmErGeCaP.pcap")
+            i = 0
+            pcap_list = []
+
+            for frame_string in frame_string_list_in:  # Create pcaps for merging
                 output_file = os.path.join(os.getcwd(), "tEmPpCaP" + str(i) + ".pcap")
+                if platform.system() == "Windows":
+                    os.system(
+                        'cd "C:\Program Files\Wireshark" & tshark -r ' + infile_in + ' -Y \"' + frame_string + '\" -w ' + output_file)
+                elif platform.system() == "Linux":
+                    os.system('tshark -r ' + infile_in + ' -Y \"' + frame_string + '\" -w ' + output_file)
+
+                pcap_list.append(output_file)
+                i += 1
+                progressbar_value = progressbar_value + value
+                progress_sig.emit(progressbar_value)
+
+            if platform.system() == "Windows":  # Merge pcaps in pcap_list into tEmPmErGe.pcap
                 os.system(
-                    'cd "C:\Program Files\Wireshark" & tshark -r ' + infile_in + ' -Y \"' + frame_string + '\" -w ' + output_file)
+                    'cd "C:\Program Files\Wireshark" & mergecap -w ' + temp_mergecap + " " + (' '.join(pcap_list)))
             elif platform.system() == "Linux":
-                os.system('tshark -r ' + infile_in + ' -Y \"' + frame_string + '\" -w ' + output_file)
+                os.system('mergecap -w ' + temp_mergecap + " " + (' '.join(pcap_list)))
 
-            pcap_list.append(output_file)
-            i += 1
-            progressbar_value = progressbar_value + value
-            progressbar.setValue(progressbar_value)
+            progress_sig.emit(0)
+            progressbar.hide()
 
-        if platform.system() == "Windows":  # Merge pcaps in pcap_list into tEmPmErGe.pcap
-            os.system(
-                'cd "C:\Program Files\Wireshark" & mergecap -w ' + temp_mergecap + " " + (' '.join(pcap_list)))
-        elif platform.system() == "Linux":
-            os.system('mergecap -w ' + temp_mergecap + " " + (' '.join(pcap_list)))
+            for pcap in pcap_list:
+                if os.path.exists(pcap):
+                    os.remove(pcap)
 
-        progressbar.setValue(0)
-        progressbar.hide()
-
-        for pcap in pcap_list:
-            if os.path.exists(pcap):
-                os.remove(pcap)
-
-        return temp_mergecap
+            return temp_mergecap
+        except:
+            traceback.print_exc()
 

@@ -1,8 +1,10 @@
+import os
 import sys
 import traceback
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QTreeWidget, QWidget, QPushButton
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QTreeWidget, QWidget, QPushButton, QTreeWidgetItem, QInputDialog
 
 from packetvisualization.backend_components import json_parser
 from packetvisualization.backend_components.controller import Controller
@@ -82,11 +84,24 @@ class properties_window(QWidget):
 
         if self.cluster.text() == "" and len(selected_properties) == 0:
             raise Exception('Please select properties and enter a correct cluster number')
+
         df, features = self.controller.create_analysis(self.pktIdsAsList,
                                                        selected_properties,
                                                        int(self.cluster.text()),
                                                        self.obj,
                                                        self.db)
+
+        # Creating Analysis Item
+        analysis_item_name = QInputDialog.getText(self, "Analysis Item Name Entry", "Enter Analysis Item Name:")[0]
+        if analysis_item_name != "":
+            tree = self.workspace.project_tree
+            head, tail = os.path.split(self.obj.path)
+            project_name = os.path.basename(head)
+            project_item = tree.findItems(project_name, Qt.MatchRecursive, 0)[0]
+            analysis_item = QTreeWidgetItem()
+            analysis_item.setText(0, analysis_item_name)
+            analysis_item.setData(0, Qt.UserRole, (df, features))
+            project_item.addChild(analysis_item)
 
         fig = px.scatter(df, x="cluster", y="instance_number",
                          color='cluster', color_continuous_scale=px.colors.sequential.Bluered_r,

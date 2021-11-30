@@ -59,6 +59,7 @@ class WorkspaceWindow(QMainWindow):
         self.eo = EntityOperations()
         self.db = None
         self.test_mode = False
+        self.new_window = []
         if existing_flag:
             self.workspace_object = Load().open_zip(workspace_path)
             restore_path = os.path.join(self.workspace_object.dump_path, self.workspace_object.name)
@@ -77,7 +78,7 @@ class WorkspaceWindow(QMainWindow):
 
         # Docked widget for Project Tree
         self.project_tree = QTreeWidget()
-        self.project_tree.setHeaderLabels(["Item Name", "Size", "DoC"])
+        self.project_tree.setHeaderLabels(["Item Name"])
         self.project_tree.setColumnWidth(0, 200)
         self.project_tree.itemPressed['QTreeWidgetItem*', 'int'].connect(self.tree_item_clicked)
         self.dock_project_tree = QDockWidget("Project Tree Window", self)
@@ -210,6 +211,18 @@ class WorkspaceWindow(QMainWindow):
         self.gen_table_action.setStatusTip("View Packets in a PCAP")
         self.gen_table_action.setToolTip("View Packets in a PCAP")
 
+        self.gen_analysis_action = QAction("&View Analysis Graph", self)
+        self.gen_analysis_action.setStatusTip("View Analysis Graph")
+        self.gen_analysis_action.setToolTip("View Analysis Graph")
+
+        self.export_analysis_csv = QAction("&Export Analysis to CSV", self)
+        self.export_analysis_csv.setStatusTip("Export Analysis to CSV")
+        self.export_analysis_csv.setToolTip("Export Analysis to CSV")
+
+        self.export_analysis_json = QAction("&Export Analysis to JSON", self)
+        self.export_analysis_json = QAction("Export Analysis to JSON")
+        self.export_analysis_json = QAction("Export Analysis to JSON")
+
         # self.gen_table_action = QAction(QIcon(os.path.join(self.icons, "list.svg")), "&Packet Table", self)
         self.classifier_action = QAction("&Classify Packets", self)
         self.classifier_action.setStatusTip("Classify selected pcap data")
@@ -264,6 +277,9 @@ class WorkspaceWindow(QMainWindow):
         self.gen_table_action.triggered.connect(self.gen_table)
         self.classifier_action.triggered.connect(self.display_classifier_options)
         self.propertiesAction.triggered.connect(self.show_properties)
+        self.gen_analysis_action.triggered.connect(self.view_analysis)
+        self.export_analysis_csv.triggered.connect(lambda: self.export_analysis_item(True))
+        self.export_analysis_json.triggered.connect(lambda: self.export_analysis_item(False))
 
         # Connect Wireshark actions
         self.openWiresharkAction.triggered.connect(self.open_wireshark)
@@ -378,6 +394,11 @@ class WorkspaceWindow(QMainWindow):
                 export_menu = menu.addMenu("Export")
                 export_menu.addAction(self.exportCsvAction)
                 export_menu.addAction(self.exportJsonAction)
+            # Right-click an analysis item
+            if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is tuple:
+                menu.addAction(self.gen_analysis_action)
+                menu.addAction(self.export_analysis_csv)
+                menu.addAction(self.export_analysis_json)
 
         separator1 = QAction(self)
         separator1.setSeparator(True)
@@ -513,14 +534,36 @@ class WorkspaceWindow(QMainWindow):
             print("Error loading this pcap")
             traceback.print_exc()
 
+    def view_analysis(self):
+        try:
+            selected = self.project_tree.selectedItems()
+            if selected and type(selected[0].data(0, Qt.UserRole)) is tuple:
+                df, features = selected[0].data(0, Qt.UserRole)
+                # Generate analysis graph
+                fig = px.scatter(df, x="cluster", y="instance_number",
+                                 color='cluster', color_continuous_scale=px.colors.sequential.Bluered_r,
+                                 hover_data=df.columns.values[:len(features)])
+
+                raw_html = '<html><head><meta charset="utf-8" />'
+                raw_html += '<script src="https://cdn.plot.ly/plotly-latest.min.js"></script></head>'
+                raw_html += '<body>'
+                raw_html += po.plot(fig, include_plotlyjs=False, output_type='div')
+                raw_html += '</body></html>'
+
+                self.classifier_plot_view.setHtml(raw_html)
+                self.classifier_window.show()
+        except:
+            traceback.print_exc()
+
     def open_new_workspace(self) -> None:
         """Prompts user to select save location and opens up a new workspace window
         """
         directory = QFileDialog.getSaveFileName(caption="Choose Workspace location")[0]
 
         if directory != '':
-            self.new_window = WorkspaceWindow(workspace_path=directory)
-            self.new_window.show()
+            w = WorkspaceWindow(workspace_path=directory)
+            self.new_window.append(w)
+            w.show()
 
     def open_existing_workspace(self) -> None:
         """Prompts user to select saved zip file and opens an existing workspace window
@@ -529,9 +572,9 @@ class WorkspaceWindow(QMainWindow):
         file_path = QFileDialog.getOpenFileName(caption="Open existing Workspace", filter=file_filter)[0]
 
         if file_path != "":
-            if not self.test_mode:
-                self.new_window = WorkspaceWindow(workspace_path=file_path, existing_flag=True)
-                self.new_window.show()
+            w = WorkspaceWindow(workspace_path=file_path, existing_flag=True)
+            self.new_window.append(w)
+            w.show()
 
     def trace_dataset(self) -> None:
         """Used to trace a selected dataset and update information in the bandwidth plot if data changes.
@@ -655,6 +698,10 @@ class WorkspaceWindow(QMainWindow):
                                 pcap_item.parent().removeChild(pcap_item)
                                 self.eo.delete_packets(self.db[d.name], "parent_pcap", cap.name)
                                 self.update_traced_data(d)
+            # Delete analysis item
+            elif type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is tuple:
+                analysis_item = self.project_tree.selectedItems()[0]
+                analysis_item.parent().removeChild(analysis_item)
         else:
             return False
 
@@ -799,9 +846,6 @@ class WorkspaceWindow(QMainWindow):
             analysis_item = QTreeWidgetItem(self.analysis_tree)
             analysis_item.setText(0, text)
             return True
-
-    def remove_analysis(self):
-        return
 
     def gen_table(self):
         try:
@@ -1000,6 +1044,17 @@ class WorkspaceWindow(QMainWindow):
             self.p_win = PropertiesWindow(item)
             self.p_win.get_properties()
 
+    def export_analysis_item(self, csv:bool):
+        if self.project_tree.selectedItems():
+            df, features = self.project_tree.selectedItems()[0].data(0, Qt.UserRole)
+            if csv:
+                output_file = QFileDialog.getSaveFileName(caption="Choose Output location", filter=".csv (*.csv)")[
+                    0]
+                df.to_csv(output_file, index=False)
+            else:
+                output_file = \
+                    QFileDialog.getSaveFileName(caption="Choose Output location", filter=".json (*.json)")[0]
+                df.to_json(output_file)
 
 if __name__ == "__main__":
     args = len(sys.argv)
