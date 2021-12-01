@@ -133,11 +133,11 @@ class table_gui(QTableWidget):
             menu.addAction(self.tag_action)
             menu.addAction(self.remove_tag_action)
 
-            if type(self.obj) is Dataset:
-                analysis_menu = menu.addMenu("Analyze")
-                analysis_menu.addAction(self.analyze_action)
-                analysis_menu.addAction(self.analyze_tagged_action)
-                analysis_menu.addAction(self.analyze_all_action)
+            #if type(self.obj) is Dataset:
+            analysis_menu = menu.addMenu("Analyze")
+            analysis_menu.addAction(self.analyze_action)
+            analysis_menu.addAction(self.analyze_tagged_action)
+            analysis_menu.addAction(self.analyze_all_action)
 
             export_menu = menu.addMenu("Export")
             csv_menu = export_menu.addMenu("To CSV from...")

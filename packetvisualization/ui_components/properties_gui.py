@@ -102,8 +102,6 @@ class properties_window(QWidget):
         self.setLayout(self.layout)
 
     def analyze(self):
-        if (type(self.obj) != Dataset):
-            return 'Not a dataset name'
         items = self.listWidget.selectedItems()
         selected_properties = []
 

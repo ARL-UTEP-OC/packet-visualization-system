@@ -156,6 +156,14 @@ class WorkspaceWindow(QMainWindow):
         self.newPCAPAction.setStatusTip("Create a new pcap")
         self.newPCAPAction.setToolTip("Create a new pcap")
 
+        self.add_pcap_zip_action = QAction("Add zip file of PCAP's", self)
+        self.add_pcap_zip_action.setStatusTip("Add zip file of PCAP's")
+        self.add_pcap_zip_action.setToolTip("Add zip file of PCAP's")
+
+        self.add_pcap_folder_action = QAction("Add folder of PCAP's", self)
+        self.add_pcap_folder_action.setStatusTip("Add folder of PCAP's")
+        self.add_pcap_folder_action.setToolTip("Add folder of PCAP's")
+
         self.filterWiresharkAction = QAction("Filter Wireshark", self)
 
         self.openNewAction = QAction("&New Workspace", self)
@@ -250,6 +258,8 @@ class WorkspaceWindow(QMainWindow):
         self.traceAction.triggered.connect(self.trace_dataset)
         self.exportCsvAction.triggered.connect(self.export_csv)
         self.exportJsonAction.triggered.connect(self.export_json)
+        self.add_pcap_zip_action.triggered.connect(self.add_pcap_zip)
+        self.add_pcap_folder_action.triggered.connect(self.add_pcap_folder)
 
         # Connect Edit actions
         self.deleteAction.triggered.connect(self.delete)
@@ -352,6 +362,8 @@ class WorkspaceWindow(QMainWindow):
             # Right-click a dataset
             if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
                 menu.addAction(self.newPCAPAction)
+                menu.addAction(self.add_pcap_zip_action)
+                # menu.addAction(self.add_pcap_folder_action)
                 # menu.addAction(self.traceAction)
                 menu.addAction(self.openWiresharkAction)
                 menu.addAction(self.filterWiresharkAction)
@@ -439,8 +451,6 @@ class WorkspaceWindow(QMainWindow):
                     child_item.setData(0, Qt.UserRole, dataset)
                     child_item.setIcon(0, QIcon(":folder.svg"))
 
-                    project.addChild(child_item)
-
                     new_pcap = Pcap(file=file, path=dataset.path, name=pcap_name)
                     if new_pcap.name is not None:
                         dataset.add_pcap(new=new_pcap)
@@ -454,9 +464,16 @@ class WorkspaceWindow(QMainWindow):
                         if not new_pcap.large_pcap_flag:  # if small pcap, read json
                             self.eo.insert_packets(new_pcap.json_file, mytable, dataset.name, new_pcap.name)
                             new_pcap.cleanup()
+
+                            project.addChild(child_item)
+                            pcap_item = QTreeWidgetItem()
+                            pcap_item.setText(0, pcap_name)
+                            pcap_item.setData(0, Qt.UserRole, new_pcap)
+                            child_item.addChild(pcap_item)
                         else:  # large pcap
                             try:
-                                self.process_split_caps(new_pcap, file, mytable, dataset.name)  # Complete process on another thread
+                                self.process_split_caps(new_pcap, file, mytable, child_item, False, project)  #
+                                # Complete process on another thread
                             except:
                                 traceback.print_exc()
                     else:
@@ -481,7 +498,8 @@ class WorkspaceWindow(QMainWindow):
                     dataset_item = self.project_tree.selectedItems()[0]
 
                 d = dataset_item.data(0, Qt.UserRole)
-                new_pcap = Pcap(file=file, path=d.path, name=pcap_name)  #new method to create the thread in thread return new pcap object in first index of the list
+                new_pcap = Pcap(file=file, path=d.path,
+                                name=pcap_name)  # new method to create the thread in thread return new pcap object in first index of the list
 
                 for cap in d.pcaps:
                     if new_pcap.name == cap.name:
@@ -499,9 +517,14 @@ class WorkspaceWindow(QMainWindow):
                     if not new_pcap.large_pcap_flag:
                         self.eo.insert_packets(new_pcap.json_file, mytable, d.name, new_pcap.name)
                         new_pcap.cleanup()
+                        pcap_item = QTreeWidgetItem()
+                        pcap_item.setText(0, pcap_name)
+                        pcap_item.setData(0, Qt.UserRole, new_pcap)
+                        dataset_item.addChild(pcap_item)
                     else:
                         try:
-                            self.process_split_caps(new_pcap, file, mytable, d.name) # Complete process on another thread
+                            self.process_split_caps(new_pcap, file, mytable, dataset_item,
+                                                    True)  # Complete process on another thread
                         except:
                             traceback.print_exc()
 
@@ -510,6 +533,20 @@ class WorkspaceWindow(QMainWindow):
         except Exception:
             print("Error loading this pcap")
             traceback.print_exc()
+
+    def add_item_to_tree(self, pcap, dataset_item, is_pcap: bool, project_item=None):
+        if is_pcap:
+            pcap_item = QTreeWidgetItem()
+            pcap_item.setText(0, pcap.name)
+            pcap_item.setData(0, Qt.UserRole, pcap)
+            dataset_item.addChild(pcap_item)
+        else:
+            project_item.addChild(dataset_item)
+
+            pcap_item = QTreeWidgetItem()
+            pcap_item.setText(0, pcap.name)
+            pcap_item.setData(0, Qt.UserRole, pcap)
+            dataset_item.addChild(pcap_item)
 
     def view_analysis(self):
         try:
@@ -711,7 +748,7 @@ class WorkspaceWindow(QMainWindow):
                 if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Pcap:
                     pcap_item = self.project_tree.selectedItems()[0]
                     cap = pcap_item.data(0, Qt.UserRole)
-                    Wireshark.openwireshark(cap.pcap_file)
+                    Wireshark.openwireshark(cap.path)
         except Exception:
             traceback.print_exc()
             return False
@@ -779,6 +816,17 @@ class WorkspaceWindow(QMainWindow):
                         pcap_item.setData(0, Qt.UserRole, new_pcap)
                         dataset_item.addChild(pcap_item)
 
+                        mytable = self.db[dataset_obj.name]
+                        if not new_pcap.large_pcap_flag:
+                            self.eo.insert_packets(new_pcap.json_file, mytable, dataset_obj.name, new_pcap.name)
+                            new_pcap.cleanup()
+                        else:
+                            try:
+                                self.process_split_caps(new_pcap, file, mytable,
+                                                        dataset_item, True)  # Complete process on another thread
+                            except:
+                                traceback.print_exc()
+
                 shutil.rmtree(extracted_folder)
                 return True
         except Exception:
@@ -798,6 +846,7 @@ class WorkspaceWindow(QMainWindow):
                     namelist.append(cap.name)
 
                 for file in os.listdir(location):
+                    new_pcap = Pcap(file, dataset.path, os.path.join(location, file))
                     if new_pcap.name not in namelist:
                         new_pcap = Pcap(file, dataset.path, os.path.join(location, file))
                         dataset.add_pcap(new_pcap)
@@ -805,6 +854,17 @@ class WorkspaceWindow(QMainWindow):
                         pcap_item.setText(0, os.path.basename(file))
                         pcap_item.setData(0, Qt.UserRole, new_pcap)
                         dataset_item.addChild(pcap_item)
+
+                        mytable = self.db[dataset.name]
+                        if not new_pcap.large_pcap_flag:
+                            self.eo.insert_packets(new_pcap.json_file, mytable, dataset.name, new_pcap.name)
+                            new_pcap.cleanup()
+                        else:
+                            try:
+                                self.process_split_caps(new_pcap, file, mytable,
+                                                        dataset.name)  # Complete process on another thread
+                            except:
+                                traceback.print_exc()
                 return True
         except Exception:
             traceback.print_exc()
@@ -996,10 +1056,12 @@ class WorkspaceWindow(QMainWindow):
     def free_thread_3(self):
         self.thread_3_is_free = True
 
-    def process_split_caps(self, pcap, file, table, dataset_name):
+    def process_split_caps(self, pcap, file, table, dataset_item, is_pcap: bool, project_item=None):
+        dataset = dataset_item.data(0, Qt.UserRole)
+        dataset_name = dataset.name
         self.progressbar.show()
         self.thread_2 = QThread()
-        self.worker_2= PcapWorker(pcap, file, table, dataset_name)
+        self.worker_2 = PcapWorker(pcap, file, table, dataset_name)
         self.worker_2.moveToThread(self.thread_2)
 
         self.thread_2.started.connect(self.worker_2.run)
@@ -1012,7 +1074,7 @@ class WorkspaceWindow(QMainWindow):
         #
         self.thread_2.finished.connect(lambda: self.progressbar.setValue(0))
         self.thread_2.finished.connect(lambda: self.progressbar.hide())
-
+        self.thread_2.finished.connect(lambda: self.add_item_to_tree(pcap, dataset_item, is_pcap, project_item))
 
     def filter_wireshark(self):
 
@@ -1051,7 +1113,7 @@ class WorkspaceWindow(QMainWindow):
             self.p_win = PropertiesWindow(item)
             self.p_win.get_properties()
 
-    def export_analysis_item(self, csv:bool):
+    def export_analysis_item(self, csv: bool):
         if self.project_tree.selectedItems():
             df, features = self.project_tree.selectedItems()[0].data(0, Qt.UserRole)
             if csv:
@@ -1062,6 +1124,7 @@ class WorkspaceWindow(QMainWindow):
                 output_file = \
                     QFileDialog.getSaveFileName(caption="Choose Output location", filter=".json (*.json)")[0]
                 df.to_json(output_file)
+
 
 if __name__ == "__main__":
     args = len(sys.argv)
