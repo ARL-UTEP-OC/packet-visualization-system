@@ -833,7 +833,7 @@ class WorkspaceWindow(QMainWindow):
                         else:
                             try:
                                 self.process_split_caps(new_pcap, file, mytable,
-                                                        dataset_obj.name)  # Complete process on another thread
+                                                        dataset_item, True)  # Complete process on another thread
                             except:
                                 traceback.print_exc()
 
