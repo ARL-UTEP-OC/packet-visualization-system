@@ -471,15 +471,9 @@ class WorkspaceWindow(QMainWindow):
                     child_item.setText(0, text)
                     child_item.setData(0, Qt.UserRole, dataset)
 
-                    # project.addChild(child_item)
-
                     new_pcap = Pcap(file=file, path=dataset.path, name=pcap_name)
                     if new_pcap.name is not None:
                         dataset.add_pcap(new=new_pcap)
-                        # pcap_item = QTreeWidgetItem()
-                        # pcap_item.setText(0, pcap_name)
-                        # pcap_item.setData(0, Qt.UserRole, new_pcap)
-                        # child_item.addChild(pcap_item)
 
                         mytable = self.db[dataset.name]
                         if not new_pcap.large_pcap_flag:  # if small pcap, read json
