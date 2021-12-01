@@ -11,7 +11,6 @@ class PlotWorker(QObject):
     finished = pyqtSignal()
     progress = pyqtSignal(int)
     data = pyqtSignal(list)
-    t_data = pyqtSignal(list)
 
     def __init__(self, dataset, db):
         super().__init__()

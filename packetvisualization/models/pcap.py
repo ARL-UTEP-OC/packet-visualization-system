@@ -2,6 +2,7 @@ import os
 import shutil
 import subprocess
 import platform
+import traceback
 
 
 class Pcap:
@@ -36,6 +37,7 @@ class Pcap:
 
         except:
             print("Error adding this pcap")
+            traceback.print_exc()
             self.name = None
 
     def create_file(self, file):
@@ -57,6 +59,7 @@ class Pcap:
     def cleanup(self):
         if self.large_pcap_flag:
             shutil.rmtree(self.split_json_dir)
+            shutil.rmtree(self.split_dir)
         else:
             os.remove(self.json_file)
 

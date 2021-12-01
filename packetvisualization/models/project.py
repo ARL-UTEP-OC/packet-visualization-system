@@ -1,25 +1,37 @@
+from packetvisualization.models.analysis import Analysis
 from packetvisualization.models.dataset import Dataset
 from datetime import datetime
 import os, shutil
 
+
 class Project:
-    def __init__(self, name:str, parent_path:str, c_time=datetime.now().timestamp()) -> None:
+    def __init__(self, name: str, parent_path: str, c_time=datetime.now().timestamp()) -> None:
         self.name = name
-        self.c_time = c_time     # creation time
+        self.c_time = c_time  # creation time
         self.dataset = []
+        self.analysis = []
         self.path = os.path.join(parent_path, self.name)
         self.create_folder()
 
-    def add_dataset(self, new:Dataset) -> list:
+    def add_dataset(self, new: Dataset) -> list:
         self.dataset.append(new)
         return self.dataset
 
-    def del_dataset(self, old:Dataset) -> list:
+    def add_analysis(self, new: Analysis) -> list:
+        self.analysis.append(new)
+        return self.analysis
+
+    def del_dataset(self, old: Dataset) -> list:
         self.dataset.remove(old)
         old.remove()
         return self.dataset
 
-    def find_dataset(self, name:str) -> Dataset:
+    def del_analysis(self, old: Analysis) -> list:
+        self.analysis.remove(old)
+        old.remove()
+        return self.analysis
+
+    def find_dataset(self, name: str) -> Dataset:
         for d in self.dataset:
             if d.name == name:
                 return d
@@ -59,6 +71,13 @@ class Project:
             d.save(f)
             if d != self.dataset[-1]:
                 f.write(',')
+        f.write('], ')
+
+        f.write('"analysis": [')
+        for a in self.analysis:
+            a.save(f)
+            if a != self.analysis[-1]:
+                f.write(',')
         f.write(']}')
 
     def remove(self) -> bool:
@@ -69,7 +88,7 @@ class Project:
             shutil.rmtree(self.path)
             for d in self.dataset:
                 d.remove()
-            self.dataset = [] # unlink all datasets
+            self.dataset = []  # unlink all datasets
             return True
         except Exception:
             return False
