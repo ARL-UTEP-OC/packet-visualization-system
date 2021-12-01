@@ -1,31 +1,22 @@
-import os
 import platform as pf
 import shutil
-import subprocess
-import sys
-import traceback
-import webbrowser
 import zipfile
 
 import plotly.offline as po
 import plotly.express as px
-import plotly.graph_objs as go
 import pandas as pd
-from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineSettings
+from PyQt5.QtWebEngineWidgets import QWebEngineView
 from scapy.all import *
-from datetime import datetime
 
-from PyQt5.QtCore import Qt, QRect, QObject, pyqtSignal, QThread, QUrl, QFile, QIODevice
-from PyQt5.QtGui import QFont, QIcon, QKeySequence, QMovie, QDesktopServices
-from PyQt5.QtWidgets import QMainWindow, QTreeWidget, QPushButton, QVBoxLayout, QProgressBar, QMenu, QWidget, QLabel, \
-    QAction, QMessageBox, QDockWidget, QTextEdit, QInputDialog, QTreeWidgetItem, QFileDialog, QApplication, QToolBar, \
-    QTableWidgetItem
+from PyQt5.QtCore import Qt, QThread, QUrl, QFile
+from PyQt5.QtGui import QIcon, QMovie, QDesktopServices
+from PyQt5.QtWidgets import QMainWindow, QTreeWidget, QProgressBar, QMenu, QLabel, \
+    QAction, QMessageBox, QDockWidget, QInputDialog, QTreeWidgetItem, QFileDialog, QApplication, QToolBar
 
 from packetvisualization.backend_components.bandwidth_plot import create_plot
 from packetvisualization.backend_components.controller import Controller
 from packetvisualization.backend_components.entity_operator import EntityOperations
-from packetvisualization.backend_components.load import Load
-from packetvisualization.backend_components.loadworker import LoadWorker
+from packetvisualization.backend_components.load_worker import LoadWorker
 from packetvisualization.models.analysis import Analysis
 from packetvisualization.models.context.database_context import DbContext
 from packetvisualization.models.dataset import Dataset
@@ -37,6 +28,7 @@ from packetvisualization.backend_components import Wireshark
 from packetvisualization.ui_components import filter_gui
 from packetvisualization.ui_components.plot_worker import PlotWorker
 from packetvisualization.ui_components.properties_window import PropertiesWindow
+from packetvisualization.ui_components.load_window import LoadWindow
 from packetvisualization.ui_components.table_gui import table_gui
 
 
@@ -58,6 +50,8 @@ class WorkspaceWindow(QMainWindow):
         :type existing_flag: bool
         """
         super().__init__()
+        self.load_window = LoadWindow()
+
         self.eo = EntityOperations()
         self.db = None
         self.test_mode = False
@@ -891,7 +885,7 @@ class WorkspaceWindow(QMainWindow):
                 analysis_item.setData(0, Qt.UserRole, a)
                 analysis_item.setIcon(0, QIcon(":document-text.svg"))
                 project_item.addChild(analysis_item)
-        self.load_widget.close()
+        self.load_window.close()
 
     def show_classifier_qt(self, fig):
         raw_html = '<html><head><meta charset="utf-8" />'
@@ -943,11 +937,7 @@ class WorkspaceWindow(QMainWindow):
         if self.thread_3_is_free:
             # Step 1: Initialization
             self.thread_3_is_free = False
-            load_layout = QVBoxLayout()
-            self.load_widget = QWidget()
-            self.load_widget.setLayout(load_layout)
-            load_layout.addWidget(QLabel("LOADING"))
-            self.load_widget.show()
+            self.load_window.show()
             # Step 2: Create a QThread object
             self.thread_3 = QThread()
             # Step 3: Create a worker object
