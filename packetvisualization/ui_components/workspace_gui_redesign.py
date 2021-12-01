@@ -26,7 +26,7 @@ from packetvisualization.models.workspace import Workspace
 from packetvisualization.models.pcap_worker import PcapWorker
 from packetvisualization.backend_components import Wireshark
 from packetvisualization.ui_components import filter_gui
-from packetvisualization.ui_components.plot_worker import PlotWorker
+from packetvisualization.backend_components.plot_worker import PlotWorker
 from packetvisualization.ui_components.properties_window import PropertiesWindow
 from packetvisualization.ui_components.load_window import LoadWindow
 from packetvisualization.ui_components.table_gui import table_gui
@@ -939,7 +939,6 @@ class WorkspaceWindow(QMainWindow):
                 analysis_item.setData(0, Qt.UserRole, a)
                 analysis_item.setIcon(0, QIcon(":document-text.svg"))
                 project_item.addChild(analysis_item)
-        self.load_window.close()
 
     def show_classifier_qt(self, fig):
         raw_html = '<html><head><meta charset="utf-8" />'
@@ -982,8 +981,12 @@ class WorkspaceWindow(QMainWindow):
         self.plot_x = n[0]
         self.plot_y = n[1]
 
-    def report_db(self, n:list) -> None:
+    def report_db(self, n: list) -> None:
         self.db = n[0]
+
+    def report_load_progress(self, n: list) -> None:
+        self.load_window.progress.setValue(n[0])
+        self.load_window.status.setText(n[1])
 
     def load_workspace(self):
         """ Creates a new thread to load existing workspace
@@ -1003,7 +1006,7 @@ class WorkspaceWindow(QMainWindow):
             self.worker_3.finished.connect(self.thread_3.quit)
             self.worker_3.finished.connect(self.worker_3.deleteLater)
             self.thread_3.finished.connect(self.thread_3.deleteLater)
-            # self.worker_3.progress.connect(self.report_progress)
+            self.worker_3.progress.connect(self.report_load_progress)
             self.worker_3.data.connect(self.report_db)
             # Step 6: Start the thread
             self.thread_3.start()
