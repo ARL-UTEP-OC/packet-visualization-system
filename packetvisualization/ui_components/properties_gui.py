@@ -65,25 +65,25 @@ class properties_window(QWidget):
 
         self.layout.addWidget(self.listWidget, 1, 2, 1, 2)
 
-        self.listWidget2 = QtWidgets.QListWidget()
-
-        self.listWidget2.setGeometry(QtCore.QRect(10, 10, 211, 291))
+        # self.listWidget2 = QtWidgets.QListWidget()
+        #
+        # self.listWidget2.setGeometry(QtCore.QRect(10, 10, 211, 291))
 
 
         self.pktIdsAsList = []
         for i in range(len(pktIds)):
             string = str(pktIds[i])
             self.pktIdsAsList.append(string)
-            item = QtWidgets.QListWidgetItem(string)
-            item.setFlags(Qt.ItemIsEnabled)
-            self.listWidget2.addItem(item)
+            # item = QtWidgets.QListWidgetItem(string)
+            # item.setFlags(Qt.ItemIsEnabled)
+            # self.listWidget2.addItem(item)
 
         pktIdLength = len(self.pktIdsAsList)
         self.clusterLabel = QtWidgets.QLabel()
-        self.clusterLabel.setText(f"Packet IDs ({pktIdLength})")
+        #self.clusterLabel.setText(f"Packet IDs ({pktIdLength})")
         self.layout.addWidget(self.clusterLabel, 0, 0)
 
-        self.layout.addWidget(self.listWidget2, 1, 0, 1, 2)
+        #self.layout.addWidget(self.listWidget2, 1, 0, 1, 2)
 
         self.button = QtWidgets.QPushButton("Analyze", clicked=lambda: self.analyze())
         self.layout.addWidget(self.button, 2, 2, 1, 2)
