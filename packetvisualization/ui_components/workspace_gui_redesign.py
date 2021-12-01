@@ -425,6 +425,8 @@ class WorkspaceWindow(QMainWindow):
             menu.addAction(self.propertiesAction)
         if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
             menu.addAction(self.propertiesAction)
+        if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Analysis:
+            menu.addAction(self.propertiesAction)
 
         menu.exec(event.globalPos())
 
@@ -925,8 +927,7 @@ class WorkspaceWindow(QMainWindow):
                 analysis_item.setData(0, Qt.UserRole, a)
                 analysis_item.setIcon(0, QIcon(":document-text.svg"))
                 project_item.addChild(analysis_item)
-
-        return True
+        self.load_widget.close()
 
     def show_classifier_qt(self, fig):
         raw_html = '<html><head><meta charset="utf-8" />'

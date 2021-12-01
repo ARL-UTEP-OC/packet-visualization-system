@@ -90,7 +90,7 @@ class Load:
             for a in analysis:
                 csv_path = os.path.join(project.path, a['name'] + ".csv")
                 df = pd.read_csv(csv_path)
-                anal = Analysis(a['name'], df, a['features'], project.path)
+                anal = Analysis(a['name'], df, a['features'], project.path, a['origin'], a['m_data'])
                 project.add_analysis(anal)
         except Exception:
             traceback.print_exc()

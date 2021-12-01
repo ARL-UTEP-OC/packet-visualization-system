@@ -3,6 +3,7 @@ from datetime import datetime
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QWidget, QLabel, QFormLayout, QTextEdit, QListWidget
 
+from packetvisualization.models.analysis import Analysis
 from packetvisualization.models.dataset import Dataset
 from packetvisualization.models.project import Project
 
@@ -23,6 +24,9 @@ class PropertiesWindow(QWidget):
             self.show()
         elif type(self.item) == Dataset:
             self.get_dataset_properties()
+            self.show()
+        elif type(self.item) == Analysis:
+            self.get_analysis_properties()
             self.show()
 
     def get_project_properties(self):
@@ -67,7 +71,29 @@ class PropertiesWindow(QWidget):
         layout.addRow("PCAP Names: ", pcaps)
         layout.addRow("Protocols: ", protocols)
         layout.addRow("Metadata: ", metadata)
+        self.setLayout(layout)
 
+        def text_changed():
+            self.item.m_data = metadata.toPlainText()
+
+    def get_analysis_properties(self):
+        name = QLabel(self.item.name)
+        origin = QLabel(self.item.origin)
+
+        features = QListWidget()
+        for f in self.item.features:
+            QListWidget.addItem(features, f)
+        features.setFixedHeight(75)
+
+        metadata = QTextEdit(self, plainText=self.item.m_data, lineWrapMode=QTextEdit.FixedColumnWidth,
+                             lineWrapColumnOrWidth=50, placeholderText="Custom metadata")
+        metadata.textChanged.connect(lambda: text_changed())
+
+        layout = QFormLayout()
+        layout.addRow("Analysis Name: ", name)
+        layout.addRow("Dataset Origin: ", origin)
+        layout.addRow("Features: ", features)
+        layout.addRow("Metadata: ", metadata)
         self.setLayout(layout)
 
         def text_changed():

@@ -147,14 +147,14 @@ class properties_window(QWidget):
                                      hover_data=df.columns.values[:len(features)])
         # Creating Analysis Item
         analysis_item_name = QInputDialog.getText(self, "Analysis Item Name Entry", "Enter Analysis Item Name:")[0]
-        if analysis_item_name != "":
+        if analysis_item_name != "" and not self.workspace.project_tree.findItems(analysis_item_name, Qt.MatchRecursive, 0):
             tree = self.workspace.project_tree
             head, tail = os.path.split(self.obj.path)
             project_name = os.path.basename(head)
             project_item = tree.findItems(project_name, Qt.MatchRecursive, 0)[0]
             analysis_item = QTreeWidgetItem()
             analysis_item.setText(0, analysis_item_name)
-            analysis_object = Analysis(analysis_item_name, df, features, project_item.data(0, Qt.UserRole).path)
+            analysis_object = Analysis(analysis_item_name, df, features, project_item.data(0, Qt.UserRole).path, self.obj.name)
             analysis_item.setData(0, Qt.UserRole, analysis_object)
             analysis_item.setIcon(0, QIcon(":document-text.svg"))
             project_item.data(0, Qt.UserRole).add_analysis(analysis_object)
