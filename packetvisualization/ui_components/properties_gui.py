@@ -1,9 +1,10 @@
 import sys
-import traceback
+# import traceback
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QTreeWidget, QWidget, QPushButton
-from PyQt5.QtGui import QIntValidator, QValidator
+from PyQt5.QtGui import QIntValidator, QValidator, QColor
 
 from packetvisualization.backend_components import json_parser
 from packetvisualization.backend_components.controller import Controller
@@ -43,9 +44,15 @@ class properties_window(QWidget):
         items = json_parser.parser(jsonString)
         properties = items[0]
         pktIds = items[1]
+        self.propMap = dict(items[2])
+        prop = self.propMap.keys()
 
-        for i in properties:
+        for i in prop: # properties:
             item = QtWidgets.QListWidgetItem(i)
+            propRow = list(self.propMap[i])
+            if propRow[1] == False:
+                item.setBackground(QColor.fromRgb(220, 220, 220))
+            # item.setFlags(Qt.ItemIsEnabled)
             self.listWidget.addItem(item)
         self.clusterLabel = QtWidgets.QLabel()
         self.clusterLabel.setText("Select Properties for Analysis")
@@ -57,15 +64,19 @@ class properties_window(QWidget):
 
         self.listWidget2.setGeometry(QtCore.QRect(10, 10, 211, 291))
 
-        self.clusterLabel = QtWidgets.QLabel()
-        self.clusterLabel.setText("Packet IDs")
-        self.layout.addWidget(self.clusterLabel, 0, 0)
+
         self.pktIdsAsList = []
         for i in range(len(pktIds)):
             string = str(pktIds[i])
             self.pktIdsAsList.append(string)
             item = QtWidgets.QListWidgetItem(string)
+            item.setFlags(Qt.ItemIsEnabled)
             self.listWidget2.addItem(item)
+
+        pktIdLength = len(self.pktIdsAsList)
+        self.clusterLabel = QtWidgets.QLabel()
+        self.clusterLabel.setText(f"Packet IDs ({pktIdLength})")
+        self.layout.addWidget(self.clusterLabel, 0, 0)
 
         self.layout.addWidget(self.listWidget2, 1, 0, 1, 2)
 
@@ -92,20 +103,28 @@ class properties_window(QWidget):
         selected_properties = []
 
         for i in range(len(items)):
-            selected_properties.append(str(self.listWidget.selectedItems()[i].text()))
+            property = str(self.listWidget.selectedItems()[i].text())
+            actualProperty = list(self.propMap[property])
+            print(actualProperty)
+            selected_properties.append(actualProperty[0])
+            # selected_properties.append(str(self.listWidget.selectedItems()[i].text()))
 
         if not len(selected_properties) != 0:
 
             print("Properties not selected")
-            self.errorMsg.setText("Properties not selected")
+            self.errorMsg.setText("Properties not selected.")
+
+        elif self.cluster.text() == "":
+
+            self.errorMsg.setText("Must enter cluster value.")
 
         elif not self.cluster.text().isnumeric():
 
-            self.errorMsg.setText("Cluster value must be numeric")
+            self.errorMsg.setText("Cluster value must be numeric.")
 
         elif not int(self.cluster.text()) <= len(self.pktIdsAsList):
 
-            print("Cluster value must not be higher than number of packets")
+            print("Cluster value must not be higher than number of packets.")
             self.errorMsg.setText("Cluster value must not be higher than number of packets")
 
         else:
