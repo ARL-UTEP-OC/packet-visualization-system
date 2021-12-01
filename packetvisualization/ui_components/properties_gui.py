@@ -4,10 +4,12 @@ import traceback
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QTreeWidget, QWidget, QPushButton, QTreeWidgetItem, QInputDialog
 
 from packetvisualization.backend_components import json_parser
 from packetvisualization.backend_components.controller import Controller
+from packetvisualization.models.analysis import Analysis
 from packetvisualization.models.dataset import Dataset
 from packetvisualization.models.workspace import Workspace
 from packetvisualization.models.context.database_context import DbContext
@@ -40,7 +42,7 @@ class properties_window(QWidget):
             QtWidgets.QAbstractItemView.ExtendedSelection
         )
 
-        self.listWidget.setGeometry(QtCore.QRect(10, 10, 211, 291))
+        # self.listWidget.setGeometry(QtCore.QRect(10, 10, 211, 291))
         items = json_parser.parser(jsonString)
         properties = items[0]
         pktIds = items[1]
@@ -55,19 +57,19 @@ class properties_window(QWidget):
 
         self.listWidget2.setGeometry(QtCore.QRect(10, 10, 211, 291))
 
-        # self.pktIdsAsList = []
-        # for i in range(len(pktIds)):
-        #     string = str(pktIds[i])
-        #     self.pktIdsAsList.append(string)
-        #     item = QtWidgets.QListWidgetItem(string)
-        #     self.listWidget2.addItem(item)
+        self.pktIdsAsList = []
+        for i in range(len(pktIds)):
+            string = str(pktIds[i])
+            self.pktIdsAsList.append(string)
+            # item = QtWidgets.QListWidgetItem(string)
+            # self.listWidget2.addItem(item)
 
-        self.layout.addWidget(self.listWidget2, 0, 0, 1, 2)
+        # self.layout.addWidget(self.listWidget2, 0, 0, 1, 2)
 
         self.button = QtWidgets.QPushButton("Analyze", clicked=lambda: self.analyze())
         self.layout.addWidget(self.button, 1, 2, 1, 2)
 
-        self.cluster = QtWidgets.QLineEdit(self)
+        self.cluster = QtWidgets.QLineEdit(self, placeholderText="Number of Clusters")
         self.cluster.setObjectName("cluster")
         self.layout.addWidget(self.cluster, 1, 1, 1, 1)
 
@@ -100,7 +102,10 @@ class properties_window(QWidget):
             project_item = tree.findItems(project_name, Qt.MatchRecursive, 0)[0]
             analysis_item = QTreeWidgetItem()
             analysis_item.setText(0, analysis_item_name)
-            analysis_item.setData(0, Qt.UserRole, (df, features))
+            analysis_object = Analysis(analysis_item_name, df, features, project_item.data(0, Qt.UserRole).path)
+            analysis_item.setData(0, Qt.UserRole, analysis_object)
+            analysis_item.setIcon(0, QIcon(":document-text.svg"))
+            project_item.data(0, Qt.UserRole).add_analysis(analysis_object)
             project_item.addChild(analysis_item)
 
         fig = px.scatter(df, x="cluster", y="instance_number",

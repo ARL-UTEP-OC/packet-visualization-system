@@ -25,6 +25,8 @@ from packetvisualization.backend_components.bandwidth_plot import create_plot
 from packetvisualization.backend_components.controller import Controller
 from packetvisualization.backend_components.entity_operator import EntityOperations
 from packetvisualization.backend_components.load import Load
+from packetvisualization.backend_components.loadworker import LoadWorker
+from packetvisualization.models.analysis import Analysis
 from packetvisualization.models.context.database_context import DbContext
 from packetvisualization.models.dataset import Dataset
 from packetvisualization.models.pcap import Pcap
@@ -62,10 +64,6 @@ class WorkspaceWindow(QMainWindow):
         self.new_window = []
         if existing_flag:
             self.workspace_object = Load().open_zip(workspace_path)
-            restore_path = os.path.join(self.workspace_object.dump_path, self.workspace_object.name)
-            print(restore_path)
-            self.eo.restore_db(self.workspace_object.name, restore_path)
-            self.db = self.eo.set_db(self.workspace_object.name)
         else:
             self.workspace_object = Workspace(name=os.path.basename(workspace_path),
                                               location=os.path.dirname(workspace_path))
@@ -75,6 +73,7 @@ class WorkspaceWindow(QMainWindow):
         self.resize(1000, 600)
 
         self.thread_1_is_free = True
+        self.thread_3_is_free = True
 
         # Docked widget for Project Tree
         self.project_tree = QTreeWidget()
@@ -93,7 +92,6 @@ class WorkspaceWindow(QMainWindow):
         self.spinner.start()
 
         self.traced_dataset = None
-        self.traced_data = None
 
         # Docked widget for Bandwidth vs. Time Graph
         self.plot_x = []
@@ -128,11 +126,17 @@ class WorkspaceWindow(QMainWindow):
         self._create_status_bar()
 
         self.context = DbContext()
-        # self.db = self.context.db  # here
         self.controller = Controller()
 
         if existing_flag:
-            self.generate_existing_workspace()
+            # self.generate_existing_workspace()
+            # restore_path = os.path.join(self.workspace_object.dump_path, self.workspace_object.name)
+            # print(restore_path)
+            # self.eo.restore_db(self.workspace_object.name, restore_path)
+            # self.db = self.eo.set_db(self.workspace_object.name)
+            # LW = LoadWorker(self.workspace_object)
+            # self.db = LW.load_workspace()
+            self.load_workspace()
 
     def run(self):
         self.show()
@@ -395,7 +399,7 @@ class WorkspaceWindow(QMainWindow):
                 export_menu.addAction(self.exportCsvAction)
                 export_menu.addAction(self.exportJsonAction)
             # Right-click an analysis item
-            if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is tuple:
+            if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Analysis:
                 menu.addAction(self.gen_analysis_action)
                 menu.addAction(self.export_analysis_csv)
                 menu.addAction(self.export_analysis_json)
@@ -434,6 +438,7 @@ class WorkspaceWindow(QMainWindow):
             item = QTreeWidgetItem(self.project_tree)
             item.setData(0, Qt.UserRole, project)
             item.setText(0, text)
+            item.setIcon(0, QIcon(":folder.svg"))
         else:
             print("Item named " + text + " already exists")
             traceback.print_exc()
@@ -463,6 +468,7 @@ class WorkspaceWindow(QMainWindow):
                     child_item = QTreeWidgetItem()
                     child_item.setText(0, text)
                     child_item.setData(0, Qt.UserRole, dataset)
+                    child_item.setIcon(0, QIcon(":folder.svg"))
 
                     project.addChild(child_item)
 
@@ -472,6 +478,7 @@ class WorkspaceWindow(QMainWindow):
                         pcap_item = QTreeWidgetItem()
                         pcap_item.setText(0, pcap_name)
                         pcap_item.setData(0, Qt.UserRole, new_pcap)
+                        pcap_item.setIcon(0, QIcon(":document.svg"))
                         child_item.addChild(pcap_item)
 
                         mytable = self.db[dataset.name]
@@ -516,6 +523,7 @@ class WorkspaceWindow(QMainWindow):
                     pcap_item = QTreeWidgetItem()
                     pcap_item.setText(0, pcap_name)
                     pcap_item.setData(0, Qt.UserRole, new_pcap)
+                    pcap_item.setData(0, QIcon(":document.svg"))
                     dataset_item.addChild(pcap_item)
 
                     mytable = self.db[d.name]
@@ -537,8 +545,10 @@ class WorkspaceWindow(QMainWindow):
     def view_analysis(self):
         try:
             selected = self.project_tree.selectedItems()
-            if selected and type(selected[0].data(0, Qt.UserRole)) is tuple:
-                df, features = selected[0].data(0, Qt.UserRole)
+            if selected and type(selected[0].data(0, Qt.UserRole)) is Analysis:
+                analysis_object = selected[0].data(0, Qt.UserRole)
+                df = analysis_object.df
+                features = analysis_object.features
                 # Generate analysis graph
                 fig = px.scatter(df, x="cluster", y="instance_number",
                                  color='cluster', color_continuous_scale=px.colors.sequential.Bluered_r,
@@ -699,9 +709,10 @@ class WorkspaceWindow(QMainWindow):
                                 self.eo.delete_packets(self.db[d.name], "parent_pcap", cap.name)
                                 self.update_traced_data(d)
             # Delete analysis item
-            elif type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is tuple:
+            elif type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Analysis:
                 analysis_item = self.project_tree.selectedItems()[0]
                 analysis_item.parent().removeChild(analysis_item)
+                analysis_item.parent().data(0, Qt.UserRole).del_analysis(analysis_item.data(0, Qt.UserRole))
         else:
             return False
 
@@ -895,16 +906,25 @@ class WorkspaceWindow(QMainWindow):
             project_item = QTreeWidgetItem(self.project_tree)
             project_item.setText(0, p.name)
             project_item.setData(0, Qt.UserRole, p)
+            project_item.setIcon(0, QIcon(":folder.svg"))
             for d in p.dataset:
                 dataset_item = QTreeWidgetItem()
                 dataset_item.setText(0, d.name)
                 dataset_item.setData(0, Qt.UserRole, d)
+                dataset_item.setIcon(0, QIcon(":folder.svg"))
                 project_item.addChild(dataset_item)
                 for cap in d.pcaps:
                     pcap_item = QTreeWidgetItem()
                     pcap_item.setText(0, cap.name)
                     pcap_item.setData(0, Qt.UserRole, cap)
+                    pcap_item.setIcon(0, QIcon(":document.svg"))
                     dataset_item.addChild(pcap_item)
+            for a in p.analysis:
+                analysis_item = QTreeWidgetItem()
+                analysis_item.setText(0, a.name)
+                analysis_item.setData(0, Qt.UserRole, a)
+                analysis_item.setIcon(0, QIcon(":document-text.svg"))
+                project_item.addChild(analysis_item)
 
         return True
 
@@ -949,16 +969,45 @@ class WorkspaceWindow(QMainWindow):
         self.plot_x = n[0]
         self.plot_y = n[1]
 
-    def report_traced_data(self, n: list) -> None:
-        self.traced_data = n[0]
+    def report_db(self, n:list) -> None:
+        self.db = n[0]
+
+    def load_workspace(self):
+        """ Creates a new thread to load existing workspace
+        """
+        if self.thread_3_is_free:
+            # Step 1: Initialization
+            self.thread_3_is_free = False
+            load_layout = QVBoxLayout()
+            self.load_widget = QWidget()
+            self.load_widget.setLayout(load_layout)
+            load_layout.addWidget(QLabel("LOADING"))
+            self.load_widget.show()
+            # Step 2: Create a QThread object
+            self.thread_3 = QThread()
+            # Step 3: Create a worker object
+            self.worker_3 = LoadWorker(self.workspace_object)
+            # Step 4: Move worker to the thread
+            self.worker_3.moveToThread(self.thread_3)
+            # Step 5: Connect signals and slots
+            self.thread_3.started.connect(self.worker_3.load_workspace)
+            self.worker_3.finished.connect(self.thread_3.quit)
+            self.worker_3.finished.connect(self.worker_3.deleteLater)
+            self.thread_3.finished.connect(self.thread_3.deleteLater)
+            # self.worker_3.progress.connect(self.report_progress)
+            self.worker_3.data.connect(self.report_db)
+            # Step 6: Start the thread
+            self.thread_3.start()
+
+            # Final resets
+            self.thread_3.finished.connect(self.generate_existing_workspace)
+            self.thread_3.finished.connect(self.free_thread_3)
 
     def update_plot(self, d: Dataset):
         """ Creates a new thread to update bandwidth vs. time graph
         """
         if self.thread_1_is_free:
-            # Step 1: Begin showing progress bar
-            # self.progressbar.show()
-            # self.progressbar.setValue(5)
+            # Step 1: Initialization
             self.thread_1_is_free = False
             self.traced_dataset = d
             self.dock_plot.setWidget(self.loading)
@@ -975,19 +1024,22 @@ class WorkspaceWindow(QMainWindow):
             self.thread_1.finished.connect(self.thread_1.deleteLater)
             self.worker_1.progress.connect(self.report_progress)
             self.worker_1.data.connect(self.report_plot_data)
-            self.worker_1.t_data.connect(self.report_traced_data)
             # Step 6: Start the thread
             self.thread_1.start()
 
             # Final resets
-            # self.thread_1.finished.connect(lambda: self.progressbar.setValue(0))
-            # self.thread_1.finished.connect(lambda: self.progressbar.hide())
             self.thread_1.finished.connect(lambda: self.fig_view.setHtml(create_plot(self.plot_x, self.plot_y)))
             self.thread_1.finished.connect(lambda: self.dock_plot.setWidget(self.fig_view))
-            self.thread_1.finished.connect(lambda: self.free_thread_1())
+            self.thread_1.finished.connect(self.free_thread_1)
 
     def free_thread_1(self):
         self.thread_1_is_free = True
+
+    def free_thread_2(self):
+        self.thread_2_is_free = True
+
+    def free_thread_3(self):
+        self.thread_3_is_free = True
 
     def process_split_caps(self, pcap, file, table, dataset_name):
         self.progressbar.show()

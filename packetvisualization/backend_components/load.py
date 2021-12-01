@@ -1,10 +1,15 @@
+import json
+import os
+import shutil
 import traceback
 
-from packetvisualization.models.workspace import Workspace
-from packetvisualization.models.project import Project
+import pandas as pd
+
+from packetvisualization.models.analysis import Analysis
 from packetvisualization.models.dataset import Dataset
 from packetvisualization.models.pcap import Pcap
-import json, datetime, os, shutil
+from packetvisualization.models.project import Project
+from packetvisualization.models.workspace import Workspace
 
 
 class Load:
@@ -71,6 +76,7 @@ class Load:
         for p in projects:
             proj = Project(p['name'], workspace.path, p['c_time'])
             self.load_dataset(proj, p['dataset'])
+            self.load_analysis(proj, p['analysis'])
             workspace.add_project(proj)
 
     def load_dataset(self, project: Project, datasets: list) -> list:
@@ -78,6 +84,16 @@ class Load:
             data = Dataset(d['name'], project.path, d['m_data'])
             self.load_pcap(data, d['pcaps'])
             project.add_dataset(data)
+
+    def load_analysis(self, project: Project, analysis: list):
+        try:
+            for a in analysis:
+                csv_path = os.path.join(project.path, a['name'] + ".csv")
+                df = pd.read_csv(csv_path)
+                anal = Analysis(a['name'], df, a['features'], project.path)
+                project.add_analysis(anal)
+        except Exception:
+            traceback.print_exc()
 
     def load_pcap(self, dataset: Dataset, pcaps: list) -> list:
         for a in pcaps:

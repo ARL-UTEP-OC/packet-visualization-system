@@ -10,6 +10,8 @@
     <file alias="clipboard.svg">svg/clipboard.svg</file>
     <file alias="copy.svg">svg/copy.svg</file>
     <file alias="cut.svg">svg/cut.svg</file>
+    <file alias="document.svg">svg/document.svg</file>
+    <file alias="document-text.svg">svg/document-text.svg</file>
     <file alias="folder.svg">svg/folder.svg</file>
     <file alias="git-branch.svg">svg/git-branch.svg</file>
     <file alias="help.svg">svg/help.svg</file>
