@@ -159,15 +159,15 @@ class properties_window(QWidget):
                          color='cluster', color_continuous_scale=px.colors.sequential.Bluered_r,
                          hover_data=df.columns.values[:len(features)])
 
-            raw_html = '<html><head><meta charset="utf-8" />'
-            raw_html += '<script src="https://cdn.plot.ly/plotly-latest.min.js"></script></head>'
-            raw_html += '<body>'
-            raw_html += po.plot(fig, include_plotlyjs=False, output_type='div')
-            raw_html += '</body></html>'
+        raw_html = '<html><head><meta charset="utf-8" />'
+        raw_html += '<script src="https://cdn.plot.ly/plotly-latest.min.js"></script></head>'
+        raw_html += '<body>'
+        raw_html += po.plot(fig, include_plotlyjs=False, output_type='div')
+        raw_html += '</body></html>'
 
-            self.workspace.classifier_plot_view.setHtml(raw_html)
-            self.workspace.classifier_window.show()
-            self.close()
+        self.workspace.classifier_plot_view.setHtml(raw_html)
+        self.workspace.classifier_window.show()
+        self.close()
 
 
 
