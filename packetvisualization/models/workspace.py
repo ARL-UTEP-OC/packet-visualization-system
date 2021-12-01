@@ -36,9 +36,9 @@ class Workspace:
     def work_dir(self) -> str:
         tail = "." + self.name  # we want to work inside a temp, hidden folder
         path = os.path.join(self.location, tail)
+        if os.path.isdir(path):
+            shutil.rmtree(path)
         if not self.open_existing:
-            if os.path.isdir(path):
-                shutil.rmtree(path)
             os.mkdir(path)
         return path
 
