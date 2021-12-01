@@ -29,7 +29,9 @@ class TableBackend:
 
         return frame_string_list
 
-    def to_csv(self, output_file_in, input_file_in, test_mode: bool = False):
+    def to_csv(self, output_file_in, input_file_in):
+        """Convert PCAP file to CSV file
+        """
         if platform.system() == "Windows":
             os.system(
                 'cd "C:\Program Files\Wireshark" & tshark -r ' + input_file_in + ' -T fields -e frame.number -e '
@@ -48,7 +50,9 @@ class TableBackend:
                                                   'separator=, -E quote=d -E '
                                                   'occurrence=f > ' + output_file_in)
 
-    def to_json(self, output_file_in, input_file_in, test_mode: bool = False):
+    def to_json(self, output_file_in, input_file_in):
+        """Converts PCAP file to JSON file
+        """
         if platform.system() == "Windows":
             os.system(
                 'cd "C:\Program Files\Wireshark" & tshark -r ' + input_file_in + ' -T json > ' + output_file_in)

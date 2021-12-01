@@ -1,8 +1,11 @@
 import os
 import sys
-import traceback
+# import traceback
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QTreeWidget, QWidget, QPushButton
+from PyQt5.QtGui import QIntValidator, QValidator, QColor
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QTreeWidget, QWidget, QPushButton, QTreeWidgetItem, QInputDialog
@@ -42,36 +45,59 @@ class properties_window(QWidget):
             QtWidgets.QAbstractItemView.ExtendedSelection
         )
 
-        # self.listWidget.setGeometry(QtCore.QRect(10, 10, 211, 291))
+        self.listWidget.setGeometry(QtCore.QRect(10, 10, 211, 291))
         items = json_parser.parser(jsonString)
         properties = items[0]
         pktIds = items[1]
+        self.propMap = dict(items[2])
+        prop = self.propMap.keys()
 
-        for i in properties:
+        for i in prop: # properties:
             item = QtWidgets.QListWidgetItem(i)
+            propRow = list(self.propMap[i])
+            if propRow[1] == False:
+                item.setBackground(QColor.fromRgb(220, 220, 220))
+            # item.setFlags(Qt.ItemIsEnabled)
             self.listWidget.addItem(item)
+        self.clusterLabel = QtWidgets.QLabel()
+        self.clusterLabel.setText("Select Properties for Analysis")
+        self.layout.addWidget(self.clusterLabel, 0, 2)
 
-        self.layout.addWidget(self.listWidget, 0, 2, 1, 2)
+        self.layout.addWidget(self.listWidget, 1, 2, 1, 2)
 
         self.listWidget2 = QtWidgets.QListWidget()
 
         self.listWidget2.setGeometry(QtCore.QRect(10, 10, 211, 291))
 
+
         self.pktIdsAsList = []
         for i in range(len(pktIds)):
             string = str(pktIds[i])
             self.pktIdsAsList.append(string)
-            # item = QtWidgets.QListWidgetItem(string)
-            # self.listWidget2.addItem(item)
+            item = QtWidgets.QListWidgetItem(string)
+            item.setFlags(Qt.ItemIsEnabled)
+            self.listWidget2.addItem(item)
 
-        # self.layout.addWidget(self.listWidget2, 0, 0, 1, 2)
+        pktIdLength = len(self.pktIdsAsList)
+        self.clusterLabel = QtWidgets.QLabel()
+        self.clusterLabel.setText(f"Packet IDs ({pktIdLength})")
+        self.layout.addWidget(self.clusterLabel, 0, 0)
+
+        self.layout.addWidget(self.listWidget2, 1, 0, 1, 2)
 
         self.button = QtWidgets.QPushButton("Analyze", clicked=lambda: self.analyze())
-        self.layout.addWidget(self.button, 1, 2, 1, 2)
+        self.layout.addWidget(self.button, 2, 2, 1, 2)
+
+        self.clusterLabel = QtWidgets.QLabel()
+        self.clusterLabel.setText("Cluster Value")
+        self.layout.addWidget(self.clusterLabel, 2, 0)
 
         self.cluster = QtWidgets.QLineEdit(self, placeholderText="Number of Clusters")
         self.cluster.setObjectName("cluster")
-        self.layout.addWidget(self.cluster, 1, 1, 1, 1)
+        self.layout.addWidget(self.cluster, 2, 1)
+
+        self.errorMsg = QtWidgets.QLabel()
+        self.layout.addWidget(self.errorMsg, 3, 0, 1, 4)
 
         self.setLayout(self.layout)
 
@@ -82,17 +108,43 @@ class properties_window(QWidget):
         selected_properties = []
 
         for i in range(len(items)):
-            selected_properties.append(str(self.listWidget.selectedItems()[i].text()))
+            property = str(self.listWidget.selectedItems()[i].text())
+            actualProperty = list(self.propMap[property])
+            print(actualProperty)
+            selected_properties.append(actualProperty[0])
+            # selected_properties.append(str(self.listWidget.selectedItems()[i].text()))
 
-        if self.cluster.text() == "" and len(selected_properties) == 0:
-            raise Exception('Please select properties and enter a correct cluster number')
+        if not len(selected_properties) != 0:
 
-        df, features = self.controller.create_analysis(self.pktIdsAsList,
-                                                       selected_properties,
-                                                       int(self.cluster.text()),
-                                                       self.obj,
-                                                       self.db)
+            print("Properties not selected")
+            self.errorMsg.setText("Properties not selected.")
 
+        elif self.cluster.text() == "":
+
+            self.errorMsg.setText("Must enter cluster value.")
+
+        elif not self.cluster.text().isnumeric():
+
+            self.errorMsg.setText("Cluster value must be numeric.")
+
+        elif not int(self.cluster.text()) <= len(self.pktIdsAsList):
+
+            print("Cluster value must not be higher than number of packets.")
+            self.errorMsg.setText("Cluster value must not be higher than number of packets")
+
+        else:
+            # raise Exception('Please select properties and enter a correct cluster number')
+            df, features = self.controller.create_analysis(self.pktIdsAsList,
+                                                           selected_properties,
+                                                           int(self.cluster.text()),
+                                                           self.obj,
+                                                           self.db)
+
+
+
+            fig = px.scatter(df, x="cluster", y="instance_number",
+                                     color='cluster', color_continuous_scale=px.colors.sequential.Bluered_r,
+                                     hover_data=df.columns.values[:len(features)])
         # Creating Analysis Item
         analysis_item_name = QInputDialog.getText(self, "Analysis Item Name Entry", "Enter Analysis Item Name:")[0]
         if analysis_item_name != "":
@@ -121,3 +173,7 @@ class properties_window(QWidget):
         self.workspace.classifier_plot_view.setHtml(raw_html)
         self.workspace.classifier_window.show()
         self.close()
+
+
+
+

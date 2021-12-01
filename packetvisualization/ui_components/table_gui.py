@@ -48,7 +48,7 @@ class table_gui(QTableWidget):
         fnt.setBold(True)
         self.horizontalHeader().setFont(fnt)
 
-        self.populate_table(obj=obj, progressbar=progressbar, db=db)
+        self.populate_table()
 
     def contextMenuEvent(self, event):
         """Creates the right-click menu for accessing table functionality
@@ -491,7 +491,7 @@ class table_gui(QTableWidget):
         self.ui = properties_gui.properties_window(data, self.obj, self.workspace.db, self.workspace)
         self.ui.show()
 
-    def populate_table(self, obj, progressbar, db):
+    def populate_table(self):
         """Starts a thread that generates and populates a table of packets from the specified pcap or dataset
         """
         if self.thread_is_free:
