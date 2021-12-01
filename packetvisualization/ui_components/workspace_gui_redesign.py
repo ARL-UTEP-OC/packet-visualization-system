@@ -154,6 +154,14 @@ class WorkspaceWindow(QMainWindow):
         self.newPCAPAction.setStatusTip("Create a new pcap")
         self.newPCAPAction.setToolTip("Create a new pcap")
 
+        self.add_pcap_zip_action = QAction("Add zip file of PCAP's", self)
+        self.add_pcap_zip_action.setStatusTip("Add zip file of PCAP's")
+        self.add_pcap_zip_action.setToolTip("Add zip file of PCAP's")
+
+        self.add_pcap_folder_action = QAction("Add folder of PCAP's", self)
+        self.add_pcap_folder_action.setStatusTip("Add folder of PCAP's")
+        self.add_pcap_folder_action.setToolTip("Add folder of PCAP's")
+
         self.filterWiresharkAction = QAction("Filter Wireshark", self)
 
         self.openNewAction = QAction("&New Workspace", self)
@@ -265,6 +273,8 @@ class WorkspaceWindow(QMainWindow):
         self.traceAction.triggered.connect(self.trace_dataset)
         self.exportCsvAction.triggered.connect(self.export_csv)
         self.exportJsonAction.triggered.connect(self.export_json)
+        self.add_pcap_zip_action.triggered.connect(self.add_pcap_zip)
+        self.add_pcap_folder_action.triggered.connect(self.add_pcap_folder)
 
         # Connect Edit actions
         self.cutAction.triggered.connect(self.cut_content)
@@ -376,6 +386,8 @@ class WorkspaceWindow(QMainWindow):
             # Right-click a dataset
             if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
                 menu.addAction(self.newPCAPAction)
+                menu.addAction(self.add_pcap_zip_action)
+                #menu.addAction(self.add_pcap_folder_action)
                 # menu.addAction(self.traceAction)
                 menu.addAction(self.openWiresharkAction)
                 menu.addAction(self.filterWiresharkAction)
@@ -735,7 +747,7 @@ class WorkspaceWindow(QMainWindow):
                 if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Pcap:
                     pcap_item = self.project_tree.selectedItems()[0]
                     cap = pcap_item.data(0, Qt.UserRole)
-                    Wireshark.openwireshark(cap.pcap_file)
+                    Wireshark.openwireshark(cap.path)
         except Exception:
             traceback.print_exc()
             return False
@@ -797,6 +809,17 @@ class WorkspaceWindow(QMainWindow):
                         pcap_item.setData(0, Qt.UserRole, new_pcap)
                         dataset_item.addChild(pcap_item)
 
+                        mytable = self.db[dataset_obj.name]
+                        if not new_pcap.large_pcap_flag:
+                            self.eo.insert_packets(new_pcap.json_file, mytable, dataset_obj.name, new_pcap.name)
+                            new_pcap.cleanup()
+                        else:
+                            try:
+                                self.process_split_caps(new_pcap, file, mytable,
+                                                        dataset_obj.name)  # Complete process on another thread
+                            except:
+                                traceback.print_exc()
+
                 shutil.rmtree(extracted_folder)
                 return True
         except Exception:
@@ -816,6 +839,7 @@ class WorkspaceWindow(QMainWindow):
                     namelist.append(cap.name)
 
                 for file in os.listdir(location):
+                    new_pcap = Pcap(file, dataset.path, os.path.join(location, file))
                     if new_pcap.name not in namelist:
                         new_pcap = Pcap(file, dataset.path, os.path.join(location, file))
                         dataset.add_pcap(new_pcap)
@@ -823,6 +847,17 @@ class WorkspaceWindow(QMainWindow):
                         pcap_item.setText(0, os.path.basename(file))
                         pcap_item.setData(0, Qt.UserRole, new_pcap)
                         dataset_item.addChild(pcap_item)
+
+                        mytable = self.db[dataset.name]
+                        if not new_pcap.large_pcap_flag:
+                            self.eo.insert_packets(new_pcap.json_file, mytable, dataset.name, new_pcap.name)
+                            new_pcap.cleanup()
+                        else:
+                            try:
+                                self.process_split_caps(new_pcap, file, mytable,
+                                                        dataset.name)  # Complete process on another thread
+                            except:
+                                traceback.print_exc()
                 return True
         except Exception:
             traceback.print_exc()
