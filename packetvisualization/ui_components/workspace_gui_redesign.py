@@ -454,11 +454,6 @@ class WorkspaceWindow(QMainWindow):
                     new_pcap = Pcap(file=file, path=dataset.path, name=pcap_name)
                     if new_pcap.name is not None:
                         dataset.add_pcap(new=new_pcap)
-                        pcap_item = QTreeWidgetItem()
-                        pcap_item.setText(0, pcap_name)
-                        pcap_item.setData(0, Qt.UserRole, new_pcap)
-                        pcap_item.setIcon(0, QIcon(":document.svg"))
-                        child_item.addChild(pcap_item)
 
                         mytable = self.db[dataset.name]
                         if not new_pcap.large_pcap_flag:  # if small pcap, read json
@@ -469,6 +464,7 @@ class WorkspaceWindow(QMainWindow):
                             pcap_item = QTreeWidgetItem()
                             pcap_item.setText(0, pcap_name)
                             pcap_item.setData(0, Qt.UserRole, new_pcap)
+                            pcap_item.setIcon(0, QIcon(":document.svg"))
                             child_item.addChild(pcap_item)
                         else:  # large pcap
                             try:
@@ -507,11 +503,6 @@ class WorkspaceWindow(QMainWindow):
 
                 if new_pcap.name is not None and new_pcap not in d.pcaps:
                     d.add_pcap(new_pcap)
-                    pcap_item = QTreeWidgetItem()
-                    pcap_item.setText(0, pcap_name)
-                    pcap_item.setData(0, Qt.UserRole, new_pcap)
-                    pcap_item.setData(0, QIcon(":document.svg"))
-                    dataset_item.addChild(pcap_item)
 
                     mytable = self.db[d.name]
                     if not new_pcap.large_pcap_flag:
@@ -520,6 +511,7 @@ class WorkspaceWindow(QMainWindow):
                         pcap_item = QTreeWidgetItem()
                         pcap_item.setText(0, pcap_name)
                         pcap_item.setData(0, Qt.UserRole, new_pcap)
+                        pcap_item.setIcon(0, QIcon(":document.svg"))
                         dataset_item.addChild(pcap_item)
                     else:
                         try:
@@ -539,6 +531,7 @@ class WorkspaceWindow(QMainWindow):
             pcap_item = QTreeWidgetItem()
             pcap_item.setText(0, pcap.name)
             pcap_item.setData(0, Qt.UserRole, pcap)
+            pcap_item.setIcon(0, QIcon(":document.svg"))
             dataset_item.addChild(pcap_item)
         else:
             project_item.addChild(dataset_item)
@@ -546,6 +539,7 @@ class WorkspaceWindow(QMainWindow):
             pcap_item = QTreeWidgetItem()
             pcap_item.setText(0, pcap.name)
             pcap_item.setData(0, Qt.UserRole, pcap)
+            pcap_item.setIcon(0, QIcon(":document.svg"))
             dataset_item.addChild(pcap_item)
 
     def view_analysis(self):
@@ -1115,7 +1109,8 @@ class WorkspaceWindow(QMainWindow):
 
     def export_analysis_item(self, csv: bool):
         if self.project_tree.selectedItems():
-            df, features = self.project_tree.selectedItems()[0].data(0, Qt.UserRole)
+            analysis = self.project_tree.selectedItems()[0].data(0, Qt.UserRole)
+            df = analysis.df
             if csv:
                 output_file = QFileDialog.getSaveFileName(caption="Choose Output location", filter=".csv (*.csv)")[
                     0]
