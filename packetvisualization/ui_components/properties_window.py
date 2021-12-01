@@ -83,7 +83,7 @@ class PropertiesWindow(QWidget):
         features = QListWidget()
         for f in self.item.features:
             QListWidget.addItem(features, f)
-        features.setFixedHeight(75)
+        features.setFixedHeight(100)
 
         metadata = QTextEdit(self, plainText=self.item.m_data, lineWrapMode=QTextEdit.FixedColumnWidth,
                              lineWrapColumnOrWidth=50, placeholderText="Custom metadata")

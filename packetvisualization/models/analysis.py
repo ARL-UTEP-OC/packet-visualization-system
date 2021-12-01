@@ -23,4 +23,6 @@ class Analysis:
         f.write(temp)
 
     def __del__(self) -> bool:
-        shutil.rmtree(self.path)
+        csv_path = os.path.join(self.path, self.name + ".csv")
+        if os.path.isfile(csv_path):
+            os.remove(csv_path)

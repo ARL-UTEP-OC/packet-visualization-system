@@ -92,7 +92,7 @@ class properties_window(QWidget):
         self.clusterLabel.setText("Cluster Value")
         self.layout.addWidget(self.clusterLabel, 2, 0)
 
-        self.cluster = QtWidgets.QLineEdit(self, placeholderText="Number of Clusters")
+        self.cluster = QtWidgets.QLineEdit(self)
         self.cluster.setObjectName("cluster")
         self.layout.addWidget(self.cluster, 2, 1)
 

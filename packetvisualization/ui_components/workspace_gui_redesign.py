@@ -63,7 +63,10 @@ class WorkspaceWindow(QMainWindow):
         self.test_mode = False
         self.new_window = []
         if existing_flag:
-            self.workspace_object = Load().open_zip(workspace_path)
+            # self.workspace_object = Load().open_zip(workspace_path)
+            root, ext = os.path.splitext(workspace_path)
+            head, tail = os.path.split(root)
+            self.workspace_object = Workspace(name=tail, location=head, open_existing=True)
         else:
             self.workspace_object = Workspace(name=os.path.basename(workspace_path),
                                               location=os.path.dirname(workspace_path))
@@ -193,18 +196,6 @@ class WorkspaceWindow(QMainWindow):
         self.exitAction.setToolTip("Exit workspace")
 
         # Edit Menu Actions
-        self.cutAction = QAction(QIcon(":cut.svg"), "Cu&t", self)
-        self.cutAction.setShortcut(QKeySequence.Cut)
-        self.cutAction.setEnabled(False)
-
-        self.copyAction = QAction(QIcon(":copy.svg"), "&Copy", self)
-        self.copyAction.setShortcut(QKeySequence.Copy)
-        self.copyAction.setEnabled(False)
-
-        self.pasteAction = QAction(QIcon(":clipboard.svg"), "&Paste", self)
-        self.pasteAction.setShortcut(QKeySequence.Paste)
-        self.pasteAction.setEnabled(False)
-
         self.deleteAction = QAction(QIcon(":trash.svg"), "&Delete", self)
         self.deleteAction.setShortcut("Del")
         self.deleteAction.setStatusTip("Remove selected item")
@@ -226,11 +217,6 @@ class WorkspaceWindow(QMainWindow):
         self.export_analysis_json = QAction("&Export Analysis to JSON", self)
         self.export_analysis_json = QAction("Export Analysis to JSON")
         self.export_analysis_json = QAction("Export Analysis to JSON")
-
-        # self.gen_table_action = QAction(QIcon(os.path.join(self.icons, "list.svg")), "&Packet Table", self)
-        self.classifier_action = QAction("&Classify Packets", self)
-        self.classifier_action.setStatusTip("Classify selected pcap data")
-        self.classifier_action.setToolTip("Classify selected pcap data")
 
         self.propertiesAction = QAction("Properties", self)
         self.propertiesAction.setStatusTip("View Properties")
@@ -272,14 +258,10 @@ class WorkspaceWindow(QMainWindow):
         self.exportJsonAction.triggered.connect(self.export_json)
 
         # Connect Edit actions
-        self.cutAction.triggered.connect(self.cut_content)
-        self.copyAction.triggered.connect(self.copy_content)
-        self.pasteAction.triggered.connect(self.paste_content)
         self.deleteAction.triggered.connect(self.delete)
 
         # Connect View actions
         self.gen_table_action.triggered.connect(self.gen_table)
-        self.classifier_action.triggered.connect(self.display_classifier_options)
         self.propertiesAction.triggered.connect(self.show_properties)
         self.gen_analysis_action.triggered.connect(self.view_analysis)
         self.export_analysis_csv.triggered.connect(lambda: self.export_analysis_item(True))
@@ -323,16 +305,11 @@ class WorkspaceWindow(QMainWindow):
 
         # Edit Menu
         edit_menu = menu_bar.addMenu("&Edit")
-        edit_menu.addAction(self.cutAction)
-        edit_menu.addAction(self.copyAction)
-        edit_menu.addAction(self.pasteAction)
-        edit_menu.addSeparator()
         edit_menu.addAction(self.deleteAction)
 
         # View Menu
         view_menu = menu_bar.addMenu("&View")
         view_menu.addAction(self.gen_table_action)
-        view_menu.addAction(self.classifier_action)
 
         # Wireshark Menu
         wireshark_menu = menu_bar.addMenu('Wire&shark')
@@ -384,7 +361,6 @@ class WorkspaceWindow(QMainWindow):
                 # menu.addAction(self.traceAction)
                 menu.addAction(self.openWiresharkAction)
                 menu.addAction(self.filterWiresharkAction)
-                menu.addAction(self.classifier_action)
                 view_menu = menu.addMenu("View")
                 view_menu.addAction(self.gen_table_action)
                 export_menu = menu.addMenu("Export")
@@ -407,9 +383,6 @@ class WorkspaceWindow(QMainWindow):
         separator1 = QAction(self)
         separator1.setSeparator(True)
         menu.addAction(separator1)
-        menu.addAction(self.cutAction)
-        menu.addAction(self.copyAction)
-        menu.addAction(self.pasteAction)
         menu.addAction(self.deleteAction)
 
         separator2 = QAction(self)
@@ -421,9 +394,12 @@ class WorkspaceWindow(QMainWindow):
         separator3.setSeparator(True)
         menu.addAction(separator3)
 
+        self.propertiesAction.setEnabled(True)
         if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Project:
             menu.addAction(self.propertiesAction)
         if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
+            if self.project_tree.selectedItems()[0].data(0, Qt.UserRole).packet_data == None:
+                self.propertiesAction.setEnabled(False)
             menu.addAction(self.propertiesAction)
         if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Analysis:
             menu.addAction(self.propertiesAction)
@@ -454,10 +430,7 @@ class WorkspaceWindow(QMainWindow):
                 if not self.test_mode:
                     text = QInputDialog.getText(self, "Dataset Name Entry", "Enter Dataset name:")[0]
                 if not self.project_tree.findItems(text, Qt.MatchRecursive, 0) and text != "":
-                    if not self.test_mode:
-                        pcap_path, pcap_name, file, extension = self.get_pcap_path()
-                    else:
-                        pcap_path, pcap_name = os.path.split(file)
+                    pcap_path, pcap_name, file, extension = self.get_pcap_path()
                     if pcap_path is None:
                         return
                     if not self.test_mode:
@@ -683,10 +656,10 @@ class WorkspaceWindow(QMainWindow):
         if self.project_tree.selectedItems():
             # Deleting a project
             if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Project:
-                if not self.test_mode:
-                    project_item = self.project_tree.selectedItems()[0]
+                project_item = self.project_tree.selectedItems()[0]
                 p = project_item.data(0, Qt.UserRole)
-                self.workspace_object.del_project(p)
+                if p.name != "":
+                    self.workspace_object.del_project(p)
                 QTreeWidget.invisibleRootItem(self.project_tree).removeChild(project_item)
             # Deleting a dataset
             elif type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
@@ -713,8 +686,9 @@ class WorkspaceWindow(QMainWindow):
             # Delete analysis item
             elif type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Analysis:
                 analysis_item = self.project_tree.selectedItems()[0]
-                analysis_item.parent().removeChild(analysis_item)
                 analysis_item.parent().data(0, Qt.UserRole).del_analysis(analysis_item.data(0, Qt.UserRole))
+                analysis_item.parent().removeChild(analysis_item)
+
         else:
             return False
 
@@ -722,18 +696,6 @@ class WorkspaceWindow(QMainWindow):
         """Exit function that calls the close() function to stop the application
         """
         self.close()
-
-    def cut_content(self):
-        # Logic for cutting content
-        print("<b>Edit > Cut<\b> clicked")
-
-    def copy_content(self):
-        # Logic for copying content
-        print("<b>Edit > Copy<\b> clicked")
-
-    def paste_content(self):
-        # Logic for pasting content
-        print("<b>Edit > Paste<\b> clicked")
 
     def open_window_project_tree(self):
         # Logic to open the project_tree window
@@ -765,6 +727,8 @@ class WorkspaceWindow(QMainWindow):
         """
         file = QFile(":Packet_Visualization.pdf")
         helpFile = os.path.join(os.path.dirname(__file__), "resources", "helpFile.pdf")
+        if os.path.isfile(helpFile):
+            os.remove(helpFile)
         file.copy(helpFile)
         QDesktopServices().openUrl(QUrl.fromLocalFile(helpFile))
 
