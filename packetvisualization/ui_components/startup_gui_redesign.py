@@ -8,7 +8,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 from packetvisualization.ui_components.workspace_gui_redesign import WorkspaceWindow
-from packetvisualization.ui_components.images import qrc_resources
+from packetvisualization.ui_components.resources import qrc_resources
 
 
 class StartupWindow(QWidget):

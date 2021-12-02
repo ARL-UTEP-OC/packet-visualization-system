@@ -20,8 +20,6 @@ def test_create_project():
     assert p2.name == "testProject2"
     assert p1.c_time == 1632527017.653542
     assert p2.c_time == 1632527130.789377
-    assert p1.size == 4096
-    assert p2.size == 4096
     assert p1.dataset == []
     assert p2.dataset == []
     assert p1.path == os.path.join(cwd, ".testWorkspace2", "testProject1")
@@ -35,6 +33,12 @@ def test_add_project():
     assert [p1] == w.add_project(p1)
     assert [p1, p2] == w.add_project(p2)
     assert w.project == [p1, p2]
+
+
+def test_get_size():
+    global w, p1, p2
+    assert p1.get_size() == "0 B"
+    assert p2.get_size() == "0 B"
 
 
 def test_find_project():
@@ -55,7 +59,7 @@ def test_save_project():
     global w
     w.save()  # testing saving up to projects
     exported_files = [os.path.join(cwd, "testWorkspace2.zip"), os.path.join(cwd, ".testWorkspace2", "save.json")]
-    exported_hash = "588a0a1700b334e9a2446e711c7aa4a5ffab2b70"
+    exported_hash = "6bfa9aa5734347de05e912db90ef0b6a8ad1ac67"
     for f in exported_files:
         assert os.path.isfile(f)
     with open(exported_files[1], 'rb') as f:
@@ -69,7 +73,7 @@ def test_save_project_overwrite():
     w.save()
     exported_files = [os.path.join(cwd, "testWorkspace2.zip"), os.path.join(cwd, ".testWorkspace2", "save.json")]
     # new checksum
-    exported_hash = "da244ac6526e58c02065a6c7994a814b61fdba91"
+    exported_hash = "2eab6cd54e88f96725e8c01b50b1ecd9e9cb5cce"
     for f in exported_files:
         assert os.path.isfile(f)
     with open(exported_files[1], 'rb') as f:
@@ -79,7 +83,7 @@ def test_save_project_overwrite():
     w.del_project(p1)
     w.save()
     # back to old checksum
-    exported_hash = "588a0a1700b334e9a2446e711c7aa4a5ffab2b70"
+    exported_hash = "6bfa9aa5734347de05e912db90ef0b6a8ad1ac67"
     for f in exported_files:
         assert os.path.isfile(f)
     with open(exported_files[1], 'rb') as f:

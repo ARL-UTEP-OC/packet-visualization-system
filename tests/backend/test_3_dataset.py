@@ -71,7 +71,7 @@ def test_save_dataset():
     # list of files that should be exported
     exported_files = [os.path.join(cwd, "testWorkspace3.zip"), os.path.join(cwd, ".testWorkspace3", "save.json")]
     # manually checked the save.json file was correct and calculated the checksum to the value below
-    exported_hash = "5e4d477403a13e9bffcf448166de34b15d9d2709"
+    exported_hash = "bbe88654e5947a80caf9e4783a705bed7ebe49bf"
     for f in exported_files:
         # check files exist
         assert os.path.isfile(f)
@@ -88,7 +88,7 @@ def test_save_dataset_overwrite():
     w.save()
     exported_files = [os.path.join(cwd, "testWorkspace3.zip"), os.path.join(cwd, ".testWorkspace3", "save.json")]
     # new checksum
-    exported_hash = "0876378c9a9d907deeb5abc6661160f17d20c1ee"
+    exported_hash = "77d3a99cc8b04b4ece28abad30eb72a547bdb7ad"
     for f in exported_files:
         assert os.path.isfile(f)
     with open(exported_files[1], 'rb') as f:
@@ -98,7 +98,7 @@ def test_save_dataset_overwrite():
     p1.del_dataset(d2)
     w.save()
     # back to old checksum
-    exported_hash = "5e4d477403a13e9bffcf448166de34b15d9d2709"
+    exported_hash = "bbe88654e5947a80caf9e4783a705bed7ebe49bf"
     for f in exported_files:
         assert os.path.isfile(f)
     with open(exported_files[1], 'rb') as f:
