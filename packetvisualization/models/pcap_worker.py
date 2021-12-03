@@ -1,6 +1,6 @@
 import os
 from PyQt5.QtCore import QObject, pyqtSignal
-from packetvisualization.backend_components.entity_operator import EntityOperations
+from packetvisualization.backend_components.mongo_manager import MongoManager
 
 
 class PcapWorker(QObject):
@@ -13,7 +13,7 @@ class PcapWorker(QObject):
         self.file = file
         self.table = table
         self.dataset_name = dataset_name
-        self.eo = EntityOperations()
+        self.eo = MongoManager()
 
     def run(self):
         count = 0

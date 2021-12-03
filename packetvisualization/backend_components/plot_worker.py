@@ -4,12 +4,9 @@ from datetime import datetime
 import pandas as pd
 from PyQt5.QtCore import QObject, pyqtSignal
 
-from packetvisualization.backend_components.table_backend import TableBackend
-
 
 class PlotWorker(QObject):
     finished = pyqtSignal()
-    progress = pyqtSignal(int)
     data = pyqtSignal(list)
 
     def __init__(self, dataset, db):
@@ -75,8 +72,6 @@ class PlotWorker(QObject):
             for d in range(len(plot_x) - 1):
                 mask = (df["datetime"] >= plot_x[d]) & (df["datetime"] < plot_x[d + 1])
                 result_df.append(df[mask])
-                progress = int(d / len(date) * 100)
-                self.progress.emit(progress)
 
             for i in range(len(result_df)):
                 plot_y[i] = len(result_df[i])
@@ -84,9 +79,7 @@ class PlotWorker(QObject):
             self.dataset.packet_data = [plot_x, plot_y]
             self.dataset.has_changed = False
         else:
-            self.progress.emit(50)
             plot_x, plot_y = [], []
-            self.progress.emit(100)
 
         self.data.emit([plot_x, plot_y])
         self.finished.emit()

@@ -4,7 +4,7 @@ import json
 import os
 
 
-class EntityOperations:
+class MongoManager:
     # context = DbContext()
     # client = context.client
     def __init__(self):
