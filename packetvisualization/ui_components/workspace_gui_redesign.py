@@ -17,6 +17,7 @@ from packetvisualization.backend_components.bandwidth_plot import create_plot
 from packetvisualization.backend_components.controller import Controller
 from packetvisualization.backend_components.entity_operator import EntityOperations
 from packetvisualization.backend_components.load_worker import LoadWorker
+from packetvisualization.backend_components.table_backend import TableBackend
 from packetvisualization.models.analysis import Analysis
 from packetvisualization.models.context.database_context import DbContext
 from packetvisualization.models.dataset import Dataset
@@ -124,6 +125,11 @@ class WorkspaceWindow(QMainWindow):
 
         self.context = DbContext()
         self.controller = Controller()
+
+        # temp folder for analyis pcaps
+        self.temp_folder = os.path.join(os.getcwd(), "TempFolder")
+        os.mkdir(self.temp_folder)
+        self.analysis_count = 0
 
         if existing_flag:
             # self.generate_existing_workspace()
@@ -244,6 +250,9 @@ class WorkspaceWindow(QMainWindow):
         self.aboutAction = QAction("&About", self)
         self.aboutAction.setEnabled(False)
 
+        #test-------------------------------------------------------------------------------------------------------
+        self.test_table_action = QAction("Test")
+
     def _connect_actions(self) -> None:
         """Connects all actions to a method to be executed
         """
@@ -260,6 +269,8 @@ class WorkspaceWindow(QMainWindow):
         self.exportJsonAction.triggered.connect(self.export_json)
         self.add_pcap_zip_action.triggered.connect(self.add_pcap_zip)
         self.add_pcap_folder_action.triggered.connect(self.add_pcap_folder)
+        #----------------------------------------------------------------------------------------------------------
+        self.test_table_action.triggered.connect(self.gen_table_from_analysis_graph)
 
         # Connect Edit actions
         self.deleteAction.triggered.connect(self.delete)
@@ -369,6 +380,9 @@ class WorkspaceWindow(QMainWindow):
                 menu.addAction(self.filterWiresharkAction)
                 view_menu = menu.addMenu("View")
                 view_menu.addAction(self.gen_table_action)
+                #------------------------------------------------------------------------------------------
+                view_menu.addAction(self.test_table_action)
+                #-----------------------------------------------------------------------------------------
                 export_menu = menu.addMenu("Export")
                 export_menu.addAction(self.exportCsvAction)
                 export_menu.addAction(self.exportJsonAction)
@@ -769,16 +783,14 @@ class WorkspaceWindow(QMainWindow):
             self.save()
             self.eo.remove_db(self.workspace_object.name)
             self.workspace_object.__del__()
-            if os.path.exists("tEmPpCaP.pcap"):
-                os.remove("tEmPpCaP.pcap")
+            shutil.rmtree(self.temp_folder)
             if os.path.exists("tEmPmErGeCaP.pcap"):
                 os.remove("tEmPmErGeCaP.pcap")
             event.accept()
         elif reply == QMessageBox.No:
             self.eo.remove_db(self.workspace_object.name)
             self.workspace_object.__del__()
-            if os.path.exists("tEmPpCaP.pcap"):
-                os.remove("tEmPpCaP.pcap")
+            shutil.rmtree(self.temp_folder)
             if os.path.exists("tEmPmErGeCaP.pcap"):
                 os.remove("tEmPmErGeCaP.pcap")
             event.accept()
@@ -871,6 +883,28 @@ class WorkspaceWindow(QMainWindow):
             analysis_item = QTreeWidgetItem(self.analysis_tree)
             analysis_item.setText(0, text)
             return True
+
+    def gen_table_from_analysis_graph(self):
+        try:
+            frame_int_list = [1, 2, 3, 4, 5, 6, 7, 8]
+            dataset = self.project_tree.selectedItems()[0].data(0, Qt.UserRole)
+
+            table_backend = TableBackend
+            frame_string_list = table_backend.gen_frame_string(table_backend, frame_int_list)
+            new_pcap = table_backend.gen_pcap_from_frames(table_backend, frame_string_list, dataset.mergeFilePath, self.progressbar)
+            new_pcap_obj = Pcap("TempAnalysis" + str(self.analysis_count), self.temp_folder, new_pcap)
+            self.analysis_count += 1
+
+            mytable = self.db["TempFolder"]
+            self.eo.insert_packets(new_pcap_obj.json_file, mytable, "TempFolder", new_pcap_obj.name)
+
+            table = table_gui(new_pcap_obj, self.progressbar, self.db, self)
+            self.dock_table = QDockWidget("Analysis Table", self)
+            self.dock_table.setWidget(table)
+            self.dock_table.setFloating(False)
+            self.addDockWidget(Qt.BottomDockWidgetArea, self.dock_table)
+        except:
+            traceback.print_exc()
 
     def gen_table(self):
         try:

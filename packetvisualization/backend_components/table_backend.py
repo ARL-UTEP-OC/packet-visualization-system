@@ -85,7 +85,7 @@ class TableBackend:
 
         return data
 
-    def query_pcap(self, obj_in, db_in, test_mode: bool = False):
+    def query_pcap(self, obj_in, db_in, test_mode: bool = False, analysis_mode: bool = False):
         """Queries the database via collection parent_pcaps or parent_datasets and returns a cursor object that contains
         all collection items that contain the specified parent_pcap or parent_dataset
         """
@@ -97,6 +97,8 @@ class TableBackend:
             if test_mode:
                 return True
             dataset_name = os.path.basename(obj.directory)
+            print(dataset_name)
+            print(obj.name)
             collection = db[dataset_name]
             query = {'parent_dataset': dataset_name, 'parent_pcap': obj.name}
             data = collection.find(query)
@@ -126,7 +128,7 @@ class TableBackend:
             ascii += str(ord(char)) + " "
         return ascii
 
-    def gen_pcap_from_frames(self, frame_string_list_in, infile_in, progressbar, progress_sig):
+    def gen_pcap_from_frames(self, frame_string_list_in, infile_in, progressbar, progress_sig = None):
         """Generates multiple pcaps using tshark's display filter and the frame string list generated from
         gen_frame_string. These pcaps are then merged together into tEmPmErGcap.pcap using tshark's mergecap. Finally
         the pcaps generated will be deleted from the system and teh temp_mergecap is returned.
@@ -150,7 +152,10 @@ class TableBackend:
                 pcap_list.append(output_file)
                 i += 1
                 progressbar_value = progressbar_value + value
-                progress_sig.emit(progressbar_value)
+                if progress_sig:
+                    progress_sig.emit(progressbar_value)
+                else:
+                    progressbar.setValue(progressbar_value)
 
             if platform.system() == "Windows":  # Merge pcaps in pcap_list into tEmPmErGe.pcap
                 os.system(
@@ -158,7 +163,10 @@ class TableBackend:
             elif platform.system() == "Linux":
                 os.system('mergecap -w ' + temp_mergecap + " " + (' '.join(pcap_list)))
 
-            progress_sig.emit(0)
+            if progress_sig:
+                progress_sig.emit(0)
+            else:
+                progressbar.setValue(0)
             progressbar.hide()
 
             for pcap in pcap_list:
