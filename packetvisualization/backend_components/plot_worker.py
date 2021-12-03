@@ -24,8 +24,10 @@ class PlotWorker(QObject):
             # query = {'parent_dataset': self.dataset.name}
             # self.db_data = list(collection.find({}))
             if self.dataset.has_changed:
-                backend = TableBackend()
-                self.db_data = backend.query_pcap(self.dataset, self.db)
+                # backend = TableBackend()
+                # self.db_data = backend.query_pcap(self.dataset, self.db)
+                collection = self.db[self.dataset.name]
+                self.db_data = collection.find()
             else:
                 self.data.emit(self.dataset.packet_data)
                 self.finished.emit()
@@ -37,10 +39,11 @@ class PlotWorker(QObject):
             date, protocol, time_epoch = [], [], []
 
             for packet_data in self.db_data:
-                time_epoch = float(packet_data['_source']['layers']['frame'].get('frame-time_epoch'))
-                if time_epoch is not None:
+                epoch_time = packet_data['_source']['layers']['frame']['frame-time_epoch']
+                if epoch_time is not None:
+                    time_epoch = float(epoch_time)
                     date.append(datetime.fromtimestamp(time_epoch))
-                protocol.append(packet_data['_source']['layers']['frame'].get('frame-protocols'))
+                protocol.append(packet_data['_source']['layers']['frame']['frame-protocols'])
 
             date.sort()
 

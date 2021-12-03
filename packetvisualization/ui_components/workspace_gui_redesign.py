@@ -11,7 +11,8 @@ from scapy.all import *
 from PyQt5.QtCore import Qt, QThread, QUrl, QFile
 from PyQt5.QtGui import QIcon, QMovie, QDesktopServices
 from PyQt5.QtWidgets import QMainWindow, QTreeWidget, QProgressBar, QMenu, QLabel, \
-    QAction, QMessageBox, QDockWidget, QInputDialog, QTreeWidgetItem, QFileDialog, QApplication, QToolBar
+    QAction, QMessageBox, QDockWidget, QInputDialog, QTreeWidgetItem, QFileDialog, QApplication, QToolBar, \
+    QDesktopWidget
 
 from packetvisualization.backend_components.bandwidth_plot import create_plot
 from packetvisualization.backend_components.controller import Controller
@@ -51,6 +52,8 @@ class WorkspaceWindow(QMainWindow):
         """
         super().__init__()
         self.load_window = LoadWindow()
+
+        self.thread_1 = QThread()
 
         self.eo = EntityOperations()
         self.db = None
@@ -124,6 +127,12 @@ class WorkspaceWindow(QMainWindow):
 
         self.context = DbContext()
         self.controller = Controller()
+
+        # Center the application on the screen
+        qt_rectangle = self.frameGeometry()
+        center_point = QDesktopWidget().availableGeometry().center()
+        qt_rectangle.moveCenter(center_point)
+        self.move(qt_rectangle.topLeft())
 
         if existing_flag:
             # self.generate_existing_workspace()
@@ -1018,31 +1027,33 @@ class WorkspaceWindow(QMainWindow):
     def update_plot(self, d: Dataset):
         """ Creates a new thread to update bandwidth vs. time graph
         """
-        if self.thread_1_is_free:
-            # Step 1: Initialization
-            self.thread_1_is_free = False
-            self.traced_dataset = d
-            self.dock_plot.setWidget(self.loading)
-            # Step 2: Create a QThread object
-            self.thread_1 = QThread()
-            # Step 3: Create a worker object
-            self.worker_1 = PlotWorker(self.traced_dataset, self.db)
-            # Step 4: Move worker to the thread
-            self.worker_1.moveToThread(self.thread_1)
-            # Step 5: Connect signals and slots
-            self.thread_1.started.connect(self.worker_1.run)
-            self.worker_1.finished.connect(self.thread_1.quit)
-            self.worker_1.finished.connect(self.worker_1.deleteLater)
-            self.thread_1.finished.connect(self.thread_1.deleteLater)
-            self.worker_1.progress.connect(self.report_progress)
-            self.worker_1.data.connect(self.report_plot_data)
-            # Step 6: Start the thread
-            self.thread_1.start()
+        if self.thread_1.isRunning():
+            self.worker_1.stop()
+            self.thread_1.quit()
+        # Step 1: Initialization
+        self.thread_1_is_free = False
+        self.traced_dataset = d
+        self.dock_plot.setWidget(self.loading)
+        # Step 2: Create a QThread object
+        # self.thread_1 = QThread()
+        # Step 3: Create a worker object
+        self.worker_1 = PlotWorker(self.traced_dataset, self.db)
+        # Step 4: Move worker to the thread
+        self.worker_1.moveToThread(self.thread_1)
+        # Step 5: Connect signals and slots
+        self.thread_1.started.connect(self.worker_1.run)
+        self.worker_1.finished.connect(self.thread_1.quit)
+        self.worker_1.finished.connect(self.worker_1.deleteLater)
+        # self.thread_1.finished.connect(self.thread_1.deleteLater)
+        self.worker_1.progress.connect(self.report_progress)
+        self.worker_1.data.connect(self.report_plot_data)
+        # Step 6: Start the thread
+        self.thread_1.start()
 
-            # Final resets
-            self.thread_1.finished.connect(lambda: self.fig_view.setHtml(create_plot(self.plot_x, self.plot_y)))
-            self.thread_1.finished.connect(lambda: self.dock_plot.setWidget(self.fig_view))
-            self.thread_1.finished.connect(self.free_thread_1)
+        # Final resets
+        self.thread_1.finished.connect(lambda: self.fig_view.setHtml(create_plot(self.plot_x, self.plot_y)))
+        self.thread_1.finished.connect(lambda: self.dock_plot.setWidget(self.fig_view))
+        self.thread_1.finished.connect(self.free_thread_1)
 
     def free_thread_1(self):
         self.thread_1_is_free = True

@@ -1,5 +1,5 @@
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QProgressBar
+from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QProgressBar, QDesktopWidget
 
 
 class LoadWindow(QMainWindow):
@@ -22,3 +22,9 @@ class LoadWindow(QMainWindow):
         self.layout.addWidget(self.status)
 
         self.setCentralWidget(self.widget)
+
+        # Center window on the screen
+        qt_rectangle = self.frameGeometry()
+        center_point = QDesktopWidget().availableGeometry().center()
+        qt_rectangle.moveCenter(center_point)
+        self.move(qt_rectangle.topLeft())
