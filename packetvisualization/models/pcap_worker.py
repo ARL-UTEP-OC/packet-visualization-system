@@ -1,6 +1,6 @@
 import os
 from PyQt5.QtCore import QObject, pyqtSignal
-from packetvisualization.backend_components.entity_operator import EntityOperations
+from packetvisualization.backend_components.mongo_manager import MongoManager
 
 
 class PcapWorker(QObject):
@@ -13,7 +13,7 @@ class PcapWorker(QObject):
         self.file = file
         self.table = table
         self.dataset_name = dataset_name
-        self.eo = EntityOperations()
+        self.eo = MongoManager()
 
     def run(self):
         count = 0
@@ -26,7 +26,7 @@ class PcapWorker(QObject):
                 os.system('cd "C:\Program Files\Wireshark" & tshark -r ' + file + ' -T json > ' + json_file)
 
                 count += 1
-                progress = int(count / len(filenames) * 100)
+                progress = int((count / len(filenames) * 0.5) * 100)
                 self.progress.emit(progress)
 
         count = 0
@@ -37,7 +37,7 @@ class PcapWorker(QObject):
                 self.eo.insert_packets(file, self.table, self.dataset_name, parent_pcap)
 
                 count += 1
-                progress = int(count / len(filenames) * 100)
+                progress = int((count / len(filenames) * 0.5 + 0.5) * 100)
                 self.progress.emit(progress)
 
 
