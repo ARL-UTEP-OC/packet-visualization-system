@@ -11,12 +11,14 @@ from scapy.all import *
 from PyQt5.QtCore import Qt, QThread, QUrl, QFile
 from PyQt5.QtGui import QIcon, QMovie, QDesktopServices
 from PyQt5.QtWidgets import QMainWindow, QTreeWidget, QProgressBar, QMenu, QLabel, \
-    QAction, QMessageBox, QDockWidget, QInputDialog, QTreeWidgetItem, QFileDialog, QApplication, QToolBar
+    QAction, QMessageBox, QDockWidget, QInputDialog, QTreeWidgetItem, QFileDialog, QApplication, QToolBar, \
+    QDesktopWidget
 
 from packetvisualization.backend_components.bandwidth_plot import create_plot
 from packetvisualization.backend_components.controller import Controller
-from packetvisualization.backend_components.entity_operator import EntityOperations
+from packetvisualization.backend_components.mongo_manager import MongoManager
 from packetvisualization.backend_components.load_worker import LoadWorker
+from packetvisualization.backend_components.save_worker import SaveWorker
 from packetvisualization.models.analysis import Analysis
 from packetvisualization.models.context.database_context import DbContext
 from packetvisualization.models.dataset import Dataset
@@ -29,6 +31,7 @@ from packetvisualization.ui_components import filter_gui
 from packetvisualization.backend_components.plot_worker import PlotWorker
 from packetvisualization.ui_components.properties_window import PropertiesWindow
 from packetvisualization.ui_components.load_window import LoadWindow
+from packetvisualization.ui_components.save_window import SaveWindow
 from packetvisualization.ui_components.table_gui import table_gui
 
 
@@ -51,8 +54,14 @@ class WorkspaceWindow(QMainWindow):
         """
         super().__init__()
         self.load_window = LoadWindow()
+        self.save_window = SaveWindow()
 
-        self.eo = EntityOperations()
+        self.thread_1 = QThread()
+        self.thread_2 = QThread()
+        self.thread_3 = QThread()
+        self.thread_4 = QThread()
+
+        self.eo = MongoManager()
         self.db = None
         self.test_mode = False
         self.new_window = []
@@ -68,9 +77,6 @@ class WorkspaceWindow(QMainWindow):
             self.db = self.eo.create_db(self.workspace_object.name)  # create DB with workspace name
         self.setWindowTitle("PacketVisualizer - " + self.workspace_object.name)
         self.resize(1000, 600)
-
-        self.thread_1_is_free = True
-        self.thread_3_is_free = True
 
         # Docked widget for Project Tree
         self.project_tree = QTreeWidget()
@@ -125,6 +131,14 @@ class WorkspaceWindow(QMainWindow):
         self.context = DbContext()
         self.controller = Controller()
 
+        # Center the application on the screen
+        qt_rectangle = self.frameGeometry()
+        center_point = QDesktopWidget().availableGeometry().center()
+        qt_rectangle.moveCenter(center_point)
+        self.move(qt_rectangle.topLeft())
+
+        self.show()
+
         if existing_flag:
             # self.generate_existing_workspace()
             # restore_path = os.path.join(self.workspace_object.dump_path, self.workspace_object.name)
@@ -134,6 +148,7 @@ class WorkspaceWindow(QMainWindow):
             # LW = LoadWorker(self.workspace_object)
             # self.db = LW.load_workspace()
             self.load_workspace()
+
 
     def run(self):
         self.show()
@@ -253,7 +268,7 @@ class WorkspaceWindow(QMainWindow):
         self.newDatasetAction.triggered.connect(self.new_dataset)
         self.newPCAPAction.triggered.connect(self.new_pcap)
         self.openExistingAction.triggered.connect(self.open_existing_workspace)
-        self.saveAction.triggered.connect(self.save)
+        self.saveAction.triggered.connect(self.save_workspace)
         self.exitAction.triggered.connect(self.exit)
         self.traceAction.triggered.connect(self.trace_dataset)
         self.exportCsvAction.triggered.connect(self.export_csv)
@@ -400,15 +415,16 @@ class WorkspaceWindow(QMainWindow):
         separator3.setSeparator(True)
         menu.addAction(separator3)
 
-        self.propertiesAction.setEnabled(True)
-        if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Project:
-            menu.addAction(self.propertiesAction)
-        if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
-            if self.project_tree.selectedItems()[0].data(0, Qt.UserRole).packet_data == None:
-                self.propertiesAction.setEnabled(False)
-            menu.addAction(self.propertiesAction)
-        if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Analysis:
-            menu.addAction(self.propertiesAction)
+        if self.project_tree.selectedItems():
+            self.propertiesAction.setEnabled(True)
+            if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Project:
+                menu.addAction(self.propertiesAction)
+            if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
+                if self.project_tree.selectedItems()[0].data(0, Qt.UserRole).packet_data is None:
+                    self.propertiesAction.setEnabled(False)
+                menu.addAction(self.propertiesAction)
+            if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Analysis:
+                menu.addAction(self.propertiesAction)
 
         menu.exec(event.globalPos())
 
@@ -667,15 +683,6 @@ class WorkspaceWindow(QMainWindow):
         except Exception:
             traceback.print_exc()
 
-    def save(self) -> None:
-        """ Function to save a workspace and all associated data
-        """
-        self.status_bar.showMessage("Saving...")
-
-        self.eo.dump_db(self.workspace_object.name, self.workspace_object.dump_path)
-        self.workspace_object.save()
-        self.status_bar.showMessage("Saved", 3000)
-
     def delete(self, project_item=None, dataset_item=None, pcap_item=None):
         # Logic for deleting an item
         if self.project_tree.selectedItems():
@@ -761,26 +768,24 @@ class WorkspaceWindow(QMainWindow):
         # Logic for about
         print("<b>Help > About<\b> clicked")
 
+    def finish_exit(self):
+        self.eo.remove_db(self.workspace_object.name)
+        self.workspace_object.__del__()
+        if os.path.exists("tEmPpCaP.pcap"):
+            os.remove("tEmPpCaP.pcap")
+        if os.path.exists("tEmPmErGeCaP.pcap"):
+            os.remove("tEmPmErGeCaP.pcap")
+
     def closeEvent(self, event):
         reply = QMessageBox.question(self, "Workspace Close", "Would you like to save this Workspace?",
                                      QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Yes)
 
         if reply == QMessageBox.Yes:
-            self.save()
-            self.eo.remove_db(self.workspace_object.name)
-            self.workspace_object.__del__()
-            if os.path.exists("tEmPpCaP.pcap"):
-                os.remove("tEmPpCaP.pcap")
-            if os.path.exists("tEmPmErGeCaP.pcap"):
-                os.remove("tEmPmErGeCaP.pcap")
+            self.save_workspace(exiting=True)
             event.accept()
+
         elif reply == QMessageBox.No:
-            self.eo.remove_db(self.workspace_object.name)
-            self.workspace_object.__del__()
-            if os.path.exists("tEmPpCaP.pcap"):
-                os.remove("tEmPpCaP.pcap")
-            if os.path.exists("tEmPmErGeCaP.pcap"):
-                os.remove("tEmPmErGeCaP.pcap")
+            self.finish_exit()
             event.accept()
         else:
             event.ignore()
@@ -988,83 +993,46 @@ class WorkspaceWindow(QMainWindow):
         self.load_window.progress.setValue(n[0])
         self.load_window.status.setText(n[1])
 
-    def load_workspace(self):
-        """ Creates a new thread to load existing workspace
-        """
-        if self.thread_3_is_free:
-            # Step 1: Initialization
-            self.thread_3_is_free = False
-            self.load_window.show()
-            # Step 2: Create a QThread object
-            self.thread_3 = QThread()
-            # Step 3: Create a worker object
-            self.worker_3 = LoadWorker(self.workspace_object)
-            # Step 4: Move worker to the thread
-            self.worker_3.moveToThread(self.thread_3)
-            # Step 5: Connect signals and slots
-            self.thread_3.started.connect(self.worker_3.load_workspace)
-            self.worker_3.finished.connect(self.thread_3.quit)
-            self.worker_3.finished.connect(self.worker_3.deleteLater)
-            self.thread_3.finished.connect(self.thread_3.deleteLater)
-            self.worker_3.progress.connect(self.report_load_progress)
-            self.worker_3.data.connect(self.report_db)
-            # Step 6: Start the thread
-            self.thread_3.start()
-
-            # Final resets
-            self.thread_3.finished.connect(self.generate_existing_workspace)
-            self.thread_3.finished.connect(self.free_thread_3)
+    def report_save_progress(self, n: list) -> None:
+        self.save_window.progress.setValue(n[0])
+        self.save_window.status.setText(n[1])
 
     def update_plot(self, d: Dataset):
         """ Creates a new thread to update bandwidth vs. time graph
         """
-        if self.thread_1_is_free:
-            # Step 1: Initialization
-            self.thread_1_is_free = False
-            self.traced_dataset = d
-            self.dock_plot.setWidget(self.loading)
-            # Step 2: Create a QThread object
-            self.thread_1 = QThread()
-            # Step 3: Create a worker object
-            self.worker_1 = PlotWorker(self.traced_dataset, self.db)
-            # Step 4: Move worker to the thread
-            self.worker_1.moveToThread(self.thread_1)
-            # Step 5: Connect signals and slots
-            self.thread_1.started.connect(self.worker_1.run)
-            self.worker_1.finished.connect(self.thread_1.quit)
-            self.worker_1.finished.connect(self.worker_1.deleteLater)
-            self.thread_1.finished.connect(self.thread_1.deleteLater)
-            self.worker_1.progress.connect(self.report_progress)
-            self.worker_1.data.connect(self.report_plot_data)
-            # Step 6: Start the thread
-            self.thread_1.start()
+        # Step 1: Initialization
+        self.traced_dataset = d
+        self.dock_plot.setWidget(self.loading)
+        # Step 2: Create a QThread object
+        # self.thread_1 = QThread()
+        # Step 3: Create a worker object
+        self.worker_1 = PlotWorker(self.traced_dataset, self.db)
+        # Step 4: Move worker to the thread
+        self.worker_1.moveToThread(self.thread_1)
+        # Step 5: Connect signals and slots
+        self.thread_1.started.connect(self.worker_1.run)
+        self.worker_1.finished.connect(self.thread_1.quit)
+        self.worker_1.finished.connect(self.worker_1.deleteLater)
+        # self.thread_1.finished.connect(self.thread_1.deleteLater)
+        self.worker_1.data.connect(self.report_plot_data)
+        # Step 6: Start the thread
+        self.thread_1.start()
 
-            # Final resets
-            self.thread_1.finished.connect(lambda: self.fig_view.setHtml(create_plot(self.plot_x, self.plot_y)))
-            self.thread_1.finished.connect(lambda: self.dock_plot.setWidget(self.fig_view))
-            self.thread_1.finished.connect(self.free_thread_1)
-
-    def free_thread_1(self):
-        self.thread_1_is_free = True
-
-    def free_thread_2(self):
-        self.thread_2_is_free = True
-
-    def free_thread_3(self):
-        self.thread_3_is_free = True
+        # Final resets
+        self.thread_1.finished.connect(lambda: self.fig_view.setHtml(create_plot(self.plot_x, self.plot_y)))
+        self.thread_1.finished.connect(lambda: self.dock_plot.setWidget(self.fig_view))
 
     def process_split_caps(self, pcap, file, table, dataset_item, is_pcap: bool, project_item=None):
         dataset = dataset_item.data(0, Qt.UserRole)
         dataset_name = dataset.name
         self.progressbar.show()
-        self.thread_2 = QThread()
         self.worker_2 = PcapWorker(pcap, file, table, dataset_name)
         self.worker_2.moveToThread(self.thread_2)
 
         self.thread_2.started.connect(self.worker_2.run)
         self.worker_2.finished.connect(self.thread_2.quit)
         self.worker_2.finished.connect(self.worker_2.deleteLater)
-        self.thread_2.finished.connect(self.thread_2.deleteLater)
+        # self.thread_2.finished.connect(self.thread_2.deleteLater)
         self.worker_2.progress.connect(self.report_progress)
         #
         self.thread_2.start()
@@ -1072,6 +1040,58 @@ class WorkspaceWindow(QMainWindow):
         self.thread_2.finished.connect(lambda: self.progressbar.setValue(0))
         self.thread_2.finished.connect(lambda: self.progressbar.hide())
         self.thread_2.finished.connect(lambda: self.add_item_to_tree(pcap, dataset_item, is_pcap, project_item))
+
+    def load_workspace(self):
+        """ Creates a new thread to load existing workspace
+        """
+        # Step 1: Initialization
+        self.load_window.ok.setEnabled(False)
+        self.load_window.show()
+        # Step 2: Create a QThread object
+        # self.thread_3 = QThread()
+        # Step 3: Create a worker object
+        self.worker_3 = LoadWorker(self.workspace_object)
+        # Step 4: Move worker to the thread
+        self.worker_3.moveToThread(self.thread_3)
+        # Step 5: Connect signals and slots
+        self.thread_3.started.connect(self.worker_3.run)
+        self.worker_3.finished.connect(self.thread_3.quit)
+        self.worker_3.finished.connect(self.worker_3.deleteLater)
+        self.thread_3.finished.connect(self.thread_3.deleteLater)
+        self.worker_3.progress.connect(self.report_load_progress)
+        self.worker_3.data.connect(self.report_db)
+        # Step 6: Start the thread
+        self.thread_3.start()
+
+        # Final resets
+        self.thread_3.finished.connect(self.generate_existing_workspace)
+        self.thread_3.finished.connect(lambda: self.load_window.ok.setEnabled(True))
+
+    def save_workspace(self, exiting=False):
+        # Step 1: Initialization
+        self.save_window.ok.setEnabled(False)
+        self.save_window.show()
+        self.status_bar.showMessage("Saving...")
+        # Step 2: Create a QThread object
+        # self.thread_4 = QThread()
+        # Step 3: Create a worker object
+        self.worker_4 = SaveWorker(self.workspace_object)
+        # Step 4: Move worker to the thread
+        self.worker_4.moveToThread(self.thread_4)
+        # Step 5: Connect signals and slots
+        self.thread_4.started.connect(self.worker_4.run)
+        self.worker_4.finished.connect(self.thread_4.quit)
+        self.worker_4.finished.connect(self.worker_4.deleteLater)
+        # self.thread_4.finished.connect(self.thread_4.deleteLater)
+        self.worker_4.progress.connect(self.report_save_progress)
+        # Step 6: Start the thread
+        self.thread_4.start()
+
+        # Final resets
+        self.thread_4.finished.connect(lambda: self.status_bar.showMessage("Saved", 5000))
+        self.thread_4.finished.connect(lambda: self.save_window.ok.setEnabled(True))
+        if exiting:
+            self.thread_4.finished.connect(self.finish_exit)
 
     def filter_wireshark(self):
 
@@ -1122,19 +1142,3 @@ class WorkspaceWindow(QMainWindow):
                 output_file = \
                     QFileDialog.getSaveFileName(caption="Choose Output location", filter=".json (*.json)")[0]
                 df.to_json(output_file)
-
-
-if __name__ == "__main__":
-    args = len(sys.argv)
-    try:
-        path = os.path.realpath(sys.argv[1])
-        if args == 2:
-            ui = WorkspaceWindow(path)
-        elif args == 3:
-            if sys.argv[2] == 'True':
-                ui = WorkspaceWindow(path, True)
-            else:
-                ui = WorkspaceWindow(path)
-        ui.run()
-    except Exception:
-        traceback.print_exc()

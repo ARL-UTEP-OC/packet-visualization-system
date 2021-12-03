@@ -4,11 +4,13 @@ import json
 import os
 
 
-class EntityOperations:
-    context = DbContext()
-    client = context.client
+class MongoManager:
+    # context = DbContext()
+    # client = context.client
+    def __init__(self):
+        self.client = MongoClient("localhost", 27017)
 
-    def create_db(self,workspace_name):  # create new DB when we have a new workspace
+    def create_db(self, workspace_name):  # create new DB when we have a new workspace
         mydb = self.client[workspace_name]
         return mydb
 
@@ -33,7 +35,8 @@ class EntityOperations:
             new[k.replace('.', '-')] = v
         return new
 
-    def insert_packets(self, json_file, collection, dataset_name, pcap_name):  # take json with packet information and bulk insert into DB
+    def insert_packets(self, json_file, collection, dataset_name,
+                       pcap_name):  # take json with packet information and bulk insert into DB
         requesting = []
         with open(json_file, encoding="ISO-8859-1") as f:  #
             packet_data = json.load(f)  # list of packets w/data as json object
@@ -42,9 +45,12 @@ class EntityOperations:
                 jsonObj["parent_pcap"] = pcap_name
                 jsonObj = self.fix_dictionary(jsonObj)  # replace all key instances of "." with "-"
 
-                requesting.append(InsertOne(jsonObj))
+                # requesting.append(InsertOne(jsonObj))
+                requesting.append(jsonObj)
+                # collection.insert_one(jsonObj)
 
-        collection.bulk_write(requesting)
+        collection.insert_many(requesting)
+        # collection.bulk_write(requesting)
 
     def delete_packets(self, collection, parent, name):
         query = {parent: name}

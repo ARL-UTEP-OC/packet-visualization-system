@@ -7,7 +7,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
-from packetvisualization.ui_components.workspace_gui_redesign import WorkspaceWindow
+from packetvisualization.ui_components.workspace_window import WorkspaceWindow
 from packetvisualization.ui_components.resources import qrc_resources
 
 
@@ -72,12 +72,11 @@ class StartupWindow(QWidget):
         if path != '':
             self.workspace = WorkspaceWindow(path)
             self.close()
-            self.workspace.show()
 
     '''def open_new_workspace(self):
         path = QFileDialog.getSaveFileName(caption="Choose Workspace location")[0]
         if path != "":
-            gui_path = os.path.join('packetvisualization', 'ui_components', 'workspace_gui_redesign.py')
+            gui_path = os.path.join('packetvisualization', 'ui_components', 'workspace_window.py')
             subprocess.Popen(['python3', gui_path, path])
             self.close()'''
 
@@ -88,14 +87,12 @@ class StartupWindow(QWidget):
         if path != "":
             self.workspace = WorkspaceWindow(path, existing_flag=True)
             self.close()
-            self.workspace.show()
-            return True
 
     '''def open_existing_workspace(self):
         file_filter = "zip(*.zip)"
         path = QFileDialog.getOpenFileName(caption="Open existing Workspace", filter=file_filter)[0]
         if path != "":
-            gui_path = os.path.join('packetvisualization', 'ui_components', 'workspace_gui_redesign.py')
+            gui_path = os.path.join('packetvisualization', 'ui_components', 'workspace_window.py')
             subprocess.Popen(['python3', gui_path, path, 'True'])
             self.close()'''
 

@@ -3,13 +3,13 @@ import pandas as pd
 from bson.objectid import ObjectId
 
 from packetvisualization.backend_components.classifier import Classifier
-from packetvisualization.backend_components.entity_operator import EntityOperations
+from packetvisualization.backend_components.mongo_manager import MongoManager
 from packetvisualization.models.dataset import Dataset
 from packetvisualization.models.pcap import Pcap
 
 
 class Controller:
-    context = EntityOperations()
+    context = MongoManager()
 
     # TODO: Fix cluster number to capture whatever the user inputs
     # TODO: Integrate functionality of processing user selected properties

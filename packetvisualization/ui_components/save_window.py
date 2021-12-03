@@ -1,13 +1,13 @@
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QProgressBar, QDesktopWidget, QPushButton, \
+from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QProgressBar, QLabel, QDesktopWidget, QPushButton, \
     QGridLayout
 
 
-class LoadWindow(QMainWindow):
+class SaveWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Loading Workspace")
+        self.setWindowTitle("Saving Workspace")
         self.setWindowIcon(QIcon(":logo.png"))
         self.setGeometry(20, 20, 400, 50)
         self.widget = QWidget()
@@ -15,7 +15,7 @@ class LoadWindow(QMainWindow):
         self.layout = QGridLayout()
 
         self.progress = QProgressBar()
-        self.status = QLabel("Loading")
+        self.status = QLabel("Saving")
 
         self.ok = QPushButton("OK")
         self.ok.clicked.connect(self.close)

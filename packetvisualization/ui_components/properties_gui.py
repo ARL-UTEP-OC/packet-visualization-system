@@ -20,7 +20,6 @@ import plotly.express as px
 import plotly.offline as po
 
 
-
 class properties_window(QWidget):
     # QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     # app = QtWidgets.QApplication(sys.argv)
@@ -69,7 +68,6 @@ class properties_window(QWidget):
         #
         # self.listWidget2.setGeometry(QtCore.QRect(10, 10, 211, 291))
 
-
         self.pktIdsAsList = []
         for i in range(len(pktIds)):
             string = str(pktIds[i])
@@ -116,51 +114,39 @@ class properties_window(QWidget):
 
             print("Properties not selected")
             self.errorMsg.setText("Properties not selected.")
+            return
 
         elif self.cluster.text() == "":
 
             self.errorMsg.setText("Must enter cluster value.")
+            return
 
         elif not self.cluster.text().isnumeric():
 
             self.errorMsg.setText("Cluster value must be numeric.")
+            return
 
         elif not int(self.cluster.text()) <= len(self.pktIdsAsList):
 
             print("Cluster value must not be higher than number of packets.")
             self.errorMsg.setText("Cluster value must not be higher than number of packets")
+            return
 
-        else:
-            # raise Exception('Please select properties and enter a correct cluster number')
-            df, features = self.controller.create_analysis(self.pktIdsAsList,
-                                                           selected_properties,
-                                                           int(self.cluster.text()),
-                                                           self.obj,
-                                                           self.db)
-
-
-
-            fig = px.scatter(df, x="cluster", y="instance_number",
-                                     color='cluster', color_continuous_scale=px.colors.sequential.Bluered_r,
-                                     hover_data=df.columns.values[:len(features)])
-        # Creating Analysis Item
-        analysis_item_name = QInputDialog.getText(self, "Analysis Item Name Entry", "Enter Analysis Item Name:")[0]
-        if analysis_item_name != "" and not self.workspace.project_tree.findItems(analysis_item_name, Qt.MatchRecursive, 0):
-            tree = self.workspace.project_tree
-            head, tail = os.path.split(self.obj.path)
-            project_name = os.path.basename(head)
-            project_item = tree.findItems(project_name, Qt.MatchRecursive, 0)[0]
-            analysis_item = QTreeWidgetItem()
-            analysis_item.setText(0, analysis_item_name)
-            analysis_object = Analysis(analysis_item_name, df, features, project_item.data(0, Qt.UserRole).path, self.obj.name)
-            analysis_item.setData(0, Qt.UserRole, analysis_object)
-            analysis_item.setIcon(0, QIcon(":document-text.svg"))
-            project_item.data(0, Qt.UserRole).add_analysis(analysis_object)
-            project_item.addChild(analysis_item)
+        df, features = self.controller.create_analysis(self.pktIdsAsList,
+                                                       selected_properties,
+                                                       int(self.cluster.text()),
+                                                       self.obj,
+                                                       self.db)
 
         fig = px.scatter(df, x="cluster", y="instance_number",
                          color='cluster', color_continuous_scale=px.colors.sequential.Bluered_r,
                          hover_data=df.columns.values[:len(features)])
+
+        def selection_fn(trace, points, selector):
+            fig.data[0].cells.values = [df.loc[points.point_inds][col] for col in
+                                      ['ID', 'Classification', 'Driveline', 'Hybrid']]
+
+        fig[0].on_selection(selection_fn)
 
         raw_html = '<html><head><meta charset="utf-8" />'
         raw_html += '<script src="https://cdn.plot.ly/plotly-latest.min.js"></script></head>'
@@ -169,9 +155,24 @@ class properties_window(QWidget):
         raw_html += '</body></html>'
 
         self.workspace.classifier_plot_view.setHtml(raw_html)
+
+        # Creating Analysis Item
+        # Creating Analysis Item
+        analysis_item_name = QInputDialog.getText(self, "Analysis Item Name Entry", "Enter Analysis Item Name:")[0]
+        if analysis_item_name != "" and not self.workspace.project_tree.findItems(analysis_item_name, Qt.MatchRecursive,
+                                                                                  0):
+            tree = self.workspace.project_tree
+            head, tail = os.path.split(self.obj.path)
+            project_name = os.path.basename(head)
+            project_item = tree.findItems(project_name, Qt.MatchRecursive, 0)[0]
+            analysis_item = QTreeWidgetItem()
+            analysis_item.setText(0, analysis_item_name)
+            analysis_object = Analysis(analysis_item_name, df, features, project_item.data(0, Qt.UserRole).path,
+                                       self.obj.name)
+            analysis_item.setData(0, Qt.UserRole, analysis_object)
+            analysis_item.setIcon(0, QIcon(":document-text.svg"))
+            project_item.data(0, Qt.UserRole).add_analysis(analysis_object)
+            project_item.addChild(analysis_item)
+
         self.workspace.classifier_window.show()
         self.close()
-
-
-
-
