@@ -389,7 +389,7 @@ class WorkspaceWindow(QMainWindow):
             if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
                 menu.addAction(self.newPCAPAction)
                 menu.addAction(self.add_pcap_zip_action)
-                # menu.addAction(self.add_pcap_folder_action)
+                menu.addAction(self.add_pcap_folder_action)
                 # menu.addAction(self.traceAction)
                 menu.addAction(self.openWiresharkAction)
                 menu.addAction(self.filterWiresharkAction)
@@ -827,6 +827,7 @@ class WorkspaceWindow(QMainWindow):
                         pcap_item = QTreeWidgetItem()
                         pcap_item.setText(0, os.path.basename(file))
                         pcap_item.setData(0, Qt.UserRole, new_pcap)
+                        pcap_item.setIcon(0, QIcon(":document.svg"))
                         dataset_item.addChild(pcap_item)
 
                         mytable = self.db[dataset_obj.name]
@@ -859,13 +860,14 @@ class WorkspaceWindow(QMainWindow):
                     namelist.append(cap.name)
 
                 for file in os.listdir(location):
-                    new_pcap = Pcap(file, dataset.path, os.path.join(location, file))
+                    new_file = os.path.join(location, file).replace("\\", "/")
+                    new_pcap = Pcap(file, dataset.path, new_file)
                     if new_pcap.name not in namelist:
-                        new_pcap = Pcap(file, dataset.path, os.path.join(location, file))
                         dataset.add_pcap(new_pcap)
                         pcap_item = QTreeWidgetItem()
                         pcap_item.setText(0, os.path.basename(file))
                         pcap_item.setData(0, Qt.UserRole, new_pcap)
+                        pcap_item.setIcon(0, QIcon(":document.svg"))
                         dataset_item.addChild(pcap_item)
 
                         mytable = self.db[dataset.name]
