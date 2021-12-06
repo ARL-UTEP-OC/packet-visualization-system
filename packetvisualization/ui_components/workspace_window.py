@@ -20,7 +20,6 @@ from packetvisualization.backend_components.mongo_manager import MongoManager
 from packetvisualization.backend_components.load_worker import LoadWorker
 from packetvisualization.backend_components.save_worker import SaveWorker
 from packetvisualization.models.analysis import Analysis
-from packetvisualization.models.context.database_context import DbContext
 from packetvisualization.models.dataset import Dataset
 from packetvisualization.models.pcap import Pcap
 from packetvisualization.models.project import Project
@@ -66,15 +65,16 @@ class WorkspaceWindow(QMainWindow):
         self.test_mode = False
         self.new_window = []
         if existing_flag:
-            # self.workspace_object = Load().open_zip(workspace_path)
             root, ext = os.path.splitext(workspace_path)
             head, tail = os.path.split(root)
             self.workspace_object = Workspace(name=tail, location=head, open_existing=True)
+            self.eo.remove_db(tail)
         else:
             self.workspace_object = Workspace(name=os.path.basename(workspace_path),
                                               location=os.path.dirname(workspace_path))
             self.workspace_object.create_dump_dir(self.workspace_object.dump_path)
             self.db = self.eo.create_db(self.workspace_object.name)  # create DB with workspace name
+            self.eo.remove_db(self.workspace_object.name)
         self.setWindowTitle("PacketVisualizer - " + self.workspace_object.name)
         self.resize(1000, 600)
 
@@ -128,7 +128,6 @@ class WorkspaceWindow(QMainWindow):
         self._connect_actions()
         self._create_status_bar()
 
-        self.context = DbContext()
         self.controller = Controller()
 
         # Center the application on the screen
@@ -148,11 +147,6 @@ class WorkspaceWindow(QMainWindow):
             # LW = LoadWorker(self.workspace_object)
             # self.db = LW.load_workspace()
             self.load_workspace()
-
-
-    def run(self):
-        self.show()
-        sys.exit(self.app.exec_())
 
     def _create_actions(self) -> None:
         """Creates all actions that will be used in the application

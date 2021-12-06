@@ -15,7 +15,6 @@ from packetvisualization.backend_components.controller import Controller
 from packetvisualization.models.analysis import Analysis
 from packetvisualization.models.dataset import Dataset
 from packetvisualization.models.workspace import Workspace
-from packetvisualization.models.context.database_context import DbContext
 import plotly.express as px
 import plotly.offline as po
 

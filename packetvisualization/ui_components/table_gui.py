@@ -8,7 +8,6 @@ from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QMenu, QAction, QInp
 
 from packetvisualization.backend_components import Wireshark
 from packetvisualization.backend_components.table_backend import TableBackend
-from packetvisualization.models.context.database_context import DbContext
 from packetvisualization.models.dataset import Dataset
 from packetvisualization.models.pcap import Pcap
 from packetvisualization.ui_components import properties_gui
@@ -31,7 +30,7 @@ def gen_dictionary():
 
 
 class table_gui(QTableWidget):
-    def __init__(self, obj, progressbar, db: DbContext, workspace):
+    def __init__(self, obj, progressbar, db, workspace):
         super().__init__()
         self.backend = TableBackend()
         self.workspace = workspace

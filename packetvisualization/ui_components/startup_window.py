@@ -1,7 +1,4 @@
-import os
-import subprocess
 import sys
-import traceback
 
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -12,10 +9,6 @@ from packetvisualization.ui_components.resources import qrc_resources
 
 
 class StartupWindow(QWidget):
-    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-    app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon(":logo.png"))
-    finished = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -73,13 +66,6 @@ class StartupWindow(QWidget):
             self.workspace = WorkspaceWindow(path)
             self.close()
 
-    '''def open_new_workspace(self):
-        path = QFileDialog.getSaveFileName(caption="Choose Workspace location")[0]
-        if path != "":
-            gui_path = os.path.join('packetvisualization', 'ui_components', 'workspace_window.py')
-            subprocess.Popen(['python3', gui_path, path])
-            self.close()'''
-
     def open_existing_workspace(self):
         file_filter = "zip(*.zip)"
         path = QFileDialog.getOpenFileName(caption="Open existing Workspace", filter=file_filter)[0]
@@ -88,19 +74,15 @@ class StartupWindow(QWidget):
             self.workspace = WorkspaceWindow(path, existing_flag=True)
             self.close()
 
-    '''def open_existing_workspace(self):
-        file_filter = "zip(*.zip)"
-        path = QFileDialog.getOpenFileName(caption="Open existing Workspace", filter=file_filter)[0]
-        if path != "":
-            gui_path = os.path.join('packetvisualization', 'ui_components', 'workspace_window.py')
-            subprocess.Popen(['python3', gui_path, path, 'True'])
-            self.close()'''
 
-    def run_program(self):
-        self.show()
-        sys.exit(self.app.exec_())
+def run_app():
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon(":logo.png"))
+    win = StartupWindow()
+    win.show()
+    sys.exit(app.exec_())
 
 
 if __name__ == '__main__':
-    ui = StartupWindow()
-    ui.run_program()
+    run_app()
