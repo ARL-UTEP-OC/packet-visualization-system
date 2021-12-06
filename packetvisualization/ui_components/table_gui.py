@@ -812,6 +812,7 @@ class table_worker(QObject):
 
         data = self.table.backend.query_pcap(obj, db)
         self.table.setRowCount(data.count())
+
         value = (100 / data.count())
         progressbar_value = 0
         progressbar.show()

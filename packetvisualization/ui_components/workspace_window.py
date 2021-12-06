@@ -19,6 +19,7 @@ from packetvisualization.backend_components.controller import Controller
 from packetvisualization.backend_components.mongo_manager import MongoManager
 from packetvisualization.backend_components.load_worker import LoadWorker
 from packetvisualization.backend_components.save_worker import SaveWorker
+from packetvisualization.backend_components.table_backend import TableBackend
 from packetvisualization.models.analysis import Analysis
 from packetvisualization.models.dataset import Dataset
 from packetvisualization.models.pcap import Pcap
@@ -129,6 +130,11 @@ class WorkspaceWindow(QMainWindow):
         self._create_status_bar()
 
         self.controller = Controller()
+
+        # temp folder for analyis pcaps
+        self.temp_folder = os.path.join(os.getcwd(), "TempFolder")
+        os.mkdir(self.temp_folder)
+        self.analysis_count = 0
 
         # Center the application on the screen
         qt_rectangle = self.frameGeometry()
@@ -253,6 +259,9 @@ class WorkspaceWindow(QMainWindow):
         self.aboutAction = QAction("&About", self)
         self.aboutAction.setEnabled(False)
 
+        #test-------------------------------------------------------------------------------------------------------
+        self.test_table_action = QAction("Test")
+
     def _connect_actions(self) -> None:
         """Connects all actions to a method to be executed
         """
@@ -269,6 +278,8 @@ class WorkspaceWindow(QMainWindow):
         self.exportJsonAction.triggered.connect(self.export_json)
         self.add_pcap_zip_action.triggered.connect(self.add_pcap_zip)
         self.add_pcap_folder_action.triggered.connect(self.add_pcap_folder)
+        #----------------------------------------------------------------------------------------------------------
+        self.test_table_action.triggered.connect(self.gen_table_from_analysis_graph)
 
         # Connect Edit actions
         self.deleteAction.triggered.connect(self.delete)
@@ -372,12 +383,15 @@ class WorkspaceWindow(QMainWindow):
             if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Dataset:
                 menu.addAction(self.newPCAPAction)
                 menu.addAction(self.add_pcap_zip_action)
-                # menu.addAction(self.add_pcap_folder_action)
+                menu.addAction(self.add_pcap_folder_action)
                 # menu.addAction(self.traceAction)
                 menu.addAction(self.openWiresharkAction)
                 menu.addAction(self.filterWiresharkAction)
                 view_menu = menu.addMenu("View")
                 view_menu.addAction(self.gen_table_action)
+                #------------------------------------------------------------------------------------------
+                view_menu.addAction(self.test_table_action)
+                #-----------------------------------------------------------------------------------------
                 export_menu = menu.addMenu("Export")
                 export_menu.addAction(self.exportCsvAction)
                 export_menu.addAction(self.exportJsonAction)
@@ -765,10 +779,10 @@ class WorkspaceWindow(QMainWindow):
     def finish_exit(self):
         self.eo.remove_db(self.workspace_object.name)
         self.workspace_object.__del__()
-        if os.path.exists("tEmPpCaP.pcap"):
-            os.remove("tEmPpCaP.pcap")
+
         if os.path.exists("tEmPmErGeCaP.pcap"):
             os.remove("tEmPmErGeCaP.pcap")
+        shutil.rmtree(self.temp_folder)
 
     def closeEvent(self, event):
         reply = QMessageBox.question(self, "Workspace Close", "Would you like to save this Workspace?",
@@ -807,6 +821,7 @@ class WorkspaceWindow(QMainWindow):
                         pcap_item = QTreeWidgetItem()
                         pcap_item.setText(0, os.path.basename(file))
                         pcap_item.setData(0, Qt.UserRole, new_pcap)
+                        pcap_item.setIcon(0, QIcon(":document.svg"))
                         dataset_item.addChild(pcap_item)
 
                         mytable = self.db[dataset_obj.name]
@@ -839,13 +854,14 @@ class WorkspaceWindow(QMainWindow):
                     namelist.append(cap.name)
 
                 for file in os.listdir(location):
-                    new_pcap = Pcap(file, dataset.path, os.path.join(location, file))
+                    new_file = os.path.join(location, file).replace("\\", "/")
+                    new_pcap = Pcap(file, dataset.path, new_file)
                     if new_pcap.name not in namelist:
-                        new_pcap = Pcap(file, dataset.path, os.path.join(location, file))
                         dataset.add_pcap(new_pcap)
                         pcap_item = QTreeWidgetItem()
                         pcap_item.setText(0, os.path.basename(file))
                         pcap_item.setData(0, Qt.UserRole, new_pcap)
+                        pcap_item.setIcon(0, QIcon(":document.svg"))
                         dataset_item.addChild(pcap_item)
 
                         mytable = self.db[dataset.name]
@@ -870,6 +886,28 @@ class WorkspaceWindow(QMainWindow):
             analysis_item = QTreeWidgetItem(self.analysis_tree)
             analysis_item.setText(0, text)
             return True
+
+    def gen_table_from_analysis_graph(self):
+        try:
+            frame_int_list = [1, 2, 3, 4, 5, 6, 7, 8]
+            dataset = self.project_tree.selectedItems()[0].data(0, Qt.UserRole)
+
+            table_backend = TableBackend
+            frame_string_list = table_backend.gen_frame_string(table_backend, frame_int_list)
+            new_pcap = table_backend.gen_pcap_from_frames(table_backend, frame_string_list, dataset.mergeFilePath, self.progressbar)
+            new_pcap_obj = Pcap("TempAnalysis" + str(self.analysis_count), self.temp_folder, new_pcap)
+            self.analysis_count += 1
+
+            mytable = self.db["TempFolder"]
+            self.eo.insert_packets(new_pcap_obj.json_file, mytable, "TempFolder", new_pcap_obj.name)
+
+            table = table_gui(new_pcap_obj, self.progressbar, self.db, self)
+            self.dock_table = QDockWidget("Analysis Table", self)
+            self.dock_table.setWidget(table)
+            self.dock_table.setFloating(False)
+            self.addDockWidget(Qt.BottomDockWidgetArea, self.dock_table)
+        except:
+            traceback.print_exc()
 
     def gen_table(self):
         try:
