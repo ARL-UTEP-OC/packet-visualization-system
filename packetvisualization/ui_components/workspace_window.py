@@ -1,3 +1,4 @@
+import os.path
 import platform as pf
 import shutil
 import zipfile
@@ -131,8 +132,10 @@ class WorkspaceWindow(QMainWindow):
 
         self.controller = Controller()
 
-        # temp folder for analyis pcaps
+        # Temp folder for analysis pcaps
         self.temp_folder = os.path.join(os.getcwd(), "TempFolder")
+        if os.path.isdir(self.temp_folder):
+            shutil.rmtree(self.temp_folder)
         os.mkdir(self.temp_folder)
         self.analysis_count = 0
 
@@ -145,13 +148,6 @@ class WorkspaceWindow(QMainWindow):
         self.show()
 
         if existing_flag:
-            # self.generate_existing_workspace()
-            # restore_path = os.path.join(self.workspace_object.dump_path, self.workspace_object.name)
-            # print(restore_path)
-            # self.eo.restore_db(self.workspace_object.name, restore_path)
-            # self.db = self.eo.set_db(self.workspace_object.name)
-            # LW = LoadWorker(self.workspace_object)
-            # self.db = LW.load_workspace()
             self.load_workspace()
 
     def _create_actions(self) -> None:
@@ -259,7 +255,7 @@ class WorkspaceWindow(QMainWindow):
         self.aboutAction = QAction("&About", self)
         self.aboutAction.setEnabled(False)
 
-        #test-------------------------------------------------------------------------------------------------------
+        # test-------------------------------------------------------------------------------------------------------
         self.test_table_action = QAction("Test")
 
     def _connect_actions(self) -> None:
@@ -278,7 +274,7 @@ class WorkspaceWindow(QMainWindow):
         self.exportJsonAction.triggered.connect(self.export_json)
         self.add_pcap_zip_action.triggered.connect(self.add_pcap_zip)
         self.add_pcap_folder_action.triggered.connect(self.add_pcap_folder)
-        #----------------------------------------------------------------------------------------------------------
+        # ----------------------------------------------------------------------------------------------------------
         self.test_table_action.triggered.connect(self.gen_table_from_analysis_graph)
 
         # Connect Edit actions
@@ -389,9 +385,9 @@ class WorkspaceWindow(QMainWindow):
                 menu.addAction(self.filterWiresharkAction)
                 view_menu = menu.addMenu("View")
                 view_menu.addAction(self.gen_table_action)
-                #------------------------------------------------------------------------------------------
+                # ------------------------------------------------------------------------------------------
                 view_menu.addAction(self.test_table_action)
-                #-----------------------------------------------------------------------------------------
+                # -----------------------------------------------------------------------------------------
                 export_menu = menu.addMenu("Export")
                 export_menu.addAction(self.exportCsvAction)
                 export_menu.addAction(self.exportJsonAction)
@@ -894,7 +890,8 @@ class WorkspaceWindow(QMainWindow):
 
             table_backend = TableBackend
             frame_string_list = table_backend.gen_frame_string(table_backend, frame_int_list)
-            new_pcap = table_backend.gen_pcap_from_frames(table_backend, frame_string_list, dataset.mergeFilePath, self.progressbar)
+            new_pcap = table_backend.gen_pcap_from_frames(table_backend, frame_string_list, dataset.mergeFilePath,
+                                                          self.progressbar)
             new_pcap_obj = Pcap("TempAnalysis" + str(self.analysis_count), self.temp_folder, new_pcap)
             self.analysis_count += 1
 
