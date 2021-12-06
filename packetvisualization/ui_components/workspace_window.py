@@ -134,6 +134,8 @@ class WorkspaceWindow(QMainWindow):
 
         # temp folder for analyis pcaps
         self.temp_folder = os.path.join(os.getcwd(), "TempFolder")
+        if os.path.isdir(self.temp_folder):
+            shutil.rmtree(self.temp_folder)
         os.mkdir(self.temp_folder)
         self.analysis_count = 0
 

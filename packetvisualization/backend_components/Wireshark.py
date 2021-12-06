@@ -42,11 +42,13 @@ def filter(path: str, wsFilter, newFileName, projectTree: QTreeWidget, workspace
     newFilePath = ""
     for i in splitPath:
         if i != splitPath[len(splitPath) - 1]:
-            newFilePath += i + "\\"
+            newFilePath += i + os.sep
         else:
             newFilePath += i
-
-    cmd = r"C:\Program Files\Wireshark\tshark -r " + path + r' -w ' + newFilePath + '.pcap -Y '
+    if platform.system() == "Windows":
+        cmd = r"C:\Program Files\Wireshark\tshark -r " + path + r' -w ' + newFilePath + '.pcap -Y '
+    else:
+        cmd = r"tshark -r " + path + r' -w ' + newFilePath + '.pcap -Y '
     for key, value in wsFilter.items():
         cmd += f"\"{value}\""
 
@@ -62,8 +64,11 @@ def filter(path: str, wsFilter, newFileName, projectTree: QTreeWidget, workspace
 
     # subprocess.Popen(cmd)
     print(cmd)
-    error = subprocess.run(cmd, stderr=subprocess.PIPE)
-    error = error.stderr.decode('utf-8')
+    if platform.system() == "Windows":
+        error = subprocess.run(cmd, stderr=subprocess.PIPE)
+        error = error.stderr.decode('utf-8')
+    else:
+        error = subprocess.call(cmd, shell=True, stderr=subprocess.PIPE)
     if not error:
         new_pcap = Pcap(file=newFilePath + ".pcap", path=dataset.path, name=newFileName + ".pcap")
         filterFolderExist = False
