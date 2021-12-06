@@ -811,9 +811,15 @@ class table_worker(QObject):
         db = self.table.workspace.db
 
         data = self.table.backend.query_pcap(obj, db)
-        self.table.setRowCount(data.count())
+        counter = 0
+        for packet in data:
+            counter += 1
+        data.rewind()
+        # self.table.setRowCount(data.count())
+        self.table.setRowCount(counter)
 
-        value = (100 / data.count())
+        # value = (100 / data.count())
+        value = (100 / counter)
         progressbar_value = 0
         progressbar.show()
 
