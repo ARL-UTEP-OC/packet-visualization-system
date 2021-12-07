@@ -59,9 +59,9 @@ class properties_window(QWidget):
         for i in prop: # properties:
             item = QtWidgets.QListWidgetItem(i)
             propRow = list(self.propMap[i])
-            if propRow[2] == "0":
+            if propRow[1] == "False":
                 item.setForeground(Qt.red)
-            elif propRow[1] == False:
+            elif propRow[2] == "False":
                 item.setBackground(QColor.fromRgb(220, 220, 220))
             # item.setFlags(Qt.ItemIsEnabled)
             self.listWidget.addItem(item)
