@@ -919,6 +919,11 @@ class table_worker(QObject):
                 # for packet in dataset.list_data:
                 data = self.table.backend.query_pcap(self.table.obj, self.table.workspace.db)
                 for d in data:
+                    try:
+                        self.dataset.list_data[j][0]
+                    except IndexError:
+                        break
+
                     if d["_id"] == self.dataset.list_data[j][0]:
                         packet = self.dataset.list_data[j]
                         frame_number_item = QTableWidgetItem(str(i + 1))
@@ -960,6 +965,8 @@ class table_worker(QObject):
                         self.progress.emit(progressbar_value)
                         j += 1
                     i += 1
+            else:
+                self.table.setRowCount(0)
 
         self.table.resizeColumnsToContents()
         self.progress.emit(0)

@@ -2,6 +2,7 @@ import os
 import platform
 import subprocess
 import traceback
+from time import sleep
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QTreeWidget
@@ -26,7 +27,7 @@ def suricata(path, projectTree: QTreeWidget, workspace: Workspace):
     # splitPath[len(splitPath) - 1] = newFileName
     buggyNewFilePath = ""
     try:
-        for i in range(0, len(splitPath)-1):
+        for i in range(0, len(splitPath) - 1):
             if i != splitPath[len(splitPath) - 1]:
                 buggyNewFilePath += splitPath[i] + os.sep
             else:
@@ -36,14 +37,14 @@ def suricata(path, projectTree: QTreeWidget, workspace: Workspace):
 
     newFilePath = buggyNewFilePath[: -1]
 
-
     cwd = os.getcwd()
 
     if platform.system() == "Windows":
         os.chdir('C:/Program Files/Suricata')
-    print(newFilePath)
-    cmd = (fr"suricata -r {path} -l {newFilePath}")
-    subprocess.call(cmd)
+    print("PRINT", path, newFilePath)
+    cmd = f"suricata -r {path} -l {newFilePath}"
+    error = subprocess.call(cmd, shell=True, stderr=subprocess.PIPE)
+    print("ERROR:", error)
 
     os.chdir(cwd)
 
@@ -51,13 +52,13 @@ def suricata(path, projectTree: QTreeWidget, workspace: Workspace):
 
     for fname in os.listdir(path=searchPath):
         print(fname)
-        if fname.startswith("suricataPcap"):
+        if fname.startswith("log"):
             src = os.path.join(buggyNewFilePath, fname)
             dst = os.path.join(buggyNewFilePath, "suricataPcap.pcap")
             os.rename(src, dst)
     print(dataset.path)
     print(newFilePath)
-    new_pcap = Pcap(file=buggyNewFilePath+newFileName+".pcap", path=dataset.path, name=newFileName + ".pcap")
+    new_pcap = Pcap(file=buggyNewFilePath + newFileName + ".pcap", path=dataset.path, name=newFileName + ".pcap")
     print(dataset.path)
     print(newFilePath)
     filterFolderExist = False
@@ -78,7 +79,5 @@ def suricata(path, projectTree: QTreeWidget, workspace: Workspace):
         pcap_item.setText(0, newFileName + ".pcap")
         pcap_item.setData(0, Qt.UserRole, new_pcap)
         filterFolder.addChild(pcap_item)
-
-
 
     dataset.add_pcap(new=new_pcap)
