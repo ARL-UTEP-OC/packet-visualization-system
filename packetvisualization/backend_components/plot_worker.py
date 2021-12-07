@@ -9,50 +9,75 @@ class PlotWorker(QObject):
     finished = pyqtSignal()
     data = pyqtSignal(list)
 
-    def __init__(self, dataset, db):
+    def __init__(self, dataset, db, filter={}):
         super().__init__()
         self.dataset = dataset
         self.db = db
         self.db_data = None
+        self.filter = filter
 
     def run(self):
         if self.dataset:
-            # collection = self.db[self.dataset.name]
-            # query = {'parent_dataset': self.dataset.name}
-            # self.db_data = list(collection.find({}))
             if self.dataset.has_changed:
-                # backend = TableBackend()
-                # self.db_data = backend.query_pcap(self.dataset, self.db)
                 collection = self.db[self.dataset.name]
-                self.db_data = collection.find()
+                self.dataset.db_data = collection.find(self.filter)
             else:
                 self.data.emit(self.dataset.packet_data)
                 self.finished.emit()
                 return 1
         else:
-            self.db_data = None
+            self.data.emit([[], []])
+            self.finished.emit()
+            return 1
 
-        if self.db_data:
-            date, protocol, time_epoch = [], [], []
+        date, protocol_all, time_epoch = [], [], []
+        self.dataset.list_data = []
 
-            for packet_data in self.db_data:
-                epoch_time = packet_data['_source']['layers']['frame']['frame-time_epoch']
-                if epoch_time is not None:
-                    time_epoch = float(epoch_time)
-                    date.append(datetime.fromtimestamp(time_epoch))
-                protocol.append(packet_data['_source']['layers']['frame']['frame-protocols'])
+        for d in self.dataset.db_data:
+            _id = d["_id"]
+            frame_time = d["_source"]["layers"]["frame"]["frame-time"]
+            epoch_time = d['_source']['layers']['frame']['frame-time_epoch']
 
+            if d['_source']['layers'].get('ip'):
+                ip_src = d["_source"]["layers"]["ip"].get("ip-src")
+                ip_dst = d["_source"]["layers"]["ip"].get("ip-dst")
+            else:
+                ip_src = None
+                ip_dst = None
+
+            if d['_source']['layers'].get('udp'):
+                port_src = d['_source']['layers']['udp'].get('udp-srcport')
+                port_dst = d['_source']['layers']['udp'].get('udp-dstport')
+            elif d['_source']['layers'].get('tcp'):
+                port_src = d['_source']['layers']['tcp'].get('tcp-srcport')
+                port_dst = d['_source']['layers']['tcp'].get('tcp-dstport')
+            else:
+                port_src = None
+                port_dst = None
+
+            protocols = d["_source"]["layers"]["frame"]["frame-protocols"]
+            protocols = protocols.split(":")
+            if protocols[-1] == "Data":
+                protocol = protocols[-2]
+                protocol_all.append(protocol)
+            else:
+                protocol = protocols[-1]
+                protocol_all.append(protocol)
+
+            length = d["_source"]["layers"]["frame"]["frame-len"]
+
+            self.dataset.list_data.append([_id, frame_time, ip_src, ip_dst, port_src, port_dst, protocol, length])
+
+            if epoch_time is not None:
+                time_epoch = float(epoch_time)
+                date.append(datetime.fromtimestamp(time_epoch))
+            # protocol.append(d['_source']['layers']['frame']['frame-protocols'])
+
+        self.dataset.db_data.rewind()
+
+        if len(date) > 0:
             date.sort()
-
-            r_protocols = []
-            for p in protocol:
-                s = p.split(":")
-                if s[-1] != 'data':
-                    r_protocols.append(s[-1])
-                else:
-                    r_protocols.append(s[-2])
-
-            self.dataset.protocols = Counter(r_protocols)
+            self.dataset.protocols = Counter(protocol_all)
             self.dataset.protocols = sorted(self.dataset.protocols.items(), key=lambda x: (x[1], x[0]), reverse=True)
 
             d = {"datetime": date}
@@ -75,11 +100,11 @@ class PlotWorker(QObject):
 
             for i in range(len(result_df)):
                 plot_y[i] = len(result_df[i])
-
-            self.dataset.packet_data = [plot_x, plot_y]
-            self.dataset.has_changed = False
         else:
             plot_x, plot_y = [], []
+
+        self.dataset.packet_data = [plot_x, plot_y]
+        self.dataset.has_changed = False
 
         self.data.emit([plot_x, plot_y])
         self.finished.emit()

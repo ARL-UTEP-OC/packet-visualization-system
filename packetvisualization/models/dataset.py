@@ -11,6 +11,8 @@ class Dataset:
         self.name = name
         self.pcaps = [] # will use children key instead
         self.m_data = m_data
+        self.db_data = None
+        self.list_data = None
         self.mergeFilePath = None
         self.jsonFilePath = None
         self.path = os.path.join(parent_path, self.name)
