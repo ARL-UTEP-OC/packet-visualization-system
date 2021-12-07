@@ -34,6 +34,7 @@ from packetvisualization.ui_components.properties_window import PropertiesWindow
 from packetvisualization.ui_components.load_window import LoadWindow
 from packetvisualization.ui_components.save_window import SaveWindow
 from packetvisualization.ui_components.table_gui import table_gui
+from packetvisualization.backend_components.suricata import suricata
 
 
 class WorkspaceWindow(QMainWindow):
@@ -188,6 +189,7 @@ class WorkspaceWindow(QMainWindow):
         self.add_pcap_folder_action.setToolTip("Add folder of PCAP's")
 
         self.filterWiresharkAction = QAction("Filter Wireshark", self)
+        self.suricataFilterAction = QAction("Suricata Filter", self)
 
         self.openNewAction = QAction("&New Workspace", self)
         self.openNewAction.setStatusTip("Open a new workspace")
@@ -303,6 +305,9 @@ class WorkspaceWindow(QMainWindow):
         self.openWiresharkAction.triggered.connect(self.open_wireshark)
         self.filterWiresharkAction.triggered.connect(self.filter_wireshark)
 
+        # Connect Suricata
+        self.suricataFilterAction.triggered.connect(self.suricata)
+
         # Connect Windows actions
         self.openProjectTreeAction.triggered.connect(self.open_window_project_tree)
         self.openPlotAction.triggered.connect(self.open_window_plot)
@@ -395,6 +400,7 @@ class WorkspaceWindow(QMainWindow):
                 # menu.addAction(self.traceAction)
                 menu.addAction(self.openWiresharkAction)
                 menu.addAction(self.filterWiresharkAction)
+                menu.addAction(self.suricataFilterAction)
                 view_menu = menu.addMenu("View")
                 view_menu.addAction(self.gen_table_action)
                 #------------------------------------------------------------------------------------------
@@ -1144,6 +1150,17 @@ class WorkspaceWindow(QMainWindow):
                     if d.name == dataset_item.text(0):
                         ui = filter_gui.filter_window(d.mergeFilePath, self.project_tree, self.workspace_object)
 
+    def suricata(self):
+
+        if self.project_tree.selectedItems():  # and self.check_if_item_is(self.project_tree.selectedItems()[0], "Dataset"):
+
+            if self.test_mode == False:
+                dataset_item = self.project_tree.selectedItems()[0]
+            for p in self.workspace_object.project:
+                for d in p.dataset:
+                    if d.name == dataset_item.text(0):
+                        # ui = filter_gui.filter_window(d.mergeFilePath, self.project_tree, self.workspace_object)
+                        suricata(d.mergeFilePath, self.project_tree, self.workspace_object)
     def display_classifier_options(self):
         results = pd.DataFrame()
         try:
