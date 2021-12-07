@@ -102,7 +102,7 @@ class properties_window(QWidget):
 
         pktIdLength = len(self.pktIdsAsList)
         self.clusterLabel = QtWidgets.QLabel()
-        #self.clusterLabel.setText(f"Packet IDs ({pktIdLength})")
+        self.clusterLabel.setText(f"Packet IDs ({pktIdLength})")
         self.layout.addWidget(self.clusterLabel, 0, 0)
 
         #self.layout.addWidget(self.listWidget2, 1, 0, 1, 2)

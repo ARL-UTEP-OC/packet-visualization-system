@@ -51,7 +51,7 @@ def suricata(path, projectTree: QTreeWidget, workspace: Workspace):
 
     for fname in os.listdir(path=searchPath):
         print(fname)
-        if fname.startswith("suricataPcap"):
+        if fname.startswith("log"):
             src = os.path.join(buggyNewFilePath, fname)
             dst = os.path.join(buggyNewFilePath, "suricataPcap.pcap")
             os.rename(src, dst)
