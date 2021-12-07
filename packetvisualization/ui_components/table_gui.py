@@ -906,52 +906,60 @@ class table_worker(QObject):
         progressbar = self.table.progressbar
         self.table.dict = gen_dictionary()
 
-        size = len(dataset.list_data)
-        value = (100 / size)
-        self.table.setRowCount(size)
+        if dataset is not None:
 
-        progressbar_value = 0
-        progressbar.show()
-        i = 0
-        for packet in dataset.list_data:
-            frame_number_item = QTableWidgetItem(str(i + 1))
-            self.table.setItem(i, 0, frame_number_item)
-            frame_number_item.setData(Qt.UserRole, [packet[0], []])
-            # self.table.dict["frame-number"] += 1
-            self.table.setItem(i, 1, QTableWidgetItem(packet[1]))
-            # self.table.dict["frame-time_relative"] += 1
+            size = len(dataset.list_data)
+            if size > 0:
+                value = (100 / size)
+                self.table.setRowCount(size)
 
-            if packet[2] is not None:
-                self.table.setItem(i, 2, QTableWidgetItem(packet[2]))
-                # self.table.dict["ip-src"] += 1
-                self.table.setItem(i, 3, QTableWidgetItem(packet[3]))
-                # self.table.dict["ip-dst"] += 1
-            else:
-                self.table.setItem(i, 2, QTableWidgetItem(None))
-                self.table.setItem(i, 3, QTableWidgetItem(None))
-                # self.table.horizontalHeaderItem(2).setForeground(QColor(175, 175, 175))
-                # self.table.horizontalHeaderItem(3).setForeground(QColor(175, 175, 175))
+                progressbar_value = 0
+                progressbar.show()
+                i, j = 0, 0
+                # for packet in dataset.list_data:
+                data = self.table.backend.query_pcap(self.table.obj, self.table.workspace.db)
+                for d in data:
+                    if d["_id"] == self.dataset.list_data[j][0]:
+                        packet = self.dataset.list_data[j]
+                        frame_number_item = QTableWidgetItem(str(i + 1))
+                        self.table.setItem(j, 0, frame_number_item)
+                        frame_number_item.setData(Qt.UserRole, [packet[0], []])
+                        # self.table.dict["frame-number"] += 1
+                        self.table.setItem(j, 1, QTableWidgetItem(packet[1]))
+                        # self.table.dict["frame-time_relative"] += 1
 
-            if packet[4] is not None:
-                self.table.setItem(i, 4, QTableWidgetItem(packet[4]))
-                # self.table.dict["srcport"] += 1
-                self.table.setItem(i, 5, QTableWidgetItem(packet[5]))
-                # self.table.dict["dstport"] += 1
-            else:
-                self.table.setItem(i, 4, QTableWidgetItem(None))
-                self.table.setItem(i, 5, QTableWidgetItem(None))
-                # self.table.horizontalHeaderItem(4).setForeground(QColor(175, 175, 175))
-                # self.table.horizontalHeaderItem(5).setForeground(QColor(175, 175, 175))
+                        if packet[2] is not None:
+                            self.table.setItem(j, 2, QTableWidgetItem(packet[2]))
+                            # self.table.dict["ip-src"] += 1
+                            self.table.setItem(j, 3, QTableWidgetItem(packet[3]))
+                            # self.table.dict["ip-dst"] += 1
+                        else:
+                            self.table.setItem(j, 2, QTableWidgetItem(None))
+                            self.table.setItem(j, 3, QTableWidgetItem(None))
+                            # self.table.horizontalHeaderItem(2).setForeground(QColor(175, 175, 175))
+                            # self.table.horizontalHeaderItem(3).setForeground(QColor(175, 175, 175))
 
-            self.table.setItem(i, 6, QTableWidgetItem(packet[6]))
-            # self.table.dict["frame-protocols"] += 1
+                        if packet[4] is not None:
+                            self.table.setItem(j, 4, QTableWidgetItem(packet[4]))
+                            # self.table.dict["srcport"] += 1
+                            self.table.setItem(j, 5, QTableWidgetItem(packet[5]))
+                            # self.table.dict["dstport"] += 1
+                        else:
+                            self.table.setItem(j, 4, QTableWidgetItem(None))
+                            self.table.setItem(j, 5, QTableWidgetItem(None))
+                            # self.table.horizontalHeaderItem(4).setForeground(QColor(175, 175, 175))
+                            # self.table.horizontalHeaderItem(5).setForeground(QColor(175, 175, 175))
 
-            self.table.setItem(i, 7, QTableWidgetItem(packet[7]))
-            # self.table.dict["frame-len"] += 1
+                        self.table.setItem(j, 6, QTableWidgetItem(packet[6]))
+                        # self.table.dict["frame-protocols"] += 1
 
-            i += 1
-            progressbar_value = progressbar_value + value
-            self.progress.emit(progressbar_value)
+                        self.table.setItem(j, 7, QTableWidgetItem(packet[7]))
+                        # self.table.dict["frame-len"] += 1
+
+                        progressbar_value = progressbar_value + value
+                        self.progress.emit(progressbar_value)
+                        j += 1
+                    i += 1
 
         self.table.resizeColumnsToContents()
         self.progress.emit(0)
