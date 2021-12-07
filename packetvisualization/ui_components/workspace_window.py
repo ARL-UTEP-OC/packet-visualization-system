@@ -21,7 +21,6 @@ from packetvisualization.backend_components.load_worker import LoadWorker
 from packetvisualization.backend_components.save_worker import SaveWorker
 from packetvisualization.backend_components.table_backend import TableBackend
 from packetvisualization.models.analysis import Analysis
-from packetvisualization.models.context.database_context import DbContext
 from packetvisualization.models.dataset import Dataset
 from packetvisualization.models.pcap import Pcap
 from packetvisualization.models.project import Project
@@ -129,7 +128,6 @@ class WorkspaceWindow(QMainWindow):
         self._connect_actions()
         self._create_status_bar()
 
-        self.context = DbContext()
         self.controller = Controller()
 
         # temp folder for analyis pcaps
