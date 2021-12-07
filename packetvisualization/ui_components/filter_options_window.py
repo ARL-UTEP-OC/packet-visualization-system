@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QWidget, QFormLayout, QScrollArea, QGroupBox, QVBoxLayout, QLineEdit
+from PyQt5.QtWidgets import QWidget, QFormLayout, QScrollArea, QGroupBox, QVBoxLayout, QLineEdit, QComboBox
 import traceback
 import sys
 from packetvisualization.models import filter
@@ -21,7 +21,9 @@ class filter_options_window(QtWidgets.QWidget):
 
             self.setLayout(form_layout)
 
-
+            dropdown = QComboBox(self)
+            dropdown.addItem("K-Means")
+            form_layout.addRow("Algorithm", dropdown)
             for i in filter_options:
                 self.cmd = QtWidgets.QLineEdit(self)
                 self.cmd.setObjectName(f"{i}")
