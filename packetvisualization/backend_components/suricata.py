@@ -41,10 +41,8 @@ def suricata(path, projectTree: QTreeWidget, workspace: Workspace):
 
     if platform.system() == "Windows":
         os.chdir('C:/Program Files/Suricata')
-    print("PRINT", path, newFilePath)
     cmd = f"suricata -r {path} -l {newFilePath}"
     error = subprocess.call(cmd, shell=True, stderr=subprocess.PIPE)
-    print("ERROR:", error)
 
     os.chdir(cwd)
 
@@ -56,11 +54,9 @@ def suricata(path, projectTree: QTreeWidget, workspace: Workspace):
             src = os.path.join(buggyNewFilePath, fname)
             dst = os.path.join(buggyNewFilePath, "suricataPcap.pcap")
             os.rename(src, dst)
-    print(dataset.path)
-    print(newFilePath)
+
     new_pcap = Pcap(file=buggyNewFilePath + newFileName + ".pcap", path=dataset.path, name=newFileName + ".pcap")
-    print(dataset.path)
-    print(newFilePath)
+
     filterFolderExist = False
     dataset_item = projectTree.selectedItems()[0]
     for i in range(dataset_item.childCount()):

@@ -370,13 +370,14 @@ class WorkspaceWindow(QMainWindow):
         file_tool_bar.addAction(self.saveAction)
         file_tool_bar.addAction(self.deleteAction)
 
-        filter_tool_bar = QToolBar("Filter")
-        self.addToolBar(Qt.TopToolBarArea, filter_tool_bar)
+        self.filter_tool_bar = QToolBar("Filter")
+        self.addToolBar(Qt.TopToolBarArea, self.filter_tool_bar)
         self.filter_text = QLineEdit(placeholderText="{ field : 'value' }")
-        filter_tool_bar.addWidget(self.filter_text)
+
+        self.filter_tool_bar.addWidget(self.filter_text)
         self.filter_button = QPushButton("Filter")
         self.filter_button.clicked.connect(self.add_filter)
-        filter_tool_bar.addWidget(self.filter_button)
+        self.filter_tool_bar.addWidget(self.filter_button)
 
     def add_filter(self):
         if self.traced_dataset:
@@ -386,8 +387,10 @@ class WorkspaceWindow(QMainWindow):
                 else:
                     self.applied_filter = {}
                 self.traced_dataset.has_changed = True
+                self.filter_text.setStyleSheet("background-color: rgb(153,255,153);")
                 self.update_traced_data(self.traced_dataset)
             except json.decoder.JSONDecodeError:
+                self.filter_text.setStyleSheet("background-color: pink;")
                 self.applied_filter = {}
 
 
@@ -432,8 +435,8 @@ class WorkspaceWindow(QMainWindow):
             # Right-click a pcap
             if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Pcap:
                 menu.addAction(self.openWiresharkAction)
-                export_menu = menu.addMenu("View")
-                export_menu.addAction(self.gen_table_action)
+                # export_menu = menu.addMenu("View")
+                # export_menu.addAction(self.gen_table_action)
                 export_menu = menu.addMenu("Export")
                 export_menu.addAction(self.exportCsvAction)
                 export_menu.addAction(self.exportJsonAction)
