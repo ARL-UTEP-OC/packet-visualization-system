@@ -37,8 +37,7 @@ class Classifier:
 
     def cast_features_to_categorical(self, column_name):
         new_column_name = f'derived{column_name}'
-        self.result_data_frame[column_name] = pd.Categorical(self.result_data_frame[column_name])
-        self.result_data_frame[new_column_name] = self.result_data_frame[column_name].cat.codes
+        self.result_data_frame[new_column_name] = self.result_data_frame[column_name].astype('category').cat.codes
 
     def classify_dataset(self, cluster_number):
         km = KMeans(n_clusters=cluster_number)
