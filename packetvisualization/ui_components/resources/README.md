@@ -1,4 +1,4 @@
-#Adding Icons or Files
+# Adding Icons or Files
 To add icons, images or other files, add the resource to the `resources.qrc` file following 
 the format `<file alias="folder.svg">svg/folder.svg</file>`. In this example, the alias "folder.svg" 
 is the name that will be called in your code using the format ":folder.svg". The "svg/folder.svg" is 

@@ -1,12 +1,10 @@
-from packetvisualization.models.context.database_context import DbContext
-from pymongo import MongoClient, InsertOne, DeleteMany
+from pymongo import MongoClient
 import json
 import os
 
 
 class MongoManager:
-    # context = DbContext()
-    # client = context.client
+
     def __init__(self):
         self.client = MongoClient("localhost", 27017)
 

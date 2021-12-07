@@ -1,3 +1,4 @@
+import json
 import platform as pf
 import shutil
 import zipfile
@@ -12,7 +13,7 @@ from PyQt5.QtCore import Qt, QThread, QUrl, QFile
 from PyQt5.QtGui import QIcon, QMovie, QDesktopServices
 from PyQt5.QtWidgets import QMainWindow, QTreeWidget, QProgressBar, QMenu, QLabel, \
     QAction, QMessageBox, QDockWidget, QInputDialog, QTreeWidgetItem, QFileDialog, QApplication, QToolBar, \
-    QDesktopWidget
+    QDesktopWidget, QPushButton, QLineEdit
 
 from packetvisualization.backend_components.bandwidth_plot import create_plot
 from packetvisualization.backend_components.controller import Controller
@@ -21,7 +22,6 @@ from packetvisualization.backend_components.load_worker import LoadWorker
 from packetvisualization.backend_components.save_worker import SaveWorker
 from packetvisualization.backend_components.table_backend import TableBackend
 from packetvisualization.models.analysis import Analysis
-from packetvisualization.models.context.database_context import DbContext
 from packetvisualization.models.dataset import Dataset
 from packetvisualization.models.pcap import Pcap
 from packetvisualization.models.project import Project
@@ -34,6 +34,7 @@ from packetvisualization.ui_components.properties_window import PropertiesWindow
 from packetvisualization.ui_components.load_window import LoadWindow
 from packetvisualization.ui_components.save_window import SaveWindow
 from packetvisualization.ui_components.table_gui import table_gui
+from packetvisualization.backend_components.suricata import suricata
 
 
 class WorkspaceWindow(QMainWindow):
@@ -57,6 +58,12 @@ class WorkspaceWindow(QMainWindow):
         self.load_window = LoadWindow()
         self.save_window = SaveWindow()
 
+        self._create_actions()
+        self._create_menu_bar()
+        self._create_tool_bar()
+        self._connect_actions()
+        self._create_status_bar()
+
         self.thread_1 = QThread()
         self.thread_2 = QThread()
         self.thread_3 = QThread()
@@ -75,7 +82,7 @@ class WorkspaceWindow(QMainWindow):
             self.workspace_object = Workspace(name=os.path.basename(workspace_path),
                                               location=os.path.dirname(workspace_path))
             self.workspace_object.create_dump_dir(self.workspace_object.dump_path)
-            self.db = self.eo.create_db(self.workspace_object.name)  # create DB with workspace name
+        self.db = self.eo.create_db(self.workspace_object.name)  # create DB with workspace name
         self.setWindowTitle("PacketVisualizer - " + self.workspace_object.name)
         self.resize(1000, 600)
 
@@ -100,11 +107,18 @@ class WorkspaceWindow(QMainWindow):
         # Docked widget for Bandwidth vs. Time Graph
         self.plot_x = []
         self.plot_y = []
+        self.applied_filter = {}
         self.fig_view = QWebEngineView()
         self.fig_view.setHtml(create_plot(self.plot_x, self.plot_y))
         self.dock_plot = QDockWidget("Bandwidth vs. Time Window", self)
         self.dock_plot.setWidget(self.fig_view)
         self.dock_plot.setFloating(False)
+
+        # List
+        self.list = table_gui(None, self.progressbar, self.db, self)
+        self.dock_list = QDockWidget("Table View Window", self)
+        self.dock_list.setWidget(self.list)
+        self.dock_list.setFloating(False)
 
         # Docked widget for Classifier
         self.classifier_plot_view = QWebEngineView()
@@ -122,14 +136,8 @@ class WorkspaceWindow(QMainWindow):
         self.addDockWidget(Qt.LeftDockWidgetArea, self.dock_project_tree)
         self.addDockWidget(Qt.RightDockWidgetArea, self.dock_plot)
         self.addDockWidget(Qt.RightDockWidgetArea, self.classifier_window)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.dock_list)
 
-        self._create_actions()
-        self._create_menu_bar()
-        self._create_tool_bar()
-        self._connect_actions()
-        self._create_status_bar()
-
-        self.context = DbContext()
         self.controller = Controller()
 
         # temp folder for analyis pcaps
@@ -148,15 +156,7 @@ class WorkspaceWindow(QMainWindow):
         self.show()
 
         if existing_flag:
-            # self.generate_existing_workspace()
-            # restore_path = os.path.join(self.workspace_object.dump_path, self.workspace_object.name)
-            # print(restore_path)
-            # self.eo.restore_db(self.workspace_object.name, restore_path)
-            # self.db = self.eo.set_db(self.workspace_object.name)
-            # LW = LoadWorker(self.workspace_object)
-            # self.db = LW.load_workspace()
             self.load_workspace()
-
 
     def run(self):
         self.show()
@@ -188,6 +188,7 @@ class WorkspaceWindow(QMainWindow):
         self.add_pcap_folder_action.setToolTip("Add folder of PCAP's")
 
         self.filterWiresharkAction = QAction("Filter Wireshark", self)
+        self.suricataFilterAction = QAction("Suricata Filter", self)
 
         self.openNewAction = QAction("&New Workspace", self)
         self.openNewAction.setStatusTip("Open a new workspace")
@@ -267,7 +268,7 @@ class WorkspaceWindow(QMainWindow):
         self.aboutAction = QAction("&About", self)
         self.aboutAction.setEnabled(False)
 
-        #test-------------------------------------------------------------------------------------------------------
+        # test-------------------------------------------------------------------------------------------------------
         self.test_table_action = QAction("Test")
 
     def _connect_actions(self) -> None:
@@ -286,7 +287,7 @@ class WorkspaceWindow(QMainWindow):
         self.exportJsonAction.triggered.connect(self.export_json)
         self.add_pcap_zip_action.triggered.connect(self.add_pcap_zip)
         self.add_pcap_folder_action.triggered.connect(self.add_pcap_folder)
-        #----------------------------------------------------------------------------------------------------------
+        # ----------------------------------------------------------------------------------------------------------
         self.test_table_action.triggered.connect(self.gen_table_from_analysis_graph)
 
         # Connect Edit actions
@@ -302,6 +303,9 @@ class WorkspaceWindow(QMainWindow):
         # Connect Wireshark actions
         self.openWiresharkAction.triggered.connect(self.open_wireshark)
         self.filterWiresharkAction.triggered.connect(self.filter_wireshark)
+
+        # Connect Suricata
+        self.suricataFilterAction.triggered.connect(self.suricata)
 
         # Connect Windows actions
         self.openProjectTreeAction.triggered.connect(self.open_window_project_tree)
@@ -366,6 +370,30 @@ class WorkspaceWindow(QMainWindow):
         file_tool_bar.addAction(self.saveAction)
         file_tool_bar.addAction(self.deleteAction)
 
+        self.filter_tool_bar = QToolBar("Filter")
+        self.addToolBar(Qt.TopToolBarArea, self.filter_tool_bar)
+        self.filter_text = QLineEdit(placeholderText="{ field : 'value' }")
+
+        self.filter_tool_bar.addWidget(self.filter_text)
+        self.filter_button = QPushButton("Filter")
+        self.filter_button.clicked.connect(self.add_filter)
+        self.filter_tool_bar.addWidget(self.filter_button)
+
+    def add_filter(self):
+        if self.traced_dataset:
+            try:
+                if self.filter_text.text():
+                    self.applied_filter = json.loads(self.filter_text.text())
+                else:
+                    self.applied_filter = {}
+                self.traced_dataset.has_changed = True
+                self.filter_text.setStyleSheet("background-color: rgb(153,255,153);")
+                self.update_traced_data(self.traced_dataset)
+            except json.decoder.JSONDecodeError:
+                self.filter_text.setStyleSheet("background-color: pink;")
+                self.applied_filter = {}
+
+
     def _create_status_bar(self) -> None:
         """Creates a status bar to keep track of task progress
         """
@@ -395,19 +423,20 @@ class WorkspaceWindow(QMainWindow):
                 # menu.addAction(self.traceAction)
                 menu.addAction(self.openWiresharkAction)
                 menu.addAction(self.filterWiresharkAction)
+                menu.addAction(self.suricataFilterAction)
                 view_menu = menu.addMenu("View")
                 view_menu.addAction(self.gen_table_action)
-                #------------------------------------------------------------------------------------------
+                # ------------------------------------------------------------------------------------------
                 # view_menu.addAction(self.test_table_action)
-                #-----------------------------------------------------------------------------------------
+                # -----------------------------------------------------------------------------------------
                 export_menu = menu.addMenu("Export")
                 export_menu.addAction(self.exportCsvAction)
                 export_menu.addAction(self.exportJsonAction)
             # Right-click a pcap
             if type(self.project_tree.selectedItems()[0].data(0, Qt.UserRole)) is Pcap:
                 menu.addAction(self.openWiresharkAction)
-                export_menu = menu.addMenu("View")
-                export_menu.addAction(self.gen_table_action)
+                # export_menu = menu.addMenu("View")
+                # export_menu.addAction(self.gen_table_action)
                 export_menu = menu.addMenu("Export")
                 export_menu.addAction(self.exportCsvAction)
                 export_menu.addAction(self.exportJsonAction)
@@ -580,6 +609,12 @@ class WorkspaceWindow(QMainWindow):
             if selected and type(selected[0].data(0, Qt.UserRole)) is Analysis:
                 analysis_object = selected[0].data(0, Qt.UserRole)
                 df = analysis_object.df
+                date = list(df["_source.layers.frame.frame-time"])
+                clusters = list(df.cluster)
+                i = 0
+                for d in date:
+                    self.db[self.traced_dataset.name].update_one({"_source.layers.frame.frame-time": d}, {"$set": {"cluster": clusters[i]}})
+                    i += 1
                 features = analysis_object.features
                 # Generate analysis graph
                 fig = px.scatter(df, x="cluster", y="instance_number",
@@ -902,7 +937,8 @@ class WorkspaceWindow(QMainWindow):
 
             table_backend = TableBackend
             frame_string_list = table_backend.gen_frame_string(table_backend, frame_int_list)
-            new_pcap = table_backend.gen_pcap_from_frames(table_backend, frame_string_list, dataset.mergeFilePath, self.progressbar)
+            new_pcap = table_backend.gen_pcap_from_frames(table_backend, frame_string_list, dataset.mergeFilePath,
+                                                          self.progressbar)
             new_pcap_obj = Pcap("TempAnalysis" + str(self.analysis_count), self.temp_folder, new_pcap)
             self.analysis_count += 1
 
@@ -1046,7 +1082,7 @@ class WorkspaceWindow(QMainWindow):
         # Step 2: Create a QThread object
         # self.thread_1 = QThread()
         # Step 3: Create a worker object
-        self.worker_1 = PlotWorker(self.traced_dataset, self.db)
+        self.worker_1 = PlotWorker(self.traced_dataset, self.db, self.applied_filter)
         # Step 4: Move worker to the thread
         self.worker_1.moveToThread(self.thread_1)
         # Step 5: Connect signals and slots
@@ -1061,6 +1097,7 @@ class WorkspaceWindow(QMainWindow):
         # Final resets
         self.thread_1.finished.connect(lambda: self.fig_view.setHtml(create_plot(self.plot_x, self.plot_y)))
         self.thread_1.finished.connect(lambda: self.dock_plot.setWidget(self.fig_view))
+        self.thread_1.finished.connect(lambda: self.list.populate_main_table(self.traced_dataset))
 
     def process_split_caps(self, pcap, file, table, dataset_item, is_pcap: bool, project_item=None):
         dataset = dataset_item.data(0, Qt.UserRole)
@@ -1144,6 +1181,17 @@ class WorkspaceWindow(QMainWindow):
                     if d.name == dataset_item.text(0):
                         ui = filter_gui.filter_window(d.mergeFilePath, self.project_tree, self.workspace_object)
 
+    def suricata(self):
+
+        if self.project_tree.selectedItems():  # and self.check_if_item_is(self.project_tree.selectedItems()[0], "Dataset"):
+
+            if self.test_mode == False:
+                dataset_item = self.project_tree.selectedItems()[0]
+            for p in self.workspace_object.project:
+                for d in p.dataset:
+                    if d.name == dataset_item.text(0):
+                        # ui = filter_gui.filter_window(d.mergeFilePath, self.project_tree, self.workspace_object)
+                        suricata(d.mergeFilePath, self.project_tree, self.workspace_object)
     def display_classifier_options(self):
         results = pd.DataFrame()
         try:

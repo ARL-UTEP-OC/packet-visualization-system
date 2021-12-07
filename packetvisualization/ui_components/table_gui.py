@@ -4,11 +4,11 @@ import traceback
 
 from PyQt5.QtCore import Qt, QObject, pyqtSignal, QThread
 from PyQt5.QtGui import QFont, QColor, QIcon
-from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QMenu, QAction, QInputDialog, QTreeWidgetItem, QFileDialog
+from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QMenu, QAction, QInputDialog, QTreeWidgetItem, QFileDialog, \
+    QAbstractItemView
 
 from packetvisualization.backend_components import Wireshark
 from packetvisualization.backend_components.table_backend import TableBackend
-from packetvisualization.models.context.database_context import DbContext
 from packetvisualization.models.dataset import Dataset
 from packetvisualization.models.pcap import Pcap
 from packetvisualization.ui_components import properties_gui
@@ -31,7 +31,7 @@ def gen_dictionary():
 
 
 class table_gui(QTableWidget):
-    def __init__(self, obj, progressbar, db: DbContext, workspace):
+    def __init__(self, obj, progressbar, db, workspace):
         super().__init__()
         self.backend = TableBackend()
         self.workspace = workspace
@@ -40,6 +40,7 @@ class table_gui(QTableWidget):
         self.thread_is_free = True
         self.dict = gen_dictionary()
         self.setColumnCount(8)
+        self.rowCount()
         self.setHorizontalHeaderLabels(
             ["No.", "Time", "Source IP", "Destination IP", "srcport", "dstport", "Protocol", "Length"])
         self.verticalHeader().hide()
@@ -47,8 +48,10 @@ class table_gui(QTableWidget):
         fnt.setPointSize(11)
         fnt.setBold(True)
         self.horizontalHeader().setFont(fnt)
+        self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
 
-        self.populate_table()
+        if obj is not None:
+            self.populate_table()
 
     def contextMenuEvent(self, event):
         """Creates the right-click menu for accessing table functionality
@@ -510,6 +513,25 @@ class table_gui(QTableWidget):
 
             self.thread.finished.connect(self.free_thread)
 
+    def populate_main_table(self, dataset):
+        """Starts a thread that generates and populates a table of packets from the specified pcap or dataset
+        """
+        if self.thread_is_free:
+            self.thread_is_free = False
+
+            self.thread = QThread()
+            self.worker = table_worker(table=self, dataset=dataset)
+
+            self.thread.started.connect(self.worker.create_main_table)
+            self.worker.finished.connect(self.thread.quit)
+            self.worker.finished.connect(self.worker.deleteLater)
+            self.worker.progress.connect(self.update_progressbar)
+            self.thread.finished.connect(self.thread.deleteLater)
+
+            self.thread.start()
+
+            self.thread.finished.connect(self.free_thread)
+
     def update_lables(self):
         """Updates the table column header labels to reflect the color (grey/black) and the
         count of the fields within each packet.
@@ -570,7 +592,7 @@ class table_worker(QObject):
     merge_cap = pyqtSignal(list)
 
     def __init__(self, table: table_gui, selected=None, tagged: bool = False, all_packets: bool = None, tag: str = None,
-                 output_file=None):
+                 output_file=None, dataset=None):
         super().__init__()
         self.table = table
         self.selected = selected
@@ -578,6 +600,7 @@ class table_worker(QObject):
         self.all_packets = all_packets
         self.tag = tag
         self.output_file = output_file
+        self.dataset = dataset
 
     def create_pcap(self):
         """Creates a pcap from selected packets in the table
@@ -871,6 +894,80 @@ class table_worker(QObject):
             self.progress.emit(progressbar_value)
 
         self.table.update_lables()
+        self.table.resizeColumnsToContents()
+        self.progress.emit(0)
+        progressbar.hide()
+        self.finished.emit()
+
+    def create_main_table(self):
+        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.table.obj = self.dataset
+        dataset = self.dataset
+        progressbar = self.table.progressbar
+        self.table.dict = gen_dictionary()
+
+        if dataset is not None:
+
+            size = len(dataset.list_data)
+            if size > 0:
+                value = (100 / size)
+                self.table.setRowCount(size)
+
+                progressbar_value = 0
+                progressbar.show()
+                i, j = 0, 0
+                # for packet in dataset.list_data:
+                data = self.table.backend.query_pcap(self.table.obj, self.table.workspace.db)
+                for d in data:
+                    try:
+                        self.dataset.list_data[j][0]
+                    except IndexError:
+                        break
+
+                    if d["_id"] == self.dataset.list_data[j][0]:
+                        packet = self.dataset.list_data[j]
+                        frame_number_item = QTableWidgetItem(str(i + 1))
+                        self.table.setItem(j, 0, frame_number_item)
+                        frame_number_item.setData(Qt.UserRole, [packet[0], []])
+                        # self.table.dict["frame-number"] += 1
+                        self.table.setItem(j, 1, QTableWidgetItem(packet[1]))
+                        # self.table.dict["frame-time_relative"] += 1
+
+                        if packet[2] is not None:
+                            self.table.setItem(j, 2, QTableWidgetItem(packet[2]))
+                            # self.table.dict["ip-src"] += 1
+                            self.table.setItem(j, 3, QTableWidgetItem(packet[3]))
+                            # self.table.dict["ip-dst"] += 1
+                        else:
+                            self.table.setItem(j, 2, QTableWidgetItem(None))
+                            self.table.setItem(j, 3, QTableWidgetItem(None))
+                            # self.table.horizontalHeaderItem(2).setForeground(QColor(175, 175, 175))
+                            # self.table.horizontalHeaderItem(3).setForeground(QColor(175, 175, 175))
+
+                        if packet[4] is not None:
+                            self.table.setItem(j, 4, QTableWidgetItem(packet[4]))
+                            # self.table.dict["srcport"] += 1
+                            self.table.setItem(j, 5, QTableWidgetItem(packet[5]))
+                            # self.table.dict["dstport"] += 1
+                        else:
+                            self.table.setItem(j, 4, QTableWidgetItem(None))
+                            self.table.setItem(j, 5, QTableWidgetItem(None))
+                            # self.table.horizontalHeaderItem(4).setForeground(QColor(175, 175, 175))
+                            # self.table.horizontalHeaderItem(5).setForeground(QColor(175, 175, 175))
+
+                        self.table.setItem(j, 6, QTableWidgetItem(packet[6]))
+                        # self.table.dict["frame-protocols"] += 1
+
+                        self.table.setItem(j, 7, QTableWidgetItem(packet[7]))
+                        # self.table.dict["frame-len"] += 1
+
+                        progressbar_value = progressbar_value + value
+                        self.progress.emit(progressbar_value)
+                        j += 1
+                    i += 1
+            else:
+                self.table.setRowCount(0)
+
         self.table.resizeColumnsToContents()
         self.progress.emit(0)
         progressbar.hide()

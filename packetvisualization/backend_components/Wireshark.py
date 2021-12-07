@@ -30,7 +30,7 @@ def openwireshark(path):
 
 def filter(path: str, wsFilter, newFileName, projectTree: QTreeWidget, workspace: Workspace):
     splitPath = path.split(os.sep)
-    # splitPath = path.split("\\")
+
     datasetName = splitPath[len(splitPath) - 2]
     projectName = splitPath[len(splitPath) - 3]
 
@@ -91,7 +91,6 @@ def filter(path: str, wsFilter, newFileName, projectTree: QTreeWidget, workspace
             filterFolder.addChild(pcap_item)
 
         # dataset_item.addChild(pcap_item)
-
         dataset.add_pcap(new=new_pcap)
 
     return error

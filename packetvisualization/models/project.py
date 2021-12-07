@@ -1,7 +1,9 @@
+import os
+import shutil
+from datetime import datetime
+
 from packetvisualization.models.analysis import Analysis
 from packetvisualization.models.dataset import Dataset
-from datetime import datetime
-import os, shutil
 
 
 class Project:
