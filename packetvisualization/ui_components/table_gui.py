@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QMenu, QAction, QInp
 
 from packetvisualization.backend_components import Wireshark
 from packetvisualization.backend_components.table_backend import TableBackend
+from packetvisualization.models.context.database_context import DbContext
 from packetvisualization.models.dataset import Dataset
 from packetvisualization.models.pcap import Pcap
 from packetvisualization.ui_components import properties_gui
@@ -30,7 +31,7 @@ def gen_dictionary():
 
 
 class table_gui(QTableWidget):
-    def __init__(self, obj, progressbar, db, workspace):
+    def __init__(self, obj, progressbar, db: DbContext, workspace):
         super().__init__()
         self.backend = TableBackend()
         self.workspace = workspace
@@ -811,15 +812,14 @@ class table_worker(QObject):
         db = self.table.workspace.db
 
         data = self.table.backend.query_pcap(obj, db)
-        counter = 0
+        count = 0
         for packet in data:
-            counter += 1
+            count += 1
         data.rewind()
+        self.table.setRowCount(count)
+        value = (100 / count)
         # self.table.setRowCount(data.count())
-        self.table.setRowCount(counter)
-
         # value = (100 / data.count())
-        value = (100 / counter)
         progressbar_value = 0
         progressbar.show()
 

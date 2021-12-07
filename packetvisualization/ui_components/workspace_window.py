@@ -1,4 +1,3 @@
-import os.path
 import platform as pf
 import shutil
 import zipfile
@@ -22,6 +21,7 @@ from packetvisualization.backend_components.load_worker import LoadWorker
 from packetvisualization.backend_components.save_worker import SaveWorker
 from packetvisualization.backend_components.table_backend import TableBackend
 from packetvisualization.models.analysis import Analysis
+from packetvisualization.models.context.database_context import DbContext
 from packetvisualization.models.dataset import Dataset
 from packetvisualization.models.pcap import Pcap
 from packetvisualization.models.project import Project
@@ -67,16 +67,15 @@ class WorkspaceWindow(QMainWindow):
         self.test_mode = False
         self.new_window = []
         if existing_flag:
+            # self.workspace_object = Load().open_zip(workspace_path)
             root, ext = os.path.splitext(workspace_path)
             head, tail = os.path.split(root)
             self.workspace_object = Workspace(name=tail, location=head, open_existing=True)
-            self.eo.remove_db(tail)
         else:
             self.workspace_object = Workspace(name=os.path.basename(workspace_path),
                                               location=os.path.dirname(workspace_path))
             self.workspace_object.create_dump_dir(self.workspace_object.dump_path)
             self.db = self.eo.create_db(self.workspace_object.name)  # create DB with workspace name
-            self.eo.remove_db(self.workspace_object.name)
         self.setWindowTitle("PacketVisualizer - " + self.workspace_object.name)
         self.resize(1000, 600)
 
@@ -130,9 +129,10 @@ class WorkspaceWindow(QMainWindow):
         self._connect_actions()
         self._create_status_bar()
 
+        self.context = DbContext()
         self.controller = Controller()
 
-        # Temp folder for analysis pcaps
+        # temp folder for analyis pcaps
         self.temp_folder = os.path.join(os.getcwd(), "TempFolder")
         if os.path.isdir(self.temp_folder):
             shutil.rmtree(self.temp_folder)
@@ -148,7 +148,19 @@ class WorkspaceWindow(QMainWindow):
         self.show()
 
         if existing_flag:
+            # self.generate_existing_workspace()
+            # restore_path = os.path.join(self.workspace_object.dump_path, self.workspace_object.name)
+            # print(restore_path)
+            # self.eo.restore_db(self.workspace_object.name, restore_path)
+            # self.db = self.eo.set_db(self.workspace_object.name)
+            # LW = LoadWorker(self.workspace_object)
+            # self.db = LW.load_workspace()
             self.load_workspace()
+
+
+    def run(self):
+        self.show()
+        sys.exit(self.app.exec_())
 
     def _create_actions(self) -> None:
         """Creates all actions that will be used in the application
@@ -255,7 +267,7 @@ class WorkspaceWindow(QMainWindow):
         self.aboutAction = QAction("&About", self)
         self.aboutAction.setEnabled(False)
 
-        # test-------------------------------------------------------------------------------------------------------
+        #test-------------------------------------------------------------------------------------------------------
         self.test_table_action = QAction("Test")
 
     def _connect_actions(self) -> None:
@@ -274,7 +286,7 @@ class WorkspaceWindow(QMainWindow):
         self.exportJsonAction.triggered.connect(self.export_json)
         self.add_pcap_zip_action.triggered.connect(self.add_pcap_zip)
         self.add_pcap_folder_action.triggered.connect(self.add_pcap_folder)
-        # ----------------------------------------------------------------------------------------------------------
+        #----------------------------------------------------------------------------------------------------------
         self.test_table_action.triggered.connect(self.gen_table_from_analysis_graph)
 
         # Connect Edit actions
@@ -385,9 +397,9 @@ class WorkspaceWindow(QMainWindow):
                 menu.addAction(self.filterWiresharkAction)
                 view_menu = menu.addMenu("View")
                 view_menu.addAction(self.gen_table_action)
-                # ------------------------------------------------------------------------------------------
-                view_menu.addAction(self.test_table_action)
-                # -----------------------------------------------------------------------------------------
+                #------------------------------------------------------------------------------------------
+                # view_menu.addAction(self.test_table_action)
+                #-----------------------------------------------------------------------------------------
                 export_menu = menu.addMenu("Export")
                 export_menu.addAction(self.exportCsvAction)
                 export_menu.addAction(self.exportJsonAction)
@@ -890,8 +902,7 @@ class WorkspaceWindow(QMainWindow):
 
             table_backend = TableBackend
             frame_string_list = table_backend.gen_frame_string(table_backend, frame_int_list)
-            new_pcap = table_backend.gen_pcap_from_frames(table_backend, frame_string_list, dataset.mergeFilePath,
-                                                          self.progressbar)
+            new_pcap = table_backend.gen_pcap_from_frames(table_backend, frame_string_list, dataset.mergeFilePath, self.progressbar)
             new_pcap_obj = Pcap("TempAnalysis" + str(self.analysis_count), self.temp_folder, new_pcap)
             self.analysis_count += 1
 

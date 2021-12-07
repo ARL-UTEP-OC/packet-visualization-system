@@ -145,7 +145,7 @@ class properties_window(QWidget):
             fig.data[0].cells.values = [df.loc[points.point_inds][col] for col in
                                       ['ID', 'Classification', 'Driveline', 'Hybrid']]
 
-        fig[0].on_selection(selection_fn)
+        # fig[0].on_selection(selection_fn)
 
         raw_html = '<html><head><meta charset="utf-8" />'
         raw_html += '<script src="https://cdn.plot.ly/plotly-latest.min.js"></script></head>'
