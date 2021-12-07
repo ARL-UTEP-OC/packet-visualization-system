@@ -38,19 +38,6 @@ def suricata(path, projectTree: QTreeWidget, workspace: Workspace):
 
 
     cwd = os.getcwd()
-    # print(cwd)
-    #
-    #
-    # splitPath = path.split(os.sep)
-    #
-    # newFilePath = ""
-    # for i in range(0, 4):
-    #     newFilePath += splitPath[i]
-    #     if i < 3:
-    #         newFilePath += os.sep
-    #
-    #
-    # print(newFilePath)
 
     if platform.system() == "Windows":
         os.chdir('C:/Program Files/Suricata')
@@ -65,8 +52,8 @@ def suricata(path, projectTree: QTreeWidget, workspace: Workspace):
     for fname in os.listdir(path=searchPath):
         print(fname)
         if fname.startswith("suricataPcap"):
-            src = f"{buggyNewFilePath}/{fname}"
-            dst = f"{buggyNewFilePath}/suricataPcap.pcap"
+            src = os.path.join(buggyNewFilePath, fname)
+            dst = os.path.join(buggyNewFilePath, "suricataPcap.pcap")
             os.rename(src, dst)
     print(dataset.path)
     print(newFilePath)
