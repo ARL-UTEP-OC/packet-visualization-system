@@ -69,7 +69,7 @@ class properties_window(QWidget):
         self.clusterLabel.setText("Select Properties for Analysis")
         self.layout.addWidget(self.clusterLabel, 0, 2)
 
-        self.layout.addWidget(self.listWidget, 0, 0, 1, 6)
+        self.layout.addWidget(self.listWidget, 1, 0, 1, 6)
 
         # self.listWidget2 = QtWidgets.QListWidget()
         #
@@ -108,22 +108,22 @@ class properties_window(QWidget):
         #self.layout.addWidget(self.listWidget2, 1, 0, 1, 2)
 
         self.button = QtWidgets.QPushButton("Analyze", clicked=lambda: self.analyze())
-        self.layout.addWidget(self.button, 2, 2, 1, 2)
+        self.layout.addWidget(self.button, 3, 2, 1, 2)
 
         self.button2 = QtWidgets.QPushButton("Filters", clicked=lambda: self.filter(filter_options))
         # self.button2 = QtWidgets.QPushButton("Filters")
-        self.layout.addWidget(self.button2, 2, 4, 1, 2)
+        self.layout.addWidget(self.button2, 3, 4, 1, 2)
 
         self.clusterLabel = QtWidgets.QLabel()
         self.clusterLabel.setText("Cluster Value")
-        self.layout.addWidget(self.clusterLabel, 2, 0)
+        self.layout.addWidget(self.clusterLabel, 3, 0)
 
         self.cluster = QtWidgets.QLineEdit(self)
         self.cluster.setObjectName("cluster")
-        self.layout.addWidget(self.cluster, 2, 1, 1, 1)
+        self.layout.addWidget(self.cluster, 3, 1, 1, 1)
 
         self.errorMsg = QtWidgets.QLabel()
-        self.layout.addWidget(self.errorMsg, 3, 0, 1, 4)
+        self.layout.addWidget(self.errorMsg, 4, 0, 1, 4)
 
         self.setLayout(self.layout)
 
