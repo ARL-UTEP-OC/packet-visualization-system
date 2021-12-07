@@ -1,10 +1,12 @@
 import os
 import sys
-# import traceback
+import traceback
+from packetvisualization.models import filter
+
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QTreeWidget, QWidget, QPushButton
+from PyQt5.QtCore import Qt, QEventLoop
+from PyQt5.QtWidgets import QTreeWidget, QWidget, QPushButton, QDialog
 from PyQt5.QtGui import QIntValidator, QValidator, QColor
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
@@ -18,6 +20,7 @@ from packetvisualization.models.workspace import Workspace
 import plotly.express as px
 import plotly.offline as po
 
+from packetvisualization.ui_components import filter_options_window
 
 class properties_window(QWidget):
     # QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
@@ -31,6 +34,8 @@ class properties_window(QWidget):
         self.obj = obj
         self.db = db
         self.workspace = workspace
+
+        self.filters = {}
 
         super().__init__()
         self.setWindowTitle("Select Properties")
@@ -53,7 +58,9 @@ class properties_window(QWidget):
         for i in prop: # properties:
             item = QtWidgets.QListWidgetItem(i)
             propRow = list(self.propMap[i])
-            if propRow[1] == False:
+            if propRow[2] == "0":
+                item.setForeground(Qt.red)
+            elif propRow[1] == False:
                 item.setBackground(QColor.fromRgb(220, 220, 220))
             # item.setFlags(Qt.ItemIsEnabled)
             self.listWidget.addItem(item)
@@ -61,11 +68,28 @@ class properties_window(QWidget):
         self.clusterLabel.setText("Select Properties for Analysis")
         self.layout.addWidget(self.clusterLabel, 0, 2)
 
-        self.layout.addWidget(self.listWidget, 1, 2, 1, 2)
+        self.layout.addWidget(self.listWidget, 0, 0, 1, 6)
 
         # self.listWidget2 = QtWidgets.QListWidget()
         #
         # self.listWidget2.setGeometry(QtCore.QRect(10, 10, 211, 291))
+        # self.listWidget2 = QtWidgets.QListWidget()
+        #
+        # self.listWidget2.setGeometry(QtCore.QRect(10, 10, 422, 291))
+
+        filter_options = {"Add", "AddCluster", "AddExpression", "AddID", "AddNoise", "AddUserFields", "AddValues",
+                        "CartesianProduct", "Center", "ChangeDateFormat", "ClassAssigner", "ClusterMembership",
+                        "Copy", "DataToNumeric", "Discretize", "FirstOrder", "FixedDictionaryStringToWordVector",
+                        "InterquartileRange", "KernelFilter", "MakeIndicator", "MathExpression",
+                        "MergeInfrequentNominalValues", "MergeManyValues", "MergeTwoValues", "NominalToBinary",
+                        "NominalToString", "Normalize", "NumericCleaner", "NumbericToBinary", "NumericToDate",
+                        "NumericToNominal", "NumericTransform", "Obfuscate", "OrdinalToNumeric",
+                        "PartitionedMultiFilter", "PKIDiscretize", "PrincipalComponents", "RandomSubset", "Remove",
+                        "RemoveByName", "RemoveType", "RemoveUseless", "RenameAttribute", "RenameNominalValues",
+                        "Reorder", "ReplaceMissingValues", "ReplaceMissingWithUserConstant", "ReplaceWithMissingValue",
+                        "SortLabels", "SortLabels", "Standardize", "StringToNominal", "StringToWordVector",
+                        "SwapValues", "TimeSeriesDelta", "TimeSeriesTranslate", "Transpose"}
+
 
         self.pktIdsAsList = []
         for i in range(len(pktIds)):
@@ -85,18 +109,37 @@ class properties_window(QWidget):
         self.button = QtWidgets.QPushButton("Analyze", clicked=lambda: self.analyze())
         self.layout.addWidget(self.button, 2, 2, 1, 2)
 
+        self.button2 = QtWidgets.QPushButton("Filters", clicked=lambda: self.filter(filter_options))
+        # self.button2 = QtWidgets.QPushButton("Filters")
+        self.layout.addWidget(self.button2, 2, 4, 1, 2)
+
         self.clusterLabel = QtWidgets.QLabel()
         self.clusterLabel.setText("Cluster Value")
         self.layout.addWidget(self.clusterLabel, 2, 0)
 
         self.cluster = QtWidgets.QLineEdit(self)
         self.cluster.setObjectName("cluster")
-        self.layout.addWidget(self.cluster, 2, 1)
+        self.layout.addWidget(self.cluster, 2, 1, 1, 1)
 
         self.errorMsg = QtWidgets.QLabel()
         self.layout.addWidget(self.errorMsg, 3, 0, 1, 4)
 
         self.setLayout(self.layout)
+
+    def filter(self, filter_options):
+        print("in filter options")
+
+        try:
+            self.ui = filter_options_window.filter_options_window(filter_options)
+            self.ui.setAttribute(Qt.WA_DeleteOnClose)
+            loop = QEventLoop()
+            self.ui.destroyed.connect(loop.quit)
+            loop.exec()
+            print(filter.filters)
+            # self.ui.show()
+            # print(self.ui)
+        except Exception:
+            print(traceback.format_exc())
 
     def analyze(self):
         items = self.listWidget.selectedItems()
