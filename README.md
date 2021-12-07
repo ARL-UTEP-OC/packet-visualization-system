@@ -26,6 +26,8 @@ Once you have pulled a new branch or going to start fresh please run *pip instal
 - Once in your venv, to install dependencies use: *pip install your_dependency*
 - To check if your dependency has been installed run and find with: *pip freeze*
 - To push dependencies to our file: *pip freeze > dev_requirements.txt*
+- Must install suricata to use filter by suricata feature. After install, must modify
+suricata.yaml file by searching for "log.pcap" and change enabled to "yes".
 ***
 ## Tests - Using PyTest
 When creating a new test file, follow this naming convention test_*your_test*.py.
