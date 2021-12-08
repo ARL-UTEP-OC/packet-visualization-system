@@ -612,9 +612,10 @@ class WorkspaceWindow(QMainWindow):
                 date = list(df["_source.layers.frame.frame-time"])
                 clusters = list(df.cluster)
                 i = 0
-                for d in date:
-                    self.db[self.traced_dataset.name].update_one({"_source.layers.frame.frame-time": d}, {"$set": {"cluster": clusters[i]}})
-                    i += 1
+                if self.traced_dataset:
+                    for d in date:
+                        self.db[self.traced_dataset.name].update_one({"_source.layers.frame.frame-time": d}, {"$set": {"cluster": clusters[i]}})
+                        i += 1
                 features = analysis_object.features
                 # Generate analysis graph
                 fig = px.scatter(df, x="cluster", y="instance_number",
