@@ -59,6 +59,9 @@ class table_gui(QTableWidget):
         try:
             menu = QMenu(self)
 
+            self.add_comment_action = QAction("Add Comment", self)
+            self.add_comment_action.triggered.connect(self.add_comment)
+
             self.tag_action = QAction("Add Tag", self)
             self.tag_action.triggered.connect(self.add_tag)
 
@@ -133,6 +136,7 @@ class table_gui(QTableWidget):
             self.to_pcap_all_action = QAction("All Packets", self)
             self.to_pcap_all_action.triggered.connect(lambda: self.export_to_pcap(all_packets=True))
 
+            menu.addAction(self.add_comment_action)
             menu.addAction(self.tag_action)
             menu.addAction(self.remove_tag_action)
 
@@ -297,6 +301,28 @@ class table_gui(QTableWidget):
             self.thread.start()
 
             self.thread.finished.connect(self.free_thread)
+
+    def add_comment(self):
+        if self.selectedItems():
+            selected = self.selectedItems()
+            row_list = []
+            id_list = []
+            comment = QInputDialog.getText(self, "Comment Entry", "Enter comment:")[0]
+
+            for item in selected:
+                if item.row() not in row_list:
+                    packet_id = self.item(item.row(), 0).data(Qt.UserRole)[0]
+                    id_list.append(packet_id)
+                    row_list.append(item.row())
+
+            dataset_name = ""
+            if type(self.obj) is Pcap:
+                dataset_name = os.path.basename(self.obj.directory)
+            elif type(self.obj) is Dataset:
+                dataset_name = self.obj.name
+
+            for id in id_list:
+                self.workspace.db[dataset_name].update_one({"_id": id}, {"$set": {"comment": comment}})
 
     def add_tag(self):
         """Allows user to add "tags" to packet items on the table gui. A user can add multiple tags to
