@@ -32,8 +32,8 @@ def test_crete_dataset():
     assert d2.pcaps == []
     assert d1.totalPackets == 0
     assert d2.totalPackets == 0
-    assert d1.protocols == None
-    assert d2.protocols == None
+    assert d1.protocols == []
+    assert d2.protocols == []
     # make sure the folders were created properly
     for d in [d1, d2]:
         assert os.path.isdir(os.path.join(cwd, ".testWorkspace3", "testProject3", d.name))

@@ -7,7 +7,7 @@ long_description = (this_directory / "LongDesc.md").read_text()
 
 setuptools.setup(
     name="packetvisualization",
-    version="1.0.2",
+    version="1.0.3",
     author="team-1",
     author_email="hbarrazalo@miners.utep.edu",
     description="packet visualization",
