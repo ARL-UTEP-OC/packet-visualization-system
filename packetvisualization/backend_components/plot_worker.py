@@ -101,6 +101,10 @@ class PlotWorker(QObject):
             for i in range(len(result_df)):
                 plot_y[i] = len(result_df[i])
         else:
+            self.dataset.protocols = []
+            self.dataset.s_time = ''
+            self.dataset.e_time = ''
+            self.dataset.totalPackets = len(date)
             plot_x, plot_y = [], []
 
         self.dataset.packet_data = [plot_x, plot_y]

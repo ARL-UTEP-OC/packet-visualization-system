@@ -17,7 +17,7 @@ class Dataset:
         self.jsonFilePath = None
         self.path = os.path.join(parent_path, self.name)
         self.totalPackets = 0
-        self.protocols = None
+        self.protocols = []
         self.create_folder()
         self.create_merge_file()
         self.packet_data = None

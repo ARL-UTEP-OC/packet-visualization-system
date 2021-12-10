@@ -9,6 +9,7 @@ class MongoManager:
         self.client = MongoClient("localhost", 27017)
 
     def create_db(self, workspace_name):  # create new DB when we have a new workspace
+        self.client.drop_database(workspace_name)
         mydb = self.client[workspace_name]
         return mydb
 

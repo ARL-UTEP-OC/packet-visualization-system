@@ -44,8 +44,12 @@ class PropertiesWindow(QWidget):
     def get_dataset_properties(self):
         name = QLabel(self.item.name)
         packets = QLabel(str(self.item.totalPackets))
-        s_time = QLabel(self.item.s_time.strftime("%m/%d/%Y, %H:%M:%S"))
-        e_time = QLabel(self.item.e_time.strftime("%m/%d/%Y, %H:%M:%S"))
+        if self.item.s_time == '' or self.item.e_time == '':
+            s_time = QLabel("No Packets Selected")
+            e_time = QLabel("No Packets Selected")
+        else:
+            s_time = QLabel(self.item.s_time.strftime("%m/%d/%Y, %H:%M:%S"))
+            e_time = QLabel(self.item.e_time.strftime("%m/%d/%Y, %H:%M:%S"))
 
         pcaps = QListWidget()
         for i in self.item.pcaps:
